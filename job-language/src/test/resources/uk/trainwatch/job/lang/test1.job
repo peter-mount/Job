@@ -1,0 +1,6 @@
+/*
+ * test1    A bare minimal job, does nothing
+ */
+job "test1";
+{
+}

@@ -3,6 +3,7 @@
  */
 grammar Script;
 
+import Literals;
 
 literal
 	:	IntegerLiteral

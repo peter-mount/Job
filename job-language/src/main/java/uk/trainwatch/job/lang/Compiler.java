@@ -5,8 +5,12 @@
  */
 package uk.trainwatch.job.lang;
 
+import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.JobParser.*;
@@ -16,23 +20,65 @@ import uk.trainwatch.job.lang.JobParser.*;
  * @author peter
  */
 public class Compiler
+        extends AbstractCompiler
 {
+
+    private Job job;
+
+    public static Job compile( CharStream input )
+    {
+        ANTLRErrorListener errorListener = new BaseErrorListener()
+        {
+
+            @Override
+            public void syntaxError( Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                     int line, int charPositionInLine,
+                                     String msg, RecognitionException e )
+            {
+                //String sourceName = recognizer.getInputStream().getSourceName();
+                throw new AssertionError(
+                        String.format( "%d:%d %s",
+                                       line, charPositionInLine,
+                                       msg )
+                );
+            }
+        };
+
+        JobLexer lexer = new JobLexer( input );
+        lexer.removeErrorListeners();
+        lexer.addErrorListener( errorListener );
+
+        CommonTokenStream tokens = new CommonTokenStream( lexer );
+
+        JobParser parser = new JobParser( tokens );
+        parser.removeErrorListeners();
+        parser.addErrorListener( errorListener );
+
+        Compiler compiler = new Compiler();
+        parser.addParseListener( compiler );
+        CompilationUnitContext compilationUnitContext = parser.compilationUnit();
+
+        return compiler.getJob();
+    }
 
     private Compiler()
     {
     }
 
-    public static JobParser parse( CharStream input )
+    public Job getJob()
     {
-        JobLexer lexer = new JobLexer( input );
-        CommonTokenStream tokens = new CommonTokenStream( lexer );
-        return new JobParser( tokens );
+        return job;
     }
 
-    public static Job compile( JobContext ctx )
+    @Override
+    public void exitJobDefinition( JobDefinitionContext ctx )
     {
-        String id = ctx.ID().getText();
-        return new Job()
+        if( ctx.getChildCount() < 1 ) {
+            throw new IndexOutOfBoundsException( "job Name" );
+        }
+
+        final String id = getString( ctx, 1 );
+        job = new Job()
         {
 
             @Override
@@ -50,10 +96,4 @@ public class Compiler
         };
     }
 
-    public static Block compile( BlockContext ctx )
-    {
-        ctx.children.forEach( c -> {
-        } );
-        return new Block( new Statement[0] );
-    }
 }

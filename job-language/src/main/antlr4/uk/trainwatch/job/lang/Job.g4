@@ -2,15 +2,48 @@
 grammar Job;
 
 import Script,Literals;
-//import Identifiers,Expression,Script;
 
-job : 'job' ID jobList* output? declare? block ;
+compilationUnit
+    :   jobDefinition? output? declare? block? EOF
+    ;
 
-jobList : 'run as' ID ;
+jobDefinition
+    :   'job' StringLiteral ';' //runAs?
+    ;
 
-output: 'output' outputList+ ;
-outputList: mailOutput | logOutput ;
-mailOutput : 'mail to' expression SEMI ;
-logOutput : 'log' expression SEMI ;
+runAs
+    :   'run as' expression ';'
+    ;
 
-declare : 'declare' ;
+output
+    :   'output' '{' outputStatements* '}'
+    ;
+
+outputStatements
+    :   outputStatement ';'
+    ;
+
+outputStatement
+    :   mailOutput
+    |   logOutput
+    ;
+
+mailOutput
+    :   'mail' 'to' expression
+    ;
+
+logOutput
+    :   'log' expression
+    ;
+
+declare
+    :   'declare' '{' declareStatements* '}'
+    ;
+
+declareStatements
+    :   declareStatement ';'
+    ;
+
+declareStatement
+    :   variableDeclaratorList
+    ;
