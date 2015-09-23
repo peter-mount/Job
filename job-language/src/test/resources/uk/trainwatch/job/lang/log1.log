@@ -1,0 +1,6 @@
+log1  FINE   Starting log1
+log1  INFO   Hello world
+log1  DEBUG  This is some debugging
+log1  WARNIN A warning
+log1  SEVERE Something went wrong
+log1  FINE   Completed log1

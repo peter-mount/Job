@@ -1,0 +1,66 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package uk.trainwatch.job.lang;
+
+import uk.trainwatch.job.lang.header.CompilationUnitCompiler;
+import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import uk.trainwatch.job.Job;
+import uk.trainwatch.job.lang.JobParser.*;
+
+/**
+ *
+ * @author peter
+ */
+public class Compiler
+{
+
+    public static JobParser parse( CharStream input )
+    {
+        ANTLRErrorListener errorListener = new BaseErrorListener()
+        {
+
+            @Override
+            public void syntaxError( Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                     int line, int charPositionInLine,
+                                     String msg, RecognitionException e )
+            {
+                throw new SyntaxError( recognizer, offendingSymbol, line, charPositionInLine, msg, e );
+            }
+        };
+
+        JobLexer lexer = new JobLexer( input );
+        lexer.removeErrorListeners();
+        lexer.addErrorListener( errorListener );
+
+        CommonTokenStream tokens = new CommonTokenStream( lexer );
+
+        JobParser parser = new JobParser( tokens );
+        parser.removeErrorListeners();
+        parser.addErrorListener( errorListener );
+
+        return parser;
+    }
+
+    public static Job compile( JobParser parser )
+    {
+        return new CompilationUnitCompiler().compile( parser );
+    }
+
+    public static Job compile( CharStream input )
+    {
+        return compile( parse( input ) );
+    }
+
+    private Compiler()
+    {
+    }
+
+}

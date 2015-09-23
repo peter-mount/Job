@@ -1,0 +1,11 @@
+/*
+ * log1     Test various logging output
+ */
+job "log1";
+run as "test";
+{
+    log "Hello world";
+    debug "This is some debugging";
+    warn "A warning";
+    severe "Something went wrong";
+}
