@@ -5,8 +5,10 @@
  */
 package uk.trainwatch.job.lang;
 
+import java.util.Collection;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -17,21 +19,62 @@ public abstract class AbstractCompiler
         extends JobListenerAdapter
 {
 
+    protected String getString( ParserRuleContext ctx, int index, String def )
+    {
+        final String s = index < ctx.getChildCount() ? getString( ctx, index ) : null;
+        return s == null || s.isEmpty() ? def : s;
+    }
+
+    protected String getString( TerminalNode n )
+    {
+        // Remove " from each end
+        String s = n.getText();
+        if( s == null || s.isEmpty() || s.length() < 3 ) {
+            return "";
+        }
+        return s.substring( 1, s.length() - 1 );
+    }
+
     protected String getString( ParserRuleContext ctx, int index )
     {
         ParseTree t = ctx.getChild( index );
         if( t instanceof TerminalNode ) {
-            // Remove " from each end
-            String s = t.getText();
-            if( s == null || s.isEmpty() || s.length() < 3 ) {
-                return "";
-            }
-            return s.substring( 1, s.length() - 1 );
+            return getString( (TerminalNode) t );
         }
-        throw new UnsupportedOperationException( String.format( 
-                "Unable to decode %s %s",
-                t.getText(),
-                t.getClass()
-        ));
+        else if( t != null ) {
+            throw new UnsupportedOperationException( String.format(
+                    "Unable to decode %s %s",
+                    t.getText(),
+                    t.getClass()
+            ) );
+        }
+        return null;
     }
+
+    protected void enterRule( Collection<? extends ParserRuleContext> l )
+    {
+        if( l != null && !l.isEmpty() ) {
+            l.forEach( this::enterRule );
+        }
+    }
+
+    protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
+    {
+        if( l != null && !l.isEmpty() ) {
+            l.forEach( r -> enterRule( r, ptl ) );
+        }
+    }
+
+    protected void enterRule( ParserRuleContext ctx )
+    {
+        enterRule( ctx, this );
+    }
+
+    protected void enterRule( ParserRuleContext ctx, ParseTreeListener l )
+    {
+        if( ctx != null ) {
+            ctx.enterRule( l );
+        }
+    }
+
 }

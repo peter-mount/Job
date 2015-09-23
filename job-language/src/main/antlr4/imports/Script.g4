@@ -6,301 +6,317 @@ grammar Script;
 import Literals;
 
 literal
-	:	IntegerLiteral
-	|	FloatingPointLiteral
-	|	BooleanLiteral
-	|	CharacterLiteral
-	|	StringLiteral
-	|	NullLiteral
-	;
+    :    IntegerLiteral
+    |    FloatingPointLiteral
+    |    BooleanLiteral
+    |    CharacterLiteral
+    |    StringLiteral
+    |    NullLiteral
+    ;
 
 variableDeclaratorList
-	:	variableDeclarator (',' variableDeclarator)*
-	;
+    :    variableDeclarator (',' variableDeclarator)*
+    ;
 
 variableDeclarator
-	:	variableDeclaratorId ('=' variableInitializer)?
-	;
+    :    variableDeclaratorId ('=' variableInitializer)?
+    ;
 
 variableDeclaratorId
-	:	Identifier //dims?
-	;
+    :    Identifier //dims?
+    ;
 
 variableInitializer
-	:	expression
-//	|	arrayInitializer
-	;
+    :    expression
+//  |    arrayInitializer
+    ;
 
 block
-	:	'{' blockStatements? '}'
-	;
+    :    '{' blockStatements? '}'
+    ;
 
 blockStatements
-	:	blockStatement blockStatement*
-	;
+    :    blockStatement blockStatement*
+    ;
 
 blockStatement
-	:	localVariableDeclarationStatement
-	|	statement
-	;
+    :    localVariableDeclarationStatement
+    |    statement
+    ;
 
 localVariableDeclarationStatement
-	:	localVariableDeclaration ';'
-	;
+    :    localVariableDeclaration ';'
+    ;
 
 localVariableDeclaration
-	:	variableDeclaratorList
-	;
+    :    variableDeclaratorList
+    ;
 
 statement
-	:	statementWithoutTrailingSubstatement
-	|	ifThenStatement
-	|	ifThenElseStatement
-//	|	whileStatement
-//	|	forStatement
-	;
+    :    statementWithoutTrailingSubstatement
+    |    ifThenStatement
+    |    ifThenElseStatement
+//  |    whileStatement
+//  |    forStatement
+    ;
 
 statementWithoutTrailingSubstatement
-	:	block
-	|	emptyStatement
-	|	expressionStatement
-//	|	assertStatement
-//	|	switchStatement
-	|	doStatement
-//	|	breakStatement
-//	|	continueStatement
-//	|	returnStatement
-//	|	throwStatement
-//	|	tryStatement
-	;
+    :    block
+    |    emptyStatement
+    |    expressionStatement
+//  |    assertStatement
+//  |    switchStatement
+    |    doStatement
+//  |    breakStatement
+//  |    continueStatement
+//  |    returnStatement
+//  |    throwStatement
+//  |    tryStatement
+    ;
 
 emptyStatement
-	:	';'
-	;
+    :    ';'
+    ;
 
 expressionStatement
-	:	statementExpression ';'
-	;
+    :    statementExpression ';'
+    ;
 
 statementExpression
-	:	assignment
-//	|	preIncrementExpression
-//	|	preDecrementExpression
-//	|	postIncrementExpression
-//	|	postDecrementExpression
-//	|	methodInvocation
-//	|	classInstanceCreationExpression
-	;
+    :    assignment
+//  |    preIncrementExpression
+//  |    preDecrementExpression
+//  |    postIncrementExpression
+//  |    postDecrementExpression
+//  |    methodInvocation
+//  |    classInstanceCreationExpression
+    |   logStatement
+    ;
 
 ifThenStatement
-	:	'if' '(' expression ')' statement
-	;
+    :    'if' '(' expression ')' statement
+    ;
 
 ifThenElseStatement
-	:	'if' '(' expression ')' statement 'else' statement
-	;
+    :    'if' '(' expression ')' statement 'else' statement
+    ;
 
 whileStatement
-	:	'while' '(' expression ')' statement
-	;
+    :    'while' '(' expression ')' statement
+    ;
 
 doStatement
-	:	'do' statement 'while' '(' expression ')' ';'
-	;
+    :    'do' statement 'while' '(' expression ')' ';'
+    ;
 
 forStatement
-	:	basicForStatement
-	|	enhancedForStatement
-	;
+    :    basicForStatement
+    |    enhancedForStatement
+    ;
 
 
 basicForStatement
-	:	'for' '(' forInit? ';' expression? ';' forUpdate? ')' statement
-	;
+    :    'for' '(' forInit? ';' expression? ';' forUpdate? ')' statement
+    ;
 
 forInit
-	:	statementExpressionList
-	|	localVariableDeclaration
-	;
+    :    statementExpressionList
+    |    localVariableDeclaration
+    ;
 
 forUpdate
-	:	statementExpressionList
-	;
+    :    statementExpressionList
+    ;
 
 statementExpressionList
-	:	statementExpression (',' statementExpression)*
-	;
+    :    statementExpression (',' statementExpression)*
+    ;
 
 enhancedForStatement
-	:	'for' '('  variableDeclaratorId ':' expression ')' statement
-	;
+    :    'for' '('  variableDeclaratorId ':' expression ')' statement
+    ;
 
 expressionName
-	:	Identifier
-	|	ambiguousName '.' Identifier
-	;
+    :    Identifier
+    |    ambiguousName '.' Identifier
+    ;
 
 ambiguousName
-	:	Identifier
-	|	ambiguousName '.' Identifier
-	;
+    :    Identifier
+    |    ambiguousName '.' Identifier
+    ;
 
 assignmentOperator
-	:	'='
-	|	'*='
-	|	'/='
-	|	'%='
-	|	'+='
-	|	'-='
-	|	'<<='
-	|	'>>='
-	|	'>>>='
-	|	'&='
-	|	'^='
-	|	'|='
-	;
+    :    '='
+    |    '*='
+    |    '/='
+    |    '%='
+    |    '+='
+    |    '-='
+    |    '<<='
+    |    '>>='
+    |    '>>>='
+    |    '&='
+    |    '^='
+    |    '|='
+    ;
 
 expression
-	:	assignmentExpression
-	;
+    :    assignmentExpression
+    ;
 
 assignmentExpression
-	:	conditionalExpression
-	|	assignment
-	;
+    :    conditionalExpression
+    |    assignment
+    ;
 
 assignment
-	:	leftHandSide assignmentOperator expression
-	;
+    :    leftHandSide assignmentOperator expression
+    ;
 
 leftHandSide
-	:	expressionName
-//	|	fieldAccess
-//	|	arrayAccess
-	;
+    :    expressionName
+//  |    fieldAccess
+//  |    arrayAccess
+    ;
 
 conditionalExpression
-	:	conditionalOrExpression
-	|	conditionalOrExpression '?' expression ':' conditionalExpression
-	;
+    :    conditionalOrExpression
+    |    conditionalOrExpression '?' expression ':' conditionalExpression
+    ;
 
 conditionalOrExpression
-	:	conditionalAndExpression
-	|	conditionalOrExpression '||' conditionalAndExpression
-	;
+    :    conditionalAndExpression
+    |    conditionalOrExpression '||' conditionalAndExpression
+    ;
 
 conditionalAndExpression
-	:	inclusiveOrExpression
-	|	conditionalAndExpression '&&' inclusiveOrExpression
-	;
+    :    inclusiveOrExpression
+    |    conditionalAndExpression '&&' inclusiveOrExpression
+    ;
 
 inclusiveOrExpression
-	:	exclusiveOrExpression
-	|	inclusiveOrExpression '|' exclusiveOrExpression
-	;
+    :    exclusiveOrExpression
+    |    inclusiveOrExpression '|' exclusiveOrExpression
+    ;
 
 exclusiveOrExpression
-	:	andExpression
-	|	exclusiveOrExpression '^' andExpression
-	;
+    :    andExpression
+    |    exclusiveOrExpression '^' andExpression
+    ;
 
 andExpression
-	:	equalityExpression
-	|	andExpression '&' equalityExpression
-	;
+    :    equalityExpression
+    |    andExpression '&' equalityExpression
+    ;
 
 equalityExpression
-	:	relationalExpression
-	|	equalityExpression '==' relationalExpression
-	|	equalityExpression '!=' relationalExpression
-	;
+    :    relationalExpression
+    |    equalityExpression '==' relationalExpression
+    |    equalityExpression '!=' relationalExpression
+    ;
 
 relationalExpression
-	:	shiftExpression
-	|	relationalExpression '<' shiftExpression
-	|	relationalExpression '>' shiftExpression
-	|	relationalExpression '<=' shiftExpression
-	|	relationalExpression '>=' shiftExpression
-//	|	relationalExpression 'instanceof' referenceType
-	;
+    :    shiftExpression
+    |    relationalExpression '<' shiftExpression
+    |    relationalExpression '>' shiftExpression
+    |    relationalExpression '<=' shiftExpression
+    |    relationalExpression '>=' shiftExpression
+//  |    relationalExpression 'instanceof' referenceType
+    ;
 
 shiftExpression
-	:	additiveExpression
-	|	shiftExpression '<' '<' additiveExpression
-	|	shiftExpression '>' '>' additiveExpression
-	|	shiftExpression '>' '>' '>' additiveExpression
-	;
+    :    additiveExpression
+    |    shiftExpression '<' '<' additiveExpression
+    |    shiftExpression '>' '>' additiveExpression
+    |    shiftExpression '>' '>' '>' additiveExpression
+    ;
 
 additiveExpression
-	:	multiplicativeExpression
-	|	additiveExpression '+' multiplicativeExpression
-	|	additiveExpression '-' multiplicativeExpression
-	;
+    :    multiplicativeExpression
+    |    additiveExpression '+' multiplicativeExpression
+    |    additiveExpression '-' multiplicativeExpression
+    ;
 
 multiplicativeExpression
-	:	unaryExpression
-	|	multiplicativeExpression '*' unaryExpression
-	|	multiplicativeExpression '/' unaryExpression
-	|	multiplicativeExpression '%' unaryExpression
-	;
+    :    unaryExpression
+    |    multiplicativeExpression '*' unaryExpression
+    |    multiplicativeExpression '/' unaryExpression
+    |    multiplicativeExpression '%' unaryExpression
+    ;
 
 unaryExpression
-	:	preIncrementExpression
-	|	preDecrementExpression
-	|	'+' unaryExpression
-	|	'-' unaryExpression
-	|	unaryExpressionNotPlusMinus
-	;
+    :    preIncrementExpression
+    |    preDecrementExpression
+    |    '+' unaryExpression
+    |    '-' unaryExpression
+    |    unaryExpressionNotPlusMinus
+    ;
 
 preIncrementExpression
-	:	'++' unaryExpression
-	;
+    :    '++' unaryExpression
+    ;
 
 preDecrementExpression
-	:	'--' unaryExpression
-	;
+    :    '--' unaryExpression
+    ;
 
 unaryExpressionNotPlusMinus
-	:	postfixExpression
-	|	'~' unaryExpression
-	|	'!' unaryExpression
-//	|	castExpression
-	;
+    :    postfixExpression
+    |    '~' unaryExpression
+    |    '!' unaryExpression
+//  |    castExpression
+    ;
 
 postfixExpression
-	:	(	primary
-		|	expressionName
-		)
-		(	postIncrementExpression_lf_postfixExpression
-		|	postDecrementExpression_lf_postfixExpression
-		)*
-	;
+    :    (    primary
+        |    expressionName
+        )
+        (    postIncrementExpression_lf_postfixExpression
+        |    postDecrementExpression_lf_postfixExpression
+        )*
+    ;
 
 postIncrementExpression
-	:	postfixExpression '++'
-	;
+    :    postfixExpression '++'
+    ;
 
 postIncrementExpression_lf_postfixExpression
-	:	'++'
-	;
+    :    '++'
+    ;
 
 postDecrementExpression
-	:	postfixExpression '--'
-	;
+    :    postfixExpression '--'
+    ;
 
 postDecrementExpression_lf_postfixExpression
-	:	'--'
-	;
+    :    '--'
+    ;
 
 /*
  * Productions from §15 (Expressions)
  */
 
 primary
-	:	literal
-	|	'(' expression ')'
-//	|	fieldAccess
-//	|	arrayAccess
-//	|	methodInvocation
-//	|	methodReference
+    :    literal
+    |    '(' expression ')'
+//  |    fieldAccess
+//  |    arrayAccess
+//  |    methodInvocation
+//  |    methodReference
     ;
+
+stringExpression
+    : ( StringLiteral | expression )
+    ;
+/*
+ * Our logging statements
+ */
+logStatement
+    :   'log' stringExpression
+    |   'debug' stringExpression
+    |   'warn' stringExpression
+    |   'severe' stringExpression
+    ;
+
+

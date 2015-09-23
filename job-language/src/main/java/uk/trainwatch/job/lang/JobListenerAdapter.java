@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.lang;
 
+import javax.annotation.Generated;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -16,7 +17,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class JobListenerAdapter
         implements JobListener
 {
-    
+
     @Override
     public void enterCompilationUnit( JobParser.CompilationUnitContext ctx )
     {
@@ -37,18 +38,6 @@ public class JobListenerAdapter
 
     @Override
     public void exitJobDefinition( JobParser.JobDefinitionContext ctx )
-    {
-
-    }
-
-    @Override
-    public void enterRunAs( JobParser.RunAsContext ctx )
-    {
-
-    }
-
-    @Override
-    public void exitRunAs( JobParser.RunAsContext ctx )
     {
 
     }
@@ -807,6 +796,26 @@ public class JobListenerAdapter
     public void exitEveryRule( ParserRuleContext prc )
     {
 
+    }
+
+    @Override
+    public void enterStringExpression( JobParser.StringExpressionContext ctx )
+    {
+    }
+
+    @Override
+    public void exitStringExpression( JobParser.StringExpressionContext ctx )
+    {
+    }
+
+    @Override
+    public void enterLogStatement( JobParser.LogStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitLogStatement( JobParser.LogStatementContext ctx )
+    {
     }
 
 }

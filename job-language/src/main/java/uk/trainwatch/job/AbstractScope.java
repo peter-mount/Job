@@ -7,6 +7,7 @@ package uk.trainwatch.job;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  *
@@ -36,7 +37,22 @@ abstract class AbstractScope
 
     static class GlobalScope
             extends AbstractScope
+            implements Scope.GlobalScope
     {
+
+        protected Logger logger;
+
+        @Override
+        public void setLogger( Logger logger )
+        {
+            this.logger = logger;
+        }
+
+        @Override
+        public Logger getLogger()
+        {
+            return logger;
+        }
 
         @Override
         public <T> T getVar( String name )
@@ -68,6 +84,12 @@ abstract class AbstractScope
         protected AbstractChildScope( GlobalScope globalScope )
         {
             this.globalScope = globalScope;
+        }
+
+        @Override
+        public Logger getLogger()
+        {
+            return globalScope.getLogger();
         }
 
         @Override

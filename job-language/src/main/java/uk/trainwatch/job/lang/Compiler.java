@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.lang;
 
+import uk.trainwatch.job.lang.header.CompilationUnitCompiler;
 import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -12,7 +13,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import uk.trainwatch.job.Job;
-import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.JobParser.*;
 
 /**
@@ -20,12 +20,9 @@ import uk.trainwatch.job.lang.JobParser.*;
  * @author peter
  */
 public class Compiler
-        extends AbstractCompiler
 {
 
-    private Job job;
-
-    public static Job compile( CharStream input )
+    public static JobParser parse( CharStream input )
     {
         ANTLRErrorListener errorListener = new BaseErrorListener()
         {
@@ -35,12 +32,7 @@ public class Compiler
                                      int line, int charPositionInLine,
                                      String msg, RecognitionException e )
             {
-                //String sourceName = recognizer.getInputStream().getSourceName();
-                throw new AssertionError(
-                        String.format( "%d:%d %s",
-                                       line, charPositionInLine,
-                                       msg )
-                );
+                throw new SyntaxError( recognizer, offendingSymbol, line, charPositionInLine, msg, e );
             }
         };
 
@@ -54,46 +46,21 @@ public class Compiler
         parser.removeErrorListeners();
         parser.addErrorListener( errorListener );
 
-        Compiler compiler = new Compiler();
-        parser.addParseListener( compiler );
-        CompilationUnitContext compilationUnitContext = parser.compilationUnit();
+        return parser;
+    }
 
-        return compiler.getJob();
+    public static Job compile( JobParser parser )
+    {
+        return new CompilationUnitCompiler().compile( parser );
+    }
+
+    public static Job compile( CharStream input )
+    {
+        return compile( parse( input ) );
     }
 
     private Compiler()
     {
-    }
-
-    public Job getJob()
-    {
-        return job;
-    }
-
-    @Override
-    public void exitJobDefinition( JobDefinitionContext ctx )
-    {
-        if( ctx.getChildCount() < 1 ) {
-            throw new IndexOutOfBoundsException( "job Name" );
-        }
-
-        final String id = getString( ctx, 1 );
-        job = new Job()
-        {
-
-            @Override
-            public String getId()
-            {
-                return id;
-            }
-
-            @Override
-            public Void invoke( Scope scope )
-                    throws Exception
-            {
-                return null;
-            }
-        };
     }
 
 }

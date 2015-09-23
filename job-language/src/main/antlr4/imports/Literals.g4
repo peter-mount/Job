@@ -8,6 +8,11 @@ AS : 'as';
 OUTPUT : 'output';
 DECLARE : 'declare';
 
+LOG : 'log';
+DEBUG : 'debug';
+WARN : 'warn';
+SEVERE : 'severe';
+
 // §3.9 Keywords
 
 ABSTRACT : 'abstract';

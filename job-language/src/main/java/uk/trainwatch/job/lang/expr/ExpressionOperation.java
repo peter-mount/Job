@@ -3,19 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package uk.trainwatch.job;
+package uk.trainwatch.job.lang.expr;
 
-import uk.trainwatch.job.lang.Statement;
+import uk.trainwatch.job.lang.Operation;
 
 /**
  *
  * @author peter
  */
-public interface Job
-        extends Statement
+@FunctionalInterface
+public interface ExpressionOperation
+        extends Operation<Object>
 {
 
-    String getId();
-
-    String getRunAs();
 }

@@ -19,11 +19,15 @@ public interface Operation<R>
 
     R invoke( Scope scope )
             throws Exception;
-    
+
     /**
      * A no operation
+     * @return 
      */
-    static final Statement NOP = s -> {
-    };
+    static Statement nop()
+    {
+        return s -> {
+        };
+    }
 
 }

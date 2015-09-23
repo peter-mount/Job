@@ -5,6 +5,8 @@
  */
 package uk.trainwatch.job;
 
+import java.util.logging.Logger;
+
 /**
  *
  * @author peter
@@ -20,7 +22,14 @@ public interface Scope
      */
     static Scope newInstance()
     {
-        return new AbstractScope.GlobalScope();
+        return newInstance( Logger.getAnonymousLogger() );
+    }
+
+    static Scope newInstance( Logger logger )
+    {
+        GlobalScope scope = new AbstractScope.GlobalScope();
+        scope.setLogger( logger );
+        return scope;
     }
 
     /**
@@ -59,4 +68,13 @@ public interface Scope
      * @return new scope
      */
     Scope begin();
+
+    Logger getLogger();
+
+    static interface GlobalScope
+            extends Scope
+    {
+
+        void setLogger( Logger logger );
+    }
 }

@@ -4,15 +4,12 @@ grammar Job;
 import Script,Literals;
 
 compilationUnit
-    :   jobDefinition? output? declare? block? EOF
+    :   jobDefinition output? declare? block EOF
     ;
 
 jobDefinition
-    :   'job' StringLiteral ';' //runAs?
-    ;
-
-runAs
-    :   'run as' expression ';'
+    :   'job' StringLiteral ';'
+    |   'job' StringLiteral ';' 'run' 'as' StringLiteral ';'
     ;
 
 output
