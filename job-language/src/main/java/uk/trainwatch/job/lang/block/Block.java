@@ -5,8 +5,9 @@
  */
 package uk.trainwatch.job.lang.block;
 
-import java.io.Serializable;
+import java.util.Collection;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 
 /**
@@ -14,62 +15,46 @@ import uk.trainwatch.job.lang.Statement;
  * <p>
  * @author peter
  */
-abstract class Block
-        implements Statement,
-                   Serializable
+class Block
 {
 
-    private static final long serialVersionUID = 1L;
-
-    protected final Statement body[];
-
-    public Block( Statement[] body )
+    private static Statement[] toArray( Collection<Statement> statements )
     {
-        this.body = body;
+        if( statements == null || statements.isEmpty() ) {
+            return new Statement[0];
+        }
+        return statements.toArray( new Statement[statements.size()] );
     }
 
-    static class Global
-            extends Block
+    public static Statement declare( Collection<Statement> statements )
     {
-
-        private static final long serialVersionUID = 1L;
-
-        public Global( Statement[] body )
-        {
-            super( body );
+        if( statements == null || statements.isEmpty() ) {
+            return Operation.nop();
         }
 
-        @Override
-        public void invokeStatement( Scope scope )
-                throws Exception
-        {
+        Statement body[] = toArray( statements );
+        return scope -> {
             for( Statement s: body ) {
                 s.invoke( scope );
             }
-        }
+        };
 
     }
 
-    static class Normal
-            extends Block
+    public static Statement block( Collection<Statement> statements )
     {
-
-        private static final long serialVersionUID = 1L;
-
-        public Normal( Statement[] body )
-        {
-            super( body );
+        if( statements == null || statements.isEmpty() ) {
+            return Operation.nop();
         }
 
-        @Override
-        public void invokeStatement( Scope scope )
-                throws Exception
-        {
+        Statement body[] = toArray( statements );
+        return scope -> {
             try( Scope child = scope.begin() ) {
                 for( Statement s: body ) {
                     s.invoke( child );
                 }
             }
-        }
+        };
     }
+    
 }

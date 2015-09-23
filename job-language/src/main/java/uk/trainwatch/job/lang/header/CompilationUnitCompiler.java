@@ -68,4 +68,40 @@ public class CompilationUnitCompiler
         jobDefinitionContext = ctx;
     }
 
+    @Override
+    public void enterDeclare( DeclareContext ctx )
+    {
+        enterRule( ctx.declareStatements() );
+    }
+
+    @Override
+    public void enterDeclareStatements( DeclareStatementsContext ctx )
+    {
+        enterRule( ctx.declareStatement() );
+    }
+
+    @Override
+    public void enterDeclareStatement( DeclareStatementContext ctx )
+    {
+        enterRule( ctx.localVariableDeclarationStatement(), blockCompiler );
+    }
+
+    @Override
+    public void enterOutput( OutputContext ctx )
+    {
+        enterRule( ctx.outputStatements() );
+    }
+
+    @Override
+    public void enterOutputStatements( OutputStatementsContext ctx )
+    {
+        enterRule( ctx.outputStatement() );
+    }
+
+    @Override
+    public void enterOutputStatement( OutputStatementContext ctx )
+    {
+        throw new UnsupportedOperationException();
+    }
+
 }

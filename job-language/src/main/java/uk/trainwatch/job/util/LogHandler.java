@@ -28,6 +28,7 @@ public class LogHandler
         for( Handler h: logger.getHandlers() ) {
             logger.removeHandler( h );
         }
+        logger.setUseParentHandlers( false );
         logger.addHandler( new LogHandler( formatter, consumer ) );
         return logger;
     }

@@ -6,6 +6,7 @@
 package uk.trainwatch.job.lang.header;
 
 import java.io.Serializable;
+import java.util.logging.Level;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
@@ -52,15 +53,21 @@ class JobImpl
     public void invokeStatement( Scope scope )
             throws Exception
     {
-        if( declare != null ) {
-            declare.invokeStatement( scope );
+        scope.getLogger().log( Level.FINE, () -> "Starting " + id );
+        try {
+            if( declare != null ) {
+                declare.invokeStatement( scope );
+            }
+
+            if( output != null ) {
+                output.invokeStatement( scope );
+            }
+
+            block.invokeStatement( scope );
         }
-        
-        if( output != null ) {
-            output.invokeStatement( scope );
+        finally {
+            scope.getLogger().log( Level.FINE, () -> "Completed " + id );
         }
-        
-        block.invokeStatement( scope );
     }
 
 }

@@ -1,6 +1,12 @@
 log1  FINE   Starting log1
 log1  INFO   Hello world
-log1  DEBUG  This is some debugging
+log1  FINE   This is some debugging
 log1  WARNIN A warning
 log1  SEVERE Something went wrong
+log1  INFO   Sum is 10
+log1  INFO   Sub is 4
+log1  INFO   Mult is 25
+log1  INFO   Div is 5
+log1  INFO   Mod is 1
+log1  INFO   Test complete
 log1  FINE   Completed log1

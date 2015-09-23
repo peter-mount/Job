@@ -129,11 +129,6 @@ abstract class AbstractScope
 
             if( v == null ) {
                 v = globalScope.getVar( name );
-
-                // Cache the result to improve performance
-                if( v != null ) {
-                    vars.put( name, v );
-                }
             }
 
             return v;
@@ -163,11 +158,6 @@ abstract class AbstractScope
 
                 if( v == null ) {
                     v = parentScope.getVar( name );
-                }
-
-                // Cache the result to improve performance
-                if( v != null ) {
-                    vars.put( name, v );
                 }
             }
 

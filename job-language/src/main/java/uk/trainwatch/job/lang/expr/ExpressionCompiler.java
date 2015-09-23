@@ -5,10 +5,10 @@
  */
 package uk.trainwatch.job.lang.expr;
 
-import java.beans.Expression;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.StringJoiner;
+import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.lang.AbstractCompiler;
@@ -179,6 +179,137 @@ public class ExpressionCompiler
         }
     }
 
+    @Override
+    public void enterAdditiveExpression( JobParser.AdditiveExpressionContext ctx )
+    {
+        if( ctx.additiveExpression() == null ) {
+            enterRule( ctx.multiplicativeExpression() );
+        }
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
+                case "+":
+                    biop( ctx.additiveExpression(), ctx.multiplicativeExpression(), Arithmetic::add );
+                    break;
+                case "-":
+                    biop( ctx.additiveExpression(), ctx.multiplicativeExpression(), Arithmetic::sub );
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void enterMultiplicativeExpression( JobParser.MultiplicativeExpressionContext ctx )
+    {
+        if( ctx.multiplicativeExpression() == null ) {
+            enterRule( ctx.unaryExpression() );
+        }
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
+                case "*":
+                    biop( ctx.multiplicativeExpression(), ctx.unaryExpression(), Arithmetic::mult );
+                    break;
+                case "/":
+                    biop( ctx.multiplicativeExpression(), ctx.unaryExpression(), Arithmetic::div );
+                    break;
+                case "%":
+                    biop( ctx.multiplicativeExpression(), ctx.unaryExpression(), Arithmetic::mod );
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void enterUnaryExpression( JobParser.UnaryExpressionContext ctx )
+    {
+        enterRule( ctx.preIncrementExpression() );
+        enterRule( ctx.preDecrementExpression() );
+
+        enterRule( ctx.unaryExpressionNotPlusMinus() );
+
+        if( ctx.unaryExpression() != null ) {
+            enterRule( ctx.unaryExpression() );
+            if( "-".equals( ctx.getChild( 0 ).getText() ) ) {
+                expression = Arithmetic.negate( expression );
+            }
+        }
+    }
+
+    @Override
+    public void enterPreIncrementExpression( JobParser.PreIncrementExpressionContext ctx )
+    {
+        throw new UnsupportedOperationException( ctx.getText() );
+    }
+
+    @Override
+    public void enterPreDecrementExpression( JobParser.PreDecrementExpressionContext ctx )
+    {
+        throw new UnsupportedOperationException( ctx.getText() );
+    }
+
+    @Override
+    public void enterUnaryExpressionNotPlusMinus( JobParser.UnaryExpressionNotPlusMinusContext ctx )
+    {
+        if( ctx.unaryExpression() != null ) {
+            enterRule( ctx.unaryExpression() );
+            switch( ctx.getChild( 0 ).getText() ) {
+                case "~":
+                    expression = Arithmetic.tilde( expression );
+                    break;
+                case "!":
+                    expression = Arithmetic.not( expression );
+                    break;
+            }
+        }
+        else {
+            enterRule( ctx.postfixExpression() );
+        }
+    }
+
+    @Override
+    public void enterPostfixExpression( JobParser.PostfixExpressionContext ctx )
+    {
+        enterRule( ctx.primary() );
+        enterRule( ctx.expressionName() );
+
+        // Postfix not supported
+        enterRule( ctx.postDecrementExpression_lf_postfixExpression() );
+        enterRule( ctx.postIncrementExpression_lf_postfixExpression() );
+    }
+
+    @Override
+    public void enterPostDecrementExpression( JobParser.PostDecrementExpressionContext ctx )
+    {
+        throw new UnsupportedOperationException( ctx.getText() );
+    }
+
+    @Override
+    public void enterPostIncrementExpression( JobParser.PostIncrementExpressionContext ctx )
+    {
+        throw new UnsupportedOperationException( ctx.getText() );
+    }
+
+    @Override
+    public void enterPrimary( JobParser.PrimaryContext ctx )
+    {
+        enterRule( ctx.literal() );
+        enterRule( ctx.expression() );
+    }
+
+    @Override
+    public void enterLiteral( JobParser.LiteralContext ctx )
+    {
+        op( ctx.BooleanLiteral(), n -> Boolean.valueOf( n.getText() ) ? Logic.trueOp() : Logic.falseOp() );
+        op( ctx.FloatingPointLiteral(), n -> Constants.constant( Float.valueOf( n.getText() ) ) );
+        op( ctx.IntegerLiteral(), n -> Constants.constant( Integer.valueOf( n.getText() ) ) );
+        op( ctx.StringLiteral(), n -> Constants.constant( getString( n ) ) );
+        op( ctx.NullLiteral(), n -> scope -> null );
+
+        if( ctx.CharacterLiteral() != null ) {
+            throw new UnsupportedOperationException( "Character literals currently not supported" );
+        }
+        //op( ctx.CharacterLiteral(), n -> null );
+    }
+
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Assignment">
     @Override
@@ -222,6 +353,8 @@ public class ExpressionCompiler
             ambiguousName.add( name );
             name = ambiguousName.toString();
         }
+        
+        expression = scope-> scope.getVar( name );
     }
 
     @Override
@@ -240,8 +373,16 @@ public class ExpressionCompiler
         else {
             enterRule( lc );
             ExpressionOperation lhs = expression;
+            
             enterRule( rc );
             expression = op.apply( lhs, expression );
+        }
+    }
+
+    private <T> void op( T val, Function<T, ExpressionOperation> mapper )
+    {
+        if( val != null ) {
+            expression = mapper.apply( val );
         }
     }
 

@@ -15,6 +15,7 @@ import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionCompiler;
+import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
  *
@@ -30,6 +31,7 @@ public class BlockCompiler
     private List<Statement> statements = null;
     private Statement block;
     private boolean appendMode;
+    private String name;
 
     public BlockCompiler setAppendMode( boolean appendMode )
     {
@@ -73,10 +75,10 @@ public class BlockCompiler
                 block = Operation.nop();
             }
             else if( appendMode ) {
-                block = new Block.Normal( statements.toArray( new Statement[statements.size()] ) );
+                block = Block.block( statements );
             }
             else {
-                block = new Block.Global( statements.toArray( new Statement[statements.size()] ) );
+                block = Block.declare( statements );
             }
 
             if( push ) {
@@ -110,11 +112,6 @@ public class BlockCompiler
     }
 
     @Override
-    public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
-    {
-    }
-
-    @Override
     public void enterStatement( JobParser.StatementContext ctx )
     {
         enterRule( ctx.statementWithoutTrailingSubstatement() );
@@ -139,6 +136,45 @@ public class BlockCompiler
         enterRule( ctx.logStatement() );
     }
     //</editor-fold>
+
+    @Override
+    public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
+    {
+        enterRule( ctx.localVariableDeclaration() );
+    }
+
+    @Override
+    public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
+    {
+        enterRule( ctx.variableDeclaratorList() );
+    }
+
+    @Override
+    public void enterVariableDeclaratorList( JobParser.VariableDeclaratorListContext ctx )
+    {
+        enterRule( ctx.variableDeclarator() );
+    }
+
+    @Override
+    public void enterVariableDeclarator( JobParser.VariableDeclaratorContext ctx )
+    {
+        enterRule( ctx.variableDeclaratorId() );
+        enterRule( ctx.variableInitializer() );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+        statements.add( scope -> scope.setVar( name, expr.invoke( scope ) ) );
+    }
+
+    @Override
+    public void enterVariableDeclaratorId( JobParser.VariableDeclaratorIdContext ctx )
+    {
+        name = ctx.Identifier().getText();
+    }
+
+    @Override
+    public void enterVariableInitializer( JobParser.VariableInitializerContext ctx )
+    {
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+    }
 
     @Override
     public void enterLogStatement( JobParser.LogStatementContext ctx )
@@ -168,8 +204,9 @@ public class BlockCompiler
 
         enterRule( ctx.stringExpression(), expressionCompiler.reset() );
 
-        Operation<Object> op = expressionCompiler.getExpression();
-        statements.add( new Log( level, op ) );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+
+        statements.add( Log.log( level, expr ) );
     }
 
 }

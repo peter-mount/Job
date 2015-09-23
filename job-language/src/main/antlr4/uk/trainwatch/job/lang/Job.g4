@@ -42,5 +42,6 @@ declareStatements
     ;
 
 declareStatement
-    :   variableDeclaratorList
+    :   localVariableDeclarationStatement
+    // CDI injection goes in here
     ;
