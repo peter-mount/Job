@@ -1,0 +1,10 @@
+scope1FINE   Starting scope1
+scope1INFO   before a is 1 = 1
+scope1INFO   before b is null = null
+scope1INFO   block before a is 1 = 1
+scope1INFO   block before b is null = null
+scope1INFO   block after a is 2 = 2
+scope1INFO   block after b is 42 = 42
+scope1INFO   after a is 2 = 2
+scope1INFO   after b is null = null
+scope1FINE   Completed control1

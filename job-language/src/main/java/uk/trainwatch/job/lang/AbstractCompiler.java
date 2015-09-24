@@ -29,7 +29,8 @@ public abstract class AbstractCompiler
     {
         // Remove " from each end
         String s = n.getText();
-        if( s == null || s.isEmpty() || s.length() < 3 ) {
+        if( s == null || s.isEmpty() || s.length() < 3 )
+        {
             return "";
         }
         return s.substring( 1, s.length() - 1 );
@@ -38,10 +39,12 @@ public abstract class AbstractCompiler
     protected String getString( ParserRuleContext ctx, int index )
     {
         ParseTree t = ctx.getChild( index );
-        if( t instanceof TerminalNode ) {
+        if( t instanceof TerminalNode )
+        {
             return getString( (TerminalNode) t );
         }
-        else if( t != null ) {
+        else if( t != null )
+        {
             throw new UnsupportedOperationException( String.format(
                     "Unable to decode %s %s",
                     t.getText(),
@@ -51,21 +54,23 @@ public abstract class AbstractCompiler
         return null;
     }
 
-    protected void enterRule( Collection<? extends ParserRuleContext> l )
+    public final void enterRule( Collection<? extends ParserRuleContext> l )
     {
-        if( l != null && !l.isEmpty() ) {
+        if( l != null && !l.isEmpty() )
+        {
             l.forEach( this::enterRule );
         }
     }
 
     protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
     {
-        if( l != null && !l.isEmpty() ) {
+        if( l != null && !l.isEmpty() )
+        {
             l.forEach( r -> enterRule( r, ptl ) );
         }
     }
 
-    protected void enterRule( ParserRuleContext ctx )
+    public final void enterRule( ParserRuleContext ctx )
     {
         enterRule( ctx, this );
     }
@@ -73,7 +78,8 @@ public abstract class AbstractCompiler
     protected void enterRule( ParserRuleContext ctx, ParseTreeListener l )
     {
         //System.out.printf( "enterRule %s %s %s\n",ctx==null?null:ctx.getClass().getSimpleName(), l.getClass().getSimpleName(), ctx == null ? null : ctx.getText() );
-        if( ctx != null ) {
+        if( ctx != null )
+        {
             ctx.enterRule( l );
         }
     }

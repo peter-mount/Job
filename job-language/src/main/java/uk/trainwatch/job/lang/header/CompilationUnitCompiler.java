@@ -13,6 +13,7 @@ import uk.trainwatch.job.lang.block.BlockCompiler;
 import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.JobParser.*;
 import uk.trainwatch.job.lang.Statement;
+import uk.trainwatch.job.lang.block.BlockCompiler.BlockScope;
 
 /**
  *
@@ -41,19 +42,9 @@ public class CompilationUnitCompiler
     {
         enterRule( ctx.jobDefinition() );
 
-        // Append false as we don't allow sub blocks within declare or output
-        blockCompiler.setAppendMode( false );
-
-        enterRule( ctx.declare(), blockCompiler.reset() );
-        declareBlock = blockCompiler.getBlock();
-
-        enterRule( ctx.output(), blockCompiler.reset() );
-        outputBlock = blockCompiler.getBlock();
-
-        // For the main block append true to allow sub blocks
-        blockCompiler.setAppendMode( true );
-        enterRule( ctx.block(), blockCompiler.reset() );
-        block = blockCompiler.getBlock();
+        declareBlock = blockCompiler.getBlock( ctx.declare(), true );
+        outputBlock = blockCompiler.getBlock( ctx.output(), true );
+        block = blockCompiler.getBlock( ctx.block(), false );
 
         List<TerminalNode> strings = jobDefinitionContext.StringLiteral();
         final String id = getString( strings.get( 0 ) );

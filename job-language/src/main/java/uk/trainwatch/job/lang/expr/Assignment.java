@@ -9,12 +9,13 @@ package uk.trainwatch.job.lang.expr;
  *
  * @author peter
  */
-class Assignment
+public class Assignment
 {
 
     public static ExpressionOperation setVariable( String name, ExpressionOperation assignment )
     {
-        return scope -> {
+        return scope ->
+        {
             Object val = assignment.invoke( scope );
             scope.setVar( name, val );
             return val;

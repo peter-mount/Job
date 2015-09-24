@@ -1,0 +1,39 @@
+/*
+ * control1     Test if()
+ */
+job "control1";
+run as "test";
+{
+    // Test boolean
+    if( true )
+        log "Bool 1 true";
+
+    if( false )
+        log "Bool 2 false";
+
+    if( true )
+        log "Bool 3 true";
+    else
+        log "Bool 3 false";
+
+
+    if( false )
+        log "Bool 4 true";
+    else
+        log "Bool 4 false";
+
+    // Test equality
+    a = 1;
+    b = 2;
+    if( a == b )
+        log "== 1 true";
+    else
+        log "== 1 false";
+
+    a = b;
+    if( a == b )
+        log "== 2 true";
+    else
+        log "== 2 false";
+
+}

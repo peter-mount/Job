@@ -5,15 +5,15 @@
  */
 package uk.trainwatch.job.lang.block;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.logging.Level;
+import org.antlr.v4.runtime.ParserRuleContext;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
+import uk.trainwatch.job.lang.expr.Assignment;
 import uk.trainwatch.job.lang.expr.ExpressionCompiler;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
@@ -27,77 +27,120 @@ public class BlockCompiler
 
     private final ExpressionCompiler expressionCompiler = new ExpressionCompiler();
 
-    private final Deque<List<Statement>> stack = new ArrayDeque<>();
+    // The current block's statements
     private List<Statement> statements = null;
+    // The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
     private Statement block;
-    private boolean appendMode;
     private String name;
 
-    public BlockCompiler setAppendMode( boolean appendMode )
-    {
-        this.appendMode = appendMode;
-        return this;
-    }
-
-    public BlockCompiler reset()
-    {
-        statements = null;
-        stack.clear();
-        return this;
-    }
-
+    /**
+     * The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
+     *
+     * @return
+     */
     public Statement getBlock()
     {
         return block;
     }
 
-    @Override
-    public void enterBlock( JobParser.BlockContext ctx )
+    public BlockScope begin()
     {
-        final boolean lastAppendMode = appendMode;
-        try {
-            appendMode = true;
+        return begin( true );
+    }
 
-            // Push on the stack
-            final boolean push = statements != null;
-            if( push ) {
-                stack.addLast( statements );
-            }
+    public BlockScope begin( boolean declare )
+    {
+        BlockScope scope = new BlockScope( declare );
+        return scope;
+    }
 
-            statements = new ArrayList<>();
+    public Statement getBlock( ParserRuleContext ctx )
+    {
+        return getBlock( ctx, false );
+    }
 
-            enterRule( ctx.blockStatements() );
-
-            // Empty then do nothing. This is better than an empty block
-            // as we'll not even create a sub Scope etc when invoked
-            boolean nop = statements.isEmpty();
-            if( nop ) {
-                block = Operation.nop();
+    public Statement getBlock( ParserRuleContext ctx, boolean declare )
+    {
+        try( BlockScope scope = begin( declare ) )
+        {
+            if( ctx instanceof JobParser.BlockContext )
+            {
+                enterRule( ((JobParser.BlockContext) ctx).blockStatements() );
             }
-            else if( appendMode ) {
-                block = Block.block( statements );
+            else
+            {
+                enterRule( ctx );
             }
-            else {
-                block = Block.declare( statements );
+            Statement statement = scope.getStatement();
+            if( !declare )
+            {
+                statements.add( statement );
             }
-
-            if( push ) {
-                statements = stack.removeLast();
-
-                if( appendMode && !nop ) {
-                    statements.add( block );
-                }
-            }
-            else {
-                statements = null;
-            }
-        }
-        finally {
-            appendMode = lastAppendMode;
+            return statement;
         }
     }
 
-//<editor-fold defaultstate="collapsed" desc="General Statement processing">
+    /**
+     * A parsing scope
+     */
+    public class BlockScope
+            implements AutoCloseable
+    {
+
+        private final List<Statement> oldStatements;
+        private final boolean declare;
+
+        private BlockScope( boolean declare )
+        {
+            this.declare = declare;
+            oldStatements = statements;
+            statements = new ArrayList<>();
+        }
+
+        public boolean isDeclare()
+        {
+            return declare;
+        }
+
+        @Override
+        public void close()
+        {
+            statements = oldStatements;
+        }
+
+        public Statement getStatement()
+        {
+            // Empty then do nothing. This is better than an empty block
+            // as we'll not even create a sub Scope etc when invoked
+            boolean nop = statements.isEmpty();
+            if( nop )
+            {
+                block = Operation.nop();
+            }
+            else if( declare )
+            {
+                block = Block.declare( statements );
+            }
+            else
+            {
+                block = Block.block( statements );
+            }
+            return block;
+        }
+    }
+
+    @Override
+    public void enterBlock( JobParser.BlockContext ctx )
+    {
+        try( BlockScope st = new BlockScope( false ) )
+        {
+            enterRule( ctx.blockStatements() );
+            block = st.getStatement();
+            statements.add( block );
+        }
+    }
+
+    //<editor-fold defaultstate="collapsed" desc="General Statement processing">
     @Override
     public void enterBlockStatements( JobParser.BlockStatementsContext ctx )
     {
@@ -115,6 +158,31 @@ public class BlockCompiler
     public void enterStatement( JobParser.StatementContext ctx )
     {
         enterRule( ctx.statementWithoutTrailingSubstatement() );
+        enterRule( ctx.ifThenStatement() );
+        enterRule( ctx.ifThenElseStatement() );
+    }
+
+    @Override
+    public void enterIfThenStatement( JobParser.IfThenStatementContext ctx )
+    {
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation exp = expressionCompiler.getExpression();
+
+        Statement trueBlock = getBlock( ctx.statement(), true );
+
+        statements.add( Control.ifThen( exp, trueBlock ) );
+    }
+
+    @Override
+    public void enterIfThenElseStatement( JobParser.IfThenElseStatementContext ctx )
+    {
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation exp = expressionCompiler.getExpression();
+
+        Statement trueBlock = getBlock( ctx.statement( 0 ) );
+        Statement falseBlock = getBlock( ctx.statement( 1 ) );
+
+        statements.add( Control.ifThenElse( exp, trueBlock, falseBlock ) );
     }
 
     @Override
@@ -133,6 +201,9 @@ public class BlockCompiler
     @Override
     public void enterStatementExpression( JobParser.StatementExpressionContext ctx )
     {
+        // Although assignment is a form of statement it's handled entirely by ExpressionCompiler
+        enterRule( ctx.assignment(), expressionCompiler.reset() );
+
         enterRule( ctx.logStatement() );
     }
     //</editor-fold>
@@ -159,9 +230,11 @@ public class BlockCompiler
     public void enterVariableDeclarator( JobParser.VariableDeclaratorContext ctx )
     {
         enterRule( ctx.variableDeclaratorId() );
+        String varName = name;
+
         enterRule( ctx.variableInitializer() );
         ExpressionOperation expr = expressionCompiler.getExpression();
-        statements.add( scope -> scope.setVar( name, expr.invoke( scope ) ) );
+        statements.add( s -> Assignment.setVariable( varName, expr ).invoke( s ) );
     }
 
     @Override
@@ -181,7 +254,8 @@ public class BlockCompiler
     {
         Level level;
         String l = ctx.getChild( 0 ).getText();
-        switch( l ) {
+        switch( l )
+        {
             case "log":
                 level = Level.INFO;
                 break;
