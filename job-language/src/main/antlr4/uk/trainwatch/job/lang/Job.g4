@@ -38,7 +38,7 @@ declare
     ;
 
 declareStatements
-    :   declareStatement ';'
+    :   declareStatement
     ;
 
 declareStatement

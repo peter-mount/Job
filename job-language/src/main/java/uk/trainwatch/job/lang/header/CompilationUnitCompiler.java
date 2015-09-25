@@ -13,7 +13,6 @@ import uk.trainwatch.job.lang.block.BlockCompiler;
 import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.JobParser.*;
 import uk.trainwatch.job.lang.Statement;
-import uk.trainwatch.job.lang.block.BlockCompiler.BlockScope;
 
 /**
  *
@@ -42,8 +41,15 @@ public class CompilationUnitCompiler
     {
         enterRule( ctx.jobDefinition() );
 
-        declareBlock = blockCompiler.getBlock( ctx.declare(), true );
-        outputBlock = blockCompiler.getBlock( ctx.output(), true );
+        // Optional declare { }
+        enterRule( ctx.declare(), blockCompiler );
+        declareBlock=blockCompiler.getBlock();
+        
+        // Optional output { }
+        enterRule( ctx.output(), blockCompiler );
+        outputBlock=blockCompiler.getBlock();
+
+        // The main body
         block = blockCompiler.getBlock( ctx.block(), false );
 
         List<TerminalNode> strings = jobDefinitionContext.StringLiteral();
@@ -57,24 +63,6 @@ public class CompilationUnitCompiler
     public void enterJobDefinition( JobDefinitionContext ctx )
     {
         jobDefinitionContext = ctx;
-    }
-
-    @Override
-    public void enterDeclare( DeclareContext ctx )
-    {
-        enterRule( ctx.declareStatements() );
-    }
-
-    @Override
-    public void enterDeclareStatements( DeclareStatementsContext ctx )
-    {
-        enterRule( ctx.declareStatement() );
-    }
-
-    @Override
-    public void enterDeclareStatement( DeclareStatementContext ctx )
-    {
-        enterRule( ctx.localVariableDeclarationStatement(), blockCompiler );
     }
 
     @Override

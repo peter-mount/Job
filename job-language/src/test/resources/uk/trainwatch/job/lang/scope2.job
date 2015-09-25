@@ -1,0 +1,34 @@
+/*
+ * scope2   Test global scope
+ *
+ * Similar to scope1 but a is defined as a global variable
+ *
+ */
+job "scope2";
+run as "test";
+declare {
+    a = 1;
+}
+{
+    // Test that a variable in the outer scope retains its value
+    log "before a is 1 = "+a;
+
+    // b should be null as declared inside block
+    log "before b is null = "+b;
+
+    {
+        log "block before a is 1 = "+a;
+        a = 2;
+        log "block after a is 2 = "+a;
+
+        log "block before b is null = "+b;
+        b = 42;
+        log "block after b is 42 = "+b;
+    }
+
+    // Although changed inside block a should be changed
+    log "after a is 2 = "+a;
+
+    // b should be null as declared inside block
+    log "after b is null = "+b;
+}

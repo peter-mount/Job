@@ -1,0 +1,10 @@
+scope2FINE   Starting scope2
+scope2INFO   before a is 1 = 1
+scope2INFO   before b is null = null
+scope2INFO   block before a is 1 = 1
+scope2INFO   block after a is 2 = 2
+scope2INFO   block before b is null = null
+scope2INFO   block after b is 42 = 42
+scope2INFO   after a is 2 = 2
+scope2INFO   after b is null = null
+scope2FINE   Completed scope2
