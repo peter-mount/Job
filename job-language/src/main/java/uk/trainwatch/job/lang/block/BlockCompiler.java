@@ -136,8 +136,8 @@ public class BlockCompiler
         {
             enterRule( ctx.blockStatements() );
             block = st.getStatement();
-            statements.add( block );
         }
+        statements.add( block );
     }
 
     //<editor-fold defaultstate="collapsed" desc="General Statement processing">
