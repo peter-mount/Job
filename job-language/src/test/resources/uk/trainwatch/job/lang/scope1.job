@@ -1,5 +1,13 @@
 /*
  * scope1   Test variable scoping
+ *
+ * Here we have in the main scope a=1 and as b is undefined its null.
+ *
+ * Then in the inner block we set a to 2 and b to 42.
+ *
+ * At the end, a should be 2 but b is null as it was set in the child,
+ * so the outer scope has no knowledge of it.
+ *
  */
 job "scope1";
 run as "test";

@@ -30,9 +30,9 @@ abstract class AbstractScope
     }
 
     @Override
-    public <T> T setVar( String name, T val )
+    public <T> void setVar( String name, T val )
     {
-        return (T) vars.put( name, val );
+        vars.put( name, val );
     }
 
     static class GlobalScope
@@ -92,10 +92,26 @@ abstract class AbstractScope
             return globalScope.getLogger();
         }
 
+        protected abstract boolean put( String name, Object val );
+
         @Override
-        public <T> T setVar( String name, T val )
+        public <T> void setVar( String name, T val )
         {
-            return globalScope.exists( name ) ? globalScope.setVar( name, val ) : (T) vars.put( name, val );
+            if( vars.containsKey( name ) )
+            {
+                // If we have it then stop here
+                vars.put( name, val );
+            }
+            else if( globalScope.exists( name ) )
+            {
+                // If global then straight to that scope
+                globalScope.setVar( name, val );
+            }
+            else if( !put( name, val ) )
+            {
+                // Recurse down the scopes but if none claim it then put it into ours
+                vars.put( name, val );
+            }
         }
 
         @Override
@@ -127,11 +143,23 @@ abstract class AbstractScope
         {
             T v = (T) vars.get( name );
 
-            if( v == null ) {
+            if( v == null )
+            {
                 v = globalScope.getVar( name );
             }
 
             return v;
+        }
+
+        @Override
+        protected boolean put( String name, Object val )
+        {
+            if( vars.containsKey( name ) )
+            {
+                vars.put( name, val );
+                return true;
+            }
+            return false;
         }
 
     }
@@ -140,9 +168,9 @@ abstract class AbstractScope
             extends AbstractChildScope
     {
 
-        private Scope parentScope;
+        private AbstractChildScope parentScope;
 
-        protected SubScope( GlobalScope globalScope, Scope parentScope )
+        protected SubScope( GlobalScope globalScope, AbstractChildScope parentScope )
         {
             super( globalScope );
             this.parentScope = parentScope;
@@ -153,15 +181,28 @@ abstract class AbstractScope
         {
             T v = (T) vars.get( name );
 
-            if( v == null ) {
+            if( v == null )
+            {
                 v = globalScope.getVar( name );
 
-                if( v == null ) {
+                if( v == null )
+                {
                     v = parentScope.getVar( name );
                 }
             }
 
             return v;
+        }
+
+        @Override
+        protected boolean put( String name, Object val )
+        {
+            if( vars.containsKey( name ) )
+            {
+                vars.put( name, val );
+                return true;
+            }
+            return parentScope.put( name, val );
         }
 
     }

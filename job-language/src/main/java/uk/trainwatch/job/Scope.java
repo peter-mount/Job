@@ -60,7 +60,7 @@ public interface Scope
      * <p>
      * @return original value or null if not present
      */
-    <T> T setVar( String name, T val );
+    <T> void setVar( String name, T val );
 
     /**
      * begin a new variable scope
