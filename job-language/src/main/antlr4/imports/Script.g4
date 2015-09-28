@@ -114,7 +114,6 @@ forStatement
     |    enhancedForStatement
     ;
 
-
 basicForStatement
     :    'for' '(' forInit? ';' expression? ';' forUpdate? ')' statement
     ;

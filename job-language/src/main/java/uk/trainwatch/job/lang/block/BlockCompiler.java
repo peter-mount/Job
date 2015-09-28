@@ -274,9 +274,16 @@ public class BlockCompiler
     @Override
     public void enterEnhancedForStatement( JobParser.EnhancedForStatementContext ctx )
     {
+        enterRule( ctx.variableDeclaratorId() );
+        String varName = name;
+
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+
+        Statement statement = getBlock( ctx.statement(), true );
+        statements.add( Control.enhancedFor( varName, expr, statement ) );
     }
     //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Local Variable declaration">
     @Override
     public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )

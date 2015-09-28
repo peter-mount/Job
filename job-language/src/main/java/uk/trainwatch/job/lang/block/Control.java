@@ -5,7 +5,9 @@
  */
 package uk.trainwatch.job.lang.block;
 
+import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
@@ -70,6 +72,48 @@ public class Control
                     statement.invokeStatement( s );
                     update.invokeStatement( s );
                 }
+            }
+        };
+    }
+
+    public static Statement enhancedFor( String name, ExpressionOperation exp, Statement statement )
+    {
+        return scope ->
+        {
+            try( Scope s = scope.begin() )
+            {
+                Object col = exp.invoke( s );
+                if( col instanceof Collection )
+                {
+                    for( Object val : (Collection) col )
+                    {
+                        s.setVar( name, val );
+                        statement.invokeStatement( s );
+                    }
+                }
+                else if( col instanceof Stream )
+                {
+                    ((Stream<Object>) col).forEach( val ->
+                    {
+                        try
+                        {
+                            s.setVar( name, val );
+                            statement.invokeStatement( s );
+                        } catch( Exception ex )
+                        {
+                            throw new RuntimeException( ex );
+                        }
+                    } );
+                }
+                // TODO add range operator here
+                else
+                {
+                    throw new UnsupportedOperationException( "Don't know how to iterate " + col );
+                }
+            } catch( RuntimeException ex )
+            {
+                Throwable cause = ex.getCause();
+                throw cause == null ? ex : (Exception) cause;
             }
         };
     }
