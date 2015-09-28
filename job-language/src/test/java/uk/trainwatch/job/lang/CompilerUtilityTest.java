@@ -50,7 +50,7 @@ public class CompilerUtilityTest
         ctx.addChild( new NullParseTree() );
         ctx.addChild( new TextNode( "\"Test\"" ) );
         ctx.addChild( new NullParseTree() );
-        
+
         runAs = instance.getString( ctx, 5, null );
         assertNotNull( runAs );
         assertEquals( "Test", runAs );

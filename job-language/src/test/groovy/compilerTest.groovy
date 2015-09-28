@@ -29,7 +29,7 @@ new File( "$destDir/CompilerTest.java" ).withWriter { out ->
             file -> name = file.name;
             name=name.replace(".job","");
             out.println "";
-            out.println "\t@Test";
+            out.println "\t@Test( timeout = 10000L )";
             out.println "\tpublic void " + name + "()";
             out.println "\t\tthrows Exception";
             out.println "\t{";
