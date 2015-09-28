@@ -168,7 +168,7 @@ abstract class AbstractScope
             extends AbstractChildScope
     {
 
-        private AbstractChildScope parentScope;
+        private final AbstractChildScope parentScope;
 
         protected SubScope( GlobalScope globalScope, AbstractChildScope parentScope )
         {

@@ -5,9 +5,9 @@
  */
 package uk.trainwatch.job.lang.expr;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
+import uk.trainwatch.job.Scope;
 
 /**
  *
@@ -43,11 +43,11 @@ public class Logic
      * <p>
      * @param expr
      * @param trueExpr
-     * @param falseExpr
-     *                  <p>
+     * @param falseExpr <p>
      * @return
      */
-    public static ExpressionOperation conditional( ExpressionOperation expr, ExpressionOperation trueExpr, ExpressionOperation falseExpr )
+    public static ExpressionOperation conditional( ExpressionOperation expr, ExpressionOperation trueExpr,
+                                                   ExpressionOperation falseExpr )
     {
         return scope -> isTrue( expr.invoke( scope ) ) ? trueExpr.invoke( scope ) : falseExpr.invoke( scope );
     }
@@ -56,8 +56,7 @@ public class Logic
      * lhs || rhs
      * <p>
      * @param lhs
-     * @param rhs
-     *            <p>
+     * @param rhs <p>
      * @return
      */
     public static ExpressionOperation conditionalOr( ExpressionOperation lhs, ExpressionOperation rhs )
@@ -69,8 +68,7 @@ public class Logic
      * lhs && rhs
      * <p>
      * @param lhs
-     * @param rhs
-     *            <p>
+     * @param rhs <p>
      * @return
      */
     public static ExpressionOperation conditionalAnd( ExpressionOperation lhs, ExpressionOperation rhs )
@@ -82,8 +80,7 @@ public class Logic
      * Inclusive OR lhs | rhs
      * <p>
      * @param lhs
-     * @param rhs
-     *            <p>
+     * @param rhs <p>
      * @return
      */
     public static ExpressionOperation inclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
@@ -95,8 +92,7 @@ public class Logic
      * Exclusive or lhs ^ rhs
      * <p>
      * @param lhs
-     * @param rhs
-     *            <p>
+     * @param rhs <p>
      * @return
      */
     public static ExpressionOperation exclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
@@ -119,24 +115,32 @@ public class Logic
         return scope -> lhs.invoke( scope ) != rhs.invoke( scope );
     }
 
+    private static int compare( Scope scope, ExpressionOperation lhs, ExpressionOperation rhs )
+            throws Exception
+    {
+        Object l = lhs.invoke( scope );
+        Object r = rhs.invoke( scope );
+        return l == r ? 0 : l == null ? -1 : r == null ? 1 : Objects.compare( l, r, natural );
+    }
+
     public static ExpressionOperation lessThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> natural.compare( lhs.invoke( scope ), rhs.invoke( scope ) ) < 0;
+        return scope -> compare( scope, lhs, rhs ) < 0;
     }
 
     public static ExpressionOperation lessThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> natural.compare( lhs.invoke( scope ), rhs.invoke( scope ) ) <= 0;
+        return scope -> compare( scope, lhs, rhs ) <= 0;
     }
 
     public static ExpressionOperation greaterThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> natural.compare( lhs.invoke( scope ), rhs.invoke( scope ) ) >= 0;
+        return scope -> compare( scope, lhs, rhs ) >= 0;
     }
 
     public static ExpressionOperation greaterThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> natural.compare( lhs.invoke( scope ), rhs.invoke( scope ) ) > 0;
+        return scope -> compare( scope, lhs, rhs ) > 0;
     }
 
     public static ExpressionOperation shiftLeft( ExpressionOperation lhs, ExpressionOperation rhs )

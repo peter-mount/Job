@@ -1,0 +1,15 @@
+for1  FINE   Starting for1
+for1  INFO   Count 0..10
+for1  INFO   Before a=null
+for1  INFO   a=0
+for1  INFO   a=1
+for1  INFO   a=2
+for1  INFO   a=3
+for1  INFO   a=4
+for1  INFO   a=5
+for1  INFO   a=6
+for1  INFO   a=7
+for1  INFO   a=8
+for1  INFO   a=9
+for1  INFO   After a=null
+for1  FINE   Completed for1

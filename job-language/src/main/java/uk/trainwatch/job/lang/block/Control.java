@@ -6,6 +6,7 @@
 package uk.trainwatch.job.lang.block;
 
 import java.util.Objects;
+import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 import uk.trainwatch.job.lang.expr.Logic;
@@ -21,8 +22,8 @@ public class Control
     {
         return s ->
         {
-            Objects.requireNonNull( exp, "No if exp");
-            Objects.requireNonNull( trueBlock, "No if trueBlock");
+            Objects.requireNonNull( exp, "No if exp" );
+            Objects.requireNonNull( trueBlock, "No if trueBlock" );
             if( Logic.isTrue( exp.invoke( s ) ) )
             {
                 trueBlock.invokeStatement( s );
@@ -34,9 +35,9 @@ public class Control
     {
         return s ->
         {
-            Objects.requireNonNull( exp, "No if exp");
-            Objects.requireNonNull( trueBlock, "No if trueBlock");
-            Objects.requireNonNull( falseBlock, "No if falseBlock");
+            Objects.requireNonNull( exp, "No if exp" );
+            Objects.requireNonNull( trueBlock, "No if trueBlock" );
+            Objects.requireNonNull( falseBlock, "No if falseBlock" );
             if( Logic.isTrue( exp.invoke( s ) ) )
             {
                 trueBlock.invokeStatement( s );
@@ -44,6 +45,31 @@ public class Control
             else
             {
                 falseBlock.invokeStatement( s );
+            }
+        };
+    }
+
+    /**
+     * Basic for statement: {@code for( init; expression; update ) statement }
+     *
+     * @param init
+     * @param exp
+     * @param update
+     * @param statement
+     * @return
+     */
+    public static Statement basicFor( Statement init, ExpressionOperation exp, Statement update, Statement statement )
+    {
+        return scope ->
+        {
+            try( Scope s = scope.begin() )
+            {
+                init.invokeStatement( s );
+                while( Logic.isTrue( exp.invoke( s ) ) )
+                {
+                    statement.invokeStatement( s );
+                    update.invokeStatement( s );
+                }
             }
         };
     }

@@ -1,0 +1,13 @@
+/*
+ * for1     Test basic for statement
+ */
+job "for1";
+run as "test";
+{
+    log "Count 0..10";
+//a=0;
+    log "Before a="+a;
+    for( a=0; a<10; a=a+1 )
+        log "a="+a;
+    log "After a="+a;
+}

@@ -148,16 +148,16 @@ public class ExpressionCompiler
             switch( ctx.getChild( 1 ).getText() )
             {
                 case "<":
-                    biop( ctx.relationalExpression(), ctx.relationalExpression(), Logic::lessThan );
+                    biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::lessThan );
                     break;
                 case ">":
-                    biop( ctx.relationalExpression(), ctx.relationalExpression(), Logic::greaterThan );
+                    biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::greaterThan );
                     break;
                 case "<=":
-                    biop( ctx.relationalExpression(), ctx.relationalExpression(), Logic::lessThanEqual );
+                    biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::lessThanEqual );
                     break;
                 case ">=":
-                    biop( ctx.relationalExpression(), ctx.relationalExpression(), Logic::greaterThanEqual );
+                    biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::greaterThanEqual );
                     break;
             }
         }
@@ -293,12 +293,20 @@ public class ExpressionCompiler
     @Override
     public void enterPostfixExpression( JobParser.PostfixExpressionContext ctx )
     {
-        enterRule( ctx.primary() );
-        enterRule( ctx.expressionName() );
+        if( ctx.expressionName() != null )
+        {
+            enterRule( ctx.expressionName() );
+            final String varName = name;
+            expression = scope -> scope.getVar( varName );
+        }
+        else
+        {
+            enterRule( ctx.primary() );
 
-        // Postfix not supported
-        enterRule( ctx.postDecrementExpression_lf_postfixExpression() );
-        enterRule( ctx.postIncrementExpression_lf_postfixExpression() );
+            // Postfix not supported
+            enterRule( ctx.postDecrementExpression_lf_postfixExpression() );
+            enterRule( ctx.postIncrementExpression_lf_postfixExpression() );
+        }
     }
 
     @Override
@@ -373,20 +381,17 @@ public class ExpressionCompiler
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
-        String varName;
         if( ctx.ambiguousName() == null )
         {
-            varName = ctx.Identifier().getText();
+            name = ctx.Identifier().getText();
         }
         else
         {
             ambiguousName = new StringJoiner( "." );
             enterRule( ctx.ambiguousName() );
             ambiguousName.add( ctx.Identifier().getText() );
-            varName = ambiguousName.toString();
+            name = ambiguousName.toString();
         }
-
-        expression = scope -> scope.getVar( varName );
     }
 
     @Override

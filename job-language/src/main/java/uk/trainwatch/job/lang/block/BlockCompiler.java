@@ -32,9 +32,8 @@ public class BlockCompiler
     // The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
     private Statement block;
     private String name;
-    
+
     //<editor-fold defaultstate="collapsed" desc="Blocks">
-    
     /**
      * The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
      *
@@ -44,23 +43,22 @@ public class BlockCompiler
     {
         return block;
     }
-    
+
     public BlockScope begin()
     {
-        return begin( true );
+        return new BlockScope();
     }
-    
+
     public BlockScope begin( boolean declare )
     {
-        BlockScope scope = new BlockScope( declare );
-        return scope;
+        return new BlockScope( declare );
     }
-    
+
     public Statement getBlock( ParserRuleContext ctx )
     {
         return getBlock( ctx, false );
     }
-    
+
     public Statement getBlock( ParserRuleContext ctx, boolean declare )
     {
         try( BlockScope scope = begin( declare ) )
@@ -76,35 +74,40 @@ public class BlockCompiler
             return scope.getStatement();
         }
     }
-    
+
     /**
      * A parsing scope
      */
     public class BlockScope
-    implements AutoCloseable
+            implements AutoCloseable
     {
-        
+
         private final List<Statement> oldStatements;
         private final boolean declare;
-        
+
+        public BlockScope()
+        {
+            this( false );
+        }
+
         private BlockScope( boolean declare )
         {
             this.declare = declare;
             oldStatements = statements;
             statements = new ArrayList<>();
         }
-        
+
         public boolean isDeclare()
         {
             return declare;
         }
-        
+
         @Override
         public void close()
         {
             statements = oldStatements;
         }
-        
+
         public Statement getStatement()
         {
             // Empty then do nothing. This is better than an empty block
@@ -125,11 +128,11 @@ public class BlockCompiler
             return block;
         }
     }
-    
+
     @Override
     public void enterBlock( JobParser.BlockContext ctx )
     {
-        try( BlockScope st = new BlockScope( false ) )
+        try( BlockScope st = new BlockScope() )
         {
             enterRule( ctx.blockStatements() );
             block = st.getStatement();
@@ -158,6 +161,7 @@ public class BlockCompiler
         enterRule( ctx.statementWithoutTrailingSubstatement() );
         enterRule( ctx.ifThenStatement() );
         enterRule( ctx.ifThenElseStatement() );
+        enterRule( ctx.forStatement() );
     }
 
     @Override
@@ -177,12 +181,29 @@ public class BlockCompiler
     public void enterStatementExpression( JobParser.StatementExpressionContext ctx )
     {
         // Although assignment is a form of statement it's handled entirely by ExpressionCompiler
-        enterRule( ctx.assignment(), expressionCompiler.reset() );
+        //enterRule( ctx.assignment(), expressionCompiler.reset() );
+        enterRule( ctx.assignment() );
 
         enterRule( ctx.logStatement() );
     }
-    //</editor-fold>
 
+    @Override
+    public void enterAssignment( JobParser.AssignmentContext ctx )
+    {
+        // Assignment is actually handled by expressionCompiler
+        // so create an Expression & wrap it into a Statement
+        expressionCompiler.reset().enterAssignment( ctx );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+        statements.add( scope -> expr.invoke( scope ) );
+    }
+
+    @Override
+    public void enterStatementExpressionList( JobParser.StatementExpressionListContext ctx )
+    {
+        enterRule( ctx.statementExpression() );
+    }
+
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Control Statements">
     @Override
     public void enterIfThenStatement( JobParser.IfThenStatementContext ctx )
@@ -206,6 +227,54 @@ public class BlockCompiler
 
         statements.add( Control.ifThenElse( exp, trueBlock, falseBlock ) );
     }
+
+    @Override
+    public void enterForStatement( JobParser.ForStatementContext ctx )
+    {
+        enterRule( ctx.basicForStatement() );
+        enterRule( ctx.enhancedForStatement() );
+    }
+
+    @Override
+    public void enterBasicForStatement( JobParser.BasicForStatementContext ctx )
+    {
+        // true here as we want these blocks to access the same scope & not run their own ones.
+        // This scope will then be bound to the entire for() expression.
+        Statement init = getBlock( ctx.forInit(), true );
+
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation exp = expressionCompiler.getExpression();
+
+        Statement update = getBlock( ctx.forUpdate(), true );
+
+        Statement statement = getBlock( ctx.statement(), true );
+
+        statements.add( Control.basicFor( init, exp, update, statement ) );
+    }
+
+    @Override
+    public void enterForInit( JobParser.ForInitContext ctx )
+    {
+        if( ctx.localVariableDeclaration() == null )
+        {
+            enterRule( ctx.statementExpressionList() );
+        }
+        else
+        {
+            enterRule( ctx.localVariableDeclaration() );
+        }
+    }
+
+    @Override
+    public void enterForUpdate( JobParser.ForUpdateContext ctx )
+    {
+        enterRule( ctx.statementExpressionList() );
+    }
+
+    @Override
+    public void enterEnhancedForStatement( JobParser.EnhancedForStatementContext ctx )
+    {
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Local Variable declaration">
@@ -214,36 +283,36 @@ public class BlockCompiler
     {
         enterRule( ctx.localVariableDeclaration() );
     }
-    
+
     @Override
     public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
     {
         enterRule( ctx.variableDeclaratorList() );
     }
-    
+
     @Override
     public void enterVariableDeclaratorList( JobParser.VariableDeclaratorListContext ctx )
     {
         enterRule( ctx.variableDeclarator() );
     }
-    
+
     @Override
     public void enterVariableDeclarator( JobParser.VariableDeclaratorContext ctx )
     {
         enterRule( ctx.variableDeclaratorId() );
         String varName = name;
-        
+
         enterRule( ctx.variableInitializer() );
         ExpressionOperation expr = expressionCompiler.getExpression();
         statements.add( s -> Assignment.setVariable( varName, expr ).invoke( s ) );
     }
-    
+
     @Override
     public void enterVariableDeclaratorId( JobParser.VariableDeclaratorIdContext ctx )
     {
         name = ctx.Identifier().getText();
     }
-    
+
     @Override
     public void enterVariableInitializer( JobParser.VariableInitializerContext ctx )
     {
@@ -261,20 +330,20 @@ public class BlockCompiler
             block = st.getStatement();
         }
     }
-    
+
     @Override
     public void enterDeclareStatements( JobParser.DeclareStatementsContext ctx )
     {
         enterRule( ctx.declareStatement() );
     }
-    
+
     @Override
     public void enterDeclareStatement( JobParser.DeclareStatementContext ctx )
     {
         enterRule( ctx.localVariableDeclarationStatement() );
     }
 //</editor-fold>
-    
+
     @Override
     public void enterLogStatement( JobParser.LogStatementContext ctx )
     {
