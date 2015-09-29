@@ -83,9 +83,9 @@ public class Control
             try( Scope s = scope.begin() )
             {
                 Object col = exp.invoke( s );
-                if( col instanceof Collection )
+                if( col instanceof Iterable )
                 {
-                    for( Object val : (Collection) col )
+                    for( Object val : (Iterable) col )
                     {
                         s.setVar( name, val );
                         statement.invokeStatement( s );
