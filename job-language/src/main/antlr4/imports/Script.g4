@@ -56,7 +56,7 @@ statement
     :    statementWithoutTrailingSubstatement
     |    ifThenStatement
     |    ifThenElseStatement
-//  |    whileStatement
+    |    whileStatement
     |    forStatement
     ;
 

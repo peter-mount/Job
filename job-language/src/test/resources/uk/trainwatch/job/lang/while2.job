@@ -1,0 +1,15 @@
+/*
+ * while2   Test do {s} while(c);
+ */
+job "while2";
+run as "test";
+{
+    log "Count 0..10";
+    a=0;
+    log "Before a="+a;
+    do {
+        log "a="+a;
+        a=a+1;
+    } while( a<10 );
+    log "After a="+a;
+}

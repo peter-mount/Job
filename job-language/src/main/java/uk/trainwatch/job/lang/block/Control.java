@@ -51,6 +51,28 @@ public class Control
         };
     }
 
+    public static Statement whileLoop( ExpressionOperation exp, Statement statement )
+    {
+        return s ->
+        {
+            while( Logic.isTrue( exp.invoke( s ) ) )
+            {
+                statement.invokeStatement( s );
+            }
+        };
+    }
+
+    public static Statement doWhile( Statement statement, ExpressionOperation exp )
+    {
+        return s ->
+        {
+            do
+            {
+                statement.invokeStatement( s );
+            } while( Logic.isTrue( exp.invoke( s ) ) );
+        };
+    }
+
     /**
      * Basic for statement: {@code for( init; expression; update ) statement }
      *

@@ -1,0 +1,15 @@
+while2FINE   Starting while2
+while2INFO   Count 0..10
+while2INFO   Before a=0
+while2INFO   a=0
+while2INFO   a=1
+while2INFO   a=2
+while2INFO   a=3
+while2INFO   a=4
+while2INFO   a=5
+while2INFO   a=6
+while2INFO   a=7
+while2INFO   a=8
+while2INFO   a=9
+while2INFO   After a=10
+while2FINE   Completed while2

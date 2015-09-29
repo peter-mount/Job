@@ -162,6 +162,7 @@ public class BlockCompiler
         enterRule( ctx.ifThenStatement() );
         enterRule( ctx.ifThenElseStatement() );
         enterRule( ctx.forStatement() );
+        enterRule( ctx.whileStatement() );
     }
 
     @Override
@@ -169,6 +170,7 @@ public class BlockCompiler
     {
         enterRule( ctx.block() );
         enterRule( ctx.expressionStatement() );
+        enterRule( ctx.doStatement() );
     }
 
     @Override
@@ -283,6 +285,29 @@ public class BlockCompiler
         Statement statement = getBlock( ctx.statement(), true );
         statements.add( Control.enhancedFor( varName, expr, statement ) );
     }
+
+    @Override
+    public void enterWhileStatement( JobParser.WhileStatementContext ctx )
+    {
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+
+        Statement statement = getBlock( ctx.statement() );
+
+        statements.add( Control.whileLoop( expr, statement ) );
+    }
+
+    @Override
+    public void enterDoStatement( JobParser.DoStatementContext ctx )
+    {
+        Statement statement = getBlock( ctx.statement() );
+
+        enterRule( ctx.expression(), expressionCompiler.reset() );
+        ExpressionOperation expr = expressionCompiler.getExpression();
+
+        statements.add( Control.doWhile( statement, expr ) );
+    }
+
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Local Variable declaration">
     @Override
