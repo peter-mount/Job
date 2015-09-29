@@ -395,6 +395,12 @@ public class ExpressionCompiler
     }
 
     @Override
+    public void enterMethodName( JobParser.MethodNameContext ctx )
+    {
+        name = ctx.Identifier().getText();
+    }
+
+    @Override
     public void enterAmbiguousName( JobParser.AmbiguousNameContext ctx )
     {
         enterRule( ctx.ambiguousName() );

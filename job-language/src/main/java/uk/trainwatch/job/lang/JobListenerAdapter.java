@@ -818,4 +818,75 @@ public class JobListenerAdapter
     {
     }
 
+    @Override
+    public void enterPackageName( JobParser.PackageNameContext ctx )
+    {
+    }
+
+    @Override
+    public void exitPackageName( JobParser.PackageNameContext ctx )
+    {
+    }
+
+    @Override
+    public void enterTypeName( JobParser.TypeNameContext ctx )
+    {
+    }
+
+    @Override
+    public void exitTypeName( JobParser.TypeNameContext ctx )
+    {
+    }
+
+    @Override
+    public void enterPackageOrTypeName( JobParser.PackageOrTypeNameContext ctx )
+    {
+    }
+
+    @Override
+    public void exitPackageOrTypeName( JobParser.PackageOrTypeNameContext ctx )
+    {
+    }
+
+    @Override
+    public void enterMethodName( JobParser.MethodNameContext ctx )
+    {
+    }
+
+    @Override
+    public void exitMethodName( JobParser.MethodNameContext ctx )
+    {
+    }
+
+    @Override
+    public void enterMethodInvocation( JobParser.MethodInvocationContext ctx )
+    {
+    }
+
+    @Override
+    public void exitMethodInvocation( JobParser.MethodInvocationContext ctx )
+    {
+    }
+
+    @Override
+    public void enterMethodInvocation_lf_primary( JobParser.MethodInvocation_lf_primaryContext ctx )
+    {
+    }
+
+    @Override
+    public void exitMethodInvocation_lf_primary( JobParser.MethodInvocation_lf_primaryContext ctx )
+    {
+    }
+
+    
+    @Override
+    public void enterArgumentList( JobParser.ArgumentListContext ctx )
+    {
+    }
+
+    @Override
+    public void exitArgumentList( JobParser.ArgumentListContext ctx )
+    {
+    }
+
 }

@@ -88,7 +88,7 @@ statementExpression
 //  |    preDecrementExpression
 //  |    postIncrementExpression
 //  |    postDecrementExpression
-//  |    methodInvocation
+    |    methodInvocation
 //  |    classInstanceCreationExpression
     |   logStatement
     ;
@@ -134,10 +134,28 @@ statementExpressionList
 enhancedForStatement
     :    'for' '('  variableDeclaratorId ':' expression ')' statement
     ;
+packageName
+        :       Identifier
+        |       packageName '.' Identifier
+        ;
+
+typeName
+        :       Identifier
+        |       packageOrTypeName '.' Identifier
+        ;
+
+packageOrTypeName
+        :       Identifier
+        |       packageOrTypeName '.' Identifier
+        ;
 
 expressionName
     :    Identifier
     |    ambiguousName '.' Identifier
+    ;
+
+methodName
+    :    Identifier
     ;
 
 ambiguousName
@@ -308,6 +326,21 @@ primary
 stringExpression
     : ( StringLiteral | expression )
     ;
+
+methodInvocation
+        :       methodName '(' argumentList? ')'
+        |       typeName '.' Identifier '(' argumentList? ')'
+        |       expressionName '.' Identifier '(' argumentList? ')'
+        |       primary '.' Identifier '(' argumentList? ')'
+        ;
+methodInvocation_lf_primary
+        :       '.' Identifier '(' argumentList? ')'
+        ;
+
+argumentList
+        :       expression (',' expression)*
+        ;
+
 /*
  * Our logging statements
  */
