@@ -7,13 +7,16 @@ package uk.trainwatch.job.lang.expr;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
-import uk.trainwatch.job.lang.block.CollectionOp;
+import uk.trainwatch.job.lang.block.TypeOp;
 
 /**
  *
@@ -304,6 +307,54 @@ public class ExpressionCompiler
         //op( ctx.CharacterLiteral(), n -> null );
     }
 
+    private List<ExpressionOperation> args;
+
+    @Override
+    public void enterPrimary( JobParser.PrimaryContext ctx )
+    {
+        super.enterPrimary( ctx );
+
+        if( ctx.Identifier() != null && !ctx.Identifier().isEmpty() ) {
+            String type = ctx.Identifier()
+                    .stream()
+                    .map( TerminalNode::getText )
+                    .collect( Collectors.joining( "." ) );
+
+            enterRule( ctx.argumentList() );
+
+            expression = TypeOp.construct( type, TypeOp.toArray( args ) );
+        }
+
+        if( ctx.expressionName() != null ) {
+            enterRule( ctx.expressionName() );
+            String type = name;
+
+            enterRule( ctx.argumentList() );
+
+            expression = TypeOp.construct( type, TypeOp.toArray( args ) );
+        }
+
+//        if( ctx.primary()!=null) {
+//            enterRule( ctx.primary());
+//            ExpressionOperation primary = expression;
+//            args=new LinkedList<>();
+//            enterRule( ctx.argumentList());
+//            expression = TypeOp.construct( type, TypeOp.toArray( args ));
+//        }
+    }
+
+    @Override
+    public void enterArgumentList( JobParser.ArgumentListContext ctx )
+    {
+        args = new LinkedList<>();
+        if( ctx.expression() != null ) {
+            for( JobParser.ExpressionContext exp: ctx.expression() ) {
+                enterRule( exp );
+                args.add( expression );
+            }
+        }
+    }
+
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Assignment">
     @Override
@@ -311,6 +362,7 @@ public class ExpressionCompiler
     {
         enterRule( ctx.leftHandSide() );
         final String varName = name;
+        System.out.println( varName );
 
         enterRule( ctx.expression() );
 
@@ -355,46 +407,6 @@ public class ExpressionCompiler
     {
         enterRule( ctx.ambiguousName() );
         ambiguousName.add( ctx.Identifier().getText() );
-    }
-
-    //</editor-fold>
-    //<editor-fold defaultstate="collapsed" desc="Collections">
-    @Override
-    public void enterCollectionClear( JobParser.CollectionClearContext ctx )
-    {
-        expression = CollectionOp.clear( expression );
-    }
-
-    @Override
-    public void enterCollectionAppend( JobParser.CollectionAppendContext ctx )
-    {
-        ExpressionOperation assign = expression;
-
-        enterRule( ctx.expression() );
-
-        expression = CollectionOp.append( assign, expression );
-    }
-
-    @Override
-    public void enterCollectionPrepend( JobParser.CollectionPrependContext ctx )
-    {
-        ExpressionOperation assign = expression;
-
-        enterRule( ctx.expression() );
-
-        expression = CollectionOp.prepend( assign, expression );
-    }
-
-    @Override
-    public void enterCollectionNewList( JobParser.CollectionNewListContext ctx )
-    {
-        if( ctx.expression() == null ) {
-            expression = CollectionOp.newList();
-        }
-        else {
-            enterRule( ctx.expression() );
-            expression = CollectionOp.newList( expression );
-        }
     }
 
     //</editor-fold>

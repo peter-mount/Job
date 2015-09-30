@@ -71,6 +71,10 @@ public interface Scope
 
     Logger getLogger();
 
+    void addImport( String type );
+
+    String resolveType( String type );
+
     static interface GlobalScope
             extends Scope
     {

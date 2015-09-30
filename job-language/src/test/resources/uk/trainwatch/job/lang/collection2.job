@@ -7,13 +7,7 @@ run as "test";
     l = new List();
     log l;
 
-    s = new Set();
-    log s;
-
-    q = new Queue();
-    log q;
-
-    d = new Deque();
-    log d;
-
+    for( a=0; a<10; a=a+1 )
+        l.append(a);
+    log l;
 }

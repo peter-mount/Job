@@ -6,6 +6,8 @@
 package uk.trainwatch.job.lang;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -68,6 +70,16 @@ public class JobListenerAdapter
     public void exitJobDefinition( JobParser.JobDefinitionContext ctx )
     {
 
+    }
+
+    @Override
+    public void enterImportDeclaration( JobParser.ImportDeclarationContext ctx )
+    {
+    }
+
+    @Override
+    public void exitImportDeclaration( JobParser.ImportDeclarationContext ctx )
+    {
     }
 
     @Override
@@ -529,7 +541,6 @@ public class JobListenerAdapter
     public void enterAssignmentExpression( JobParser.AssignmentExpressionContext ctx )
     {
         enterRule( ctx.conditionalExpression() );
-        enterRule( ctx.collectionExpression() );
         enterRule( ctx.assignment() );
     }
 
@@ -806,9 +817,9 @@ public class JobListenerAdapter
     @Override
     public void enterPrimary( JobParser.PrimaryContext ctx )
     {
-        enterRule( ctx.literal() );
+        enterRule( ctx.argumentList() );
         enterRule( ctx.expression() );
-        enterRule( ctx.newObject() );
+        enterRule( ctx.literal() );
     }
 
     @Override
@@ -928,115 +939,6 @@ public class JobListenerAdapter
 
     @Override
     public void exitArgumentList( JobParser.ArgumentListContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionExpression( JobParser.CollectionExpressionContext ctx )
-    {
-        enterRule( ctx.collectionAppend() );
-        enterRule( ctx.collectionClear() );
-        enterRule( ctx.collectionPrepend() );
-    }
-
-    @Override
-    public void exitCollectionExpression( JobParser.CollectionExpressionContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionAppend( JobParser.CollectionAppendContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionAppend( JobParser.CollectionAppendContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionPrepend( JobParser.CollectionPrependContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionPrepend( JobParser.CollectionPrependContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionClear( JobParser.CollectionClearContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionClear( JobParser.CollectionClearContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionNewList( JobParser.CollectionNewListContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionNewList( JobParser.CollectionNewListContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionNewSet( JobParser.CollectionNewSetContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionNewSet( JobParser.CollectionNewSetContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionNewQueue( JobParser.CollectionNewQueueContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionNewQueue( JobParser.CollectionNewQueueContext ctx )
-    {
-    }
-
-    @Override
-    public void enterCollectionNewDeque( JobParser.CollectionNewDequeContext ctx )
-    {
-    }
-
-    @Override
-    public void exitCollectionNewDeque( JobParser.CollectionNewDequeContext ctx )
-    {
-    }
-
-    @Override
-    public void enterNewObject( JobParser.NewObjectContext ctx )
-    {
-        enterRule( ctx.assignment() );
-        enterRule( ctx.newObjectList() );
-    }
-
-    @Override
-    public void exitNewObject( JobParser.NewObjectContext ctx )
-    {
-    }
-
-    @Override
-    public void enterNewObjectList( JobParser.NewObjectListContext ctx )
-    {
-        enterRule( ctx.collectionNewDeque() );
-        enterRule( ctx.collectionNewList() );
-        enterRule( ctx.collectionNewQueue() );
-        enterRule( ctx.collectionNewSet() );
-    }
-
-    @Override
-    public void exitNewObjectList( JobParser.NewObjectListContext ctx )
     {
     }
 

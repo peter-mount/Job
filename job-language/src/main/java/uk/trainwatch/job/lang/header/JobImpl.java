@@ -6,6 +6,7 @@
 package uk.trainwatch.job.lang.header;
 
 import java.io.Serializable;
+import java.util.Set;
 import java.util.logging.Level;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
@@ -21,17 +22,18 @@ class JobImpl
 {
 
     private static final long serialVersionUID = 1L;
-
+    private final Set<String> imports;
     private final String id;
     private final String runAs;
     private final Statement declare;
     private final Statement output;
     private final Statement block;
 
-    public JobImpl( String id, String runAs, Statement declare, Statement output, Statement block )
+    public JobImpl( String id, String runAs, Set<String> imports, Statement declare, Statement output, Statement block )
     {
         this.id = id;
         this.runAs = runAs;
+        this.imports = imports;
         this.declare = declare;
         this.output = output;
         this.block = block;
@@ -53,6 +55,8 @@ class JobImpl
     public void invokeStatement( Scope scope )
             throws Exception
     {
+        imports.forEach( scope::addImport );
+
         scope.getLogger().log( Level.FINE, () -> "Starting " + id );
         try {
             if( declare != null ) {

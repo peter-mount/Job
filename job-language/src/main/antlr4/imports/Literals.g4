@@ -18,9 +18,9 @@ SET : 'set';
 QUEUE : 'queue';
 DEQUE : 'deque';
 
-APPEND : 'append';
-PREPEND : 'prepend';
-CLEAR : 'clear';
+APPEND : 'append(';
+PREPEND : 'prepend(';
+CLEAR : 'clear()';
 
 // §3.9 Keywords
 
