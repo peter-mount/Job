@@ -5,9 +5,10 @@
  */
 package uk.trainwatch.job.lang;
 
-import javax.annotation.Generated;
+import java.util.Collection;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -17,6 +18,33 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class JobListenerAdapter
         implements JobListener
 {
+
+    public final void enterRule( Collection<? extends ParserRuleContext> l )
+    {
+        if( l != null && !l.isEmpty() ) {
+            l.forEach( this::enterRule );
+        }
+    }
+
+    protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
+    {
+        if( l != null && !l.isEmpty() ) {
+            l.forEach( r -> enterRule( r, ptl ) );
+        }
+    }
+
+    public final void enterRule( ParserRuleContext ctx )
+    {
+        enterRule( ctx, this );
+    }
+
+    protected final void enterRule( ParserRuleContext ctx, ParseTreeListener l )
+    {
+        //System.out.printf( "enterRule %s %s %s\n",ctx==null?null:ctx.getClass().getSimpleName(), l.getClass().getSimpleName(), ctx == null ? null : ctx.getText() );
+        if( ctx != null ) {
+            ctx.enterRule( l );
+        }
+    }
 
     @Override
     public void enterCompilationUnit( JobParser.CompilationUnitContext ctx )
@@ -45,7 +73,7 @@ public class JobListenerAdapter
     @Override
     public void enterOutput( JobParser.OutputContext ctx )
     {
-
+        enterRule( ctx.outputStatements() );
     }
 
     @Override
@@ -57,7 +85,7 @@ public class JobListenerAdapter
     @Override
     public void enterOutputStatements( JobParser.OutputStatementsContext ctx )
     {
-
+        enterRule( ctx.outputStatement() );
     }
 
     @Override
@@ -117,7 +145,7 @@ public class JobListenerAdapter
     @Override
     public void enterDeclareStatements( JobParser.DeclareStatementsContext ctx )
     {
-
+        enterRule( ctx.declareStatement() );
     }
 
     @Override
@@ -129,7 +157,7 @@ public class JobListenerAdapter
     @Override
     public void enterDeclareStatement( JobParser.DeclareStatementContext ctx )
     {
-
+        enterRule( ctx.localVariableDeclarationStatement() );
     }
 
     @Override
@@ -153,7 +181,7 @@ public class JobListenerAdapter
     @Override
     public void enterVariableDeclaratorList( JobParser.VariableDeclaratorListContext ctx )
     {
-
+        enterRule( ctx.variableDeclarator() );
     }
 
     @Override
@@ -213,7 +241,7 @@ public class JobListenerAdapter
     @Override
     public void enterBlockStatements( JobParser.BlockStatementsContext ctx )
     {
-
+        enterRule( ctx.blockStatement() );
     }
 
     @Override
@@ -225,7 +253,8 @@ public class JobListenerAdapter
     @Override
     public void enterBlockStatement( JobParser.BlockStatementContext ctx )
     {
-
+        enterRule( ctx.localVariableDeclarationStatement() );
+        enterRule( ctx.statement() );
     }
 
     @Override
@@ -237,7 +266,7 @@ public class JobListenerAdapter
     @Override
     public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
     {
-
+        enterRule( ctx.localVariableDeclaration() );
     }
 
     @Override
@@ -249,7 +278,7 @@ public class JobListenerAdapter
     @Override
     public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
     {
-
+        enterRule( ctx.variableDeclaratorList() );
     }
 
     @Override
@@ -261,7 +290,11 @@ public class JobListenerAdapter
     @Override
     public void enterStatement( JobParser.StatementContext ctx )
     {
-
+        enterRule( ctx.statementWithoutTrailingSubstatement() );
+        enterRule( ctx.ifThenStatement() );
+        enterRule( ctx.ifThenElseStatement() );
+        enterRule( ctx.forStatement() );
+        enterRule( ctx.whileStatement() );
     }
 
     @Override
@@ -273,7 +306,9 @@ public class JobListenerAdapter
     @Override
     public void enterStatementWithoutTrailingSubstatement( JobParser.StatementWithoutTrailingSubstatementContext ctx )
     {
-
+        enterRule( ctx.block() );
+        enterRule( ctx.expressionStatement() );
+        enterRule( ctx.doStatement() );
     }
 
     @Override
@@ -297,7 +332,7 @@ public class JobListenerAdapter
     @Override
     public void enterExpressionStatement( JobParser.ExpressionStatementContext ctx )
     {
-
+        enterRule( ctx.statementExpression() );
     }
 
     @Override
@@ -309,7 +344,11 @@ public class JobListenerAdapter
     @Override
     public void enterStatementExpression( JobParser.StatementExpressionContext ctx )
     {
+        // Although assignment is a form of statement it's handled entirely by ExpressionCompiler
+        //enterRule( ctx.assignment(), expressionCompiler.reset() );
+        enterRule( ctx.assignment() );
 
+        enterRule( ctx.logStatement() );
     }
 
     @Override
@@ -417,7 +456,7 @@ public class JobListenerAdapter
     @Override
     public void enterStatementExpressionList( JobParser.StatementExpressionListContext ctx )
     {
-
+        enterRule( ctx.statementExpression() );
     }
 
     @Override
@@ -477,7 +516,7 @@ public class JobListenerAdapter
     @Override
     public void enterExpression( JobParser.ExpressionContext ctx )
     {
-
+        enterRule( ctx.assignmentExpression() );
     }
 
     @Override
@@ -489,7 +528,9 @@ public class JobListenerAdapter
     @Override
     public void enterAssignmentExpression( JobParser.AssignmentExpressionContext ctx )
     {
-
+        enterRule( ctx.conditionalExpression() );
+        enterRule( ctx.collectionExpression() );
+        enterRule( ctx.assignment() );
     }
 
     @Override
@@ -765,7 +806,9 @@ public class JobListenerAdapter
     @Override
     public void enterPrimary( JobParser.PrimaryContext ctx )
     {
-
+        enterRule( ctx.literal() );
+        enterRule( ctx.expression() );
+        enterRule( ctx.newObject() );
     }
 
     @Override
@@ -878,7 +921,6 @@ public class JobListenerAdapter
     {
     }
 
-    
     @Override
     public void enterArgumentList( JobParser.ArgumentListContext ctx )
     {
@@ -886,6 +928,115 @@ public class JobListenerAdapter
 
     @Override
     public void exitArgumentList( JobParser.ArgumentListContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionExpression( JobParser.CollectionExpressionContext ctx )
+    {
+        enterRule( ctx.collectionAppend() );
+        enterRule( ctx.collectionClear() );
+        enterRule( ctx.collectionPrepend() );
+    }
+
+    @Override
+    public void exitCollectionExpression( JobParser.CollectionExpressionContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionAppend( JobParser.CollectionAppendContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionAppend( JobParser.CollectionAppendContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionPrepend( JobParser.CollectionPrependContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionPrepend( JobParser.CollectionPrependContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionClear( JobParser.CollectionClearContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionClear( JobParser.CollectionClearContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionNewList( JobParser.CollectionNewListContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionNewList( JobParser.CollectionNewListContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionNewSet( JobParser.CollectionNewSetContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionNewSet( JobParser.CollectionNewSetContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionNewQueue( JobParser.CollectionNewQueueContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionNewQueue( JobParser.CollectionNewQueueContext ctx )
+    {
+    }
+
+    @Override
+    public void enterCollectionNewDeque( JobParser.CollectionNewDequeContext ctx )
+    {
+    }
+
+    @Override
+    public void exitCollectionNewDeque( JobParser.CollectionNewDequeContext ctx )
+    {
+    }
+
+    @Override
+    public void enterNewObject( JobParser.NewObjectContext ctx )
+    {
+        enterRule( ctx.assignment() );
+        enterRule( ctx.newObjectList() );
+    }
+
+    @Override
+    public void exitNewObject( JobParser.NewObjectContext ctx )
+    {
+    }
+
+    @Override
+    public void enterNewObjectList( JobParser.NewObjectListContext ctx )
+    {
+        enterRule( ctx.collectionNewDeque() );
+        enterRule( ctx.collectionNewList() );
+        enterRule( ctx.collectionNewQueue() );
+        enterRule( ctx.collectionNewSet() );
+    }
+
+    @Override
+    public void exitNewObjectList( JobParser.NewObjectListContext ctx )
     {
     }
 

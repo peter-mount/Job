@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
+import uk.trainwatch.job.lang.block.CollectionOp;
 
 /**
  *
@@ -52,20 +53,12 @@ public class ExpressionCompiler
     public void enterStringExpression( JobParser.StringExpressionContext ctx )
     {
         TerminalNode tn = ctx.StringLiteral();
-        if( tn != null )
-        {
+        if( tn != null ) {
             expression = Constants.constant( getString( tn ) );
         }
-        else
-        {
+        else {
             enterRule( ctx.expression() );
         }
-    }
-
-    @Override
-    public void enterExpression( JobParser.ExpressionContext ctx )
-    {
-        enterRule( ctx.assignmentExpression() );
     }
 
     //<editor-fold defaultstate="collapsed" desc="Logic">
@@ -73,8 +66,7 @@ public class ExpressionCompiler
     public void enterConditionalExpression( JobParser.ConditionalExpressionContext ctx )
     {
         enterRule( ctx.conditionalOrExpression() );
-        if( ctx.expression() != null && ctx.conditionalExpression() != null )
-        {
+        if( ctx.expression() != null && ctx.conditionalExpression() != null ) {
             ExpressionOperation expr = expression;
 
             enterRule( ctx.expression() );
@@ -118,14 +110,11 @@ public class ExpressionCompiler
     @Override
     public void enterEqualityExpression( JobParser.EqualityExpressionContext ctx )
     {
-        if( ctx.equalityExpression() == null )
-        {
+        if( ctx.equalityExpression() == null ) {
             enterRule( ctx.relationalExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "==":
                     biop( ctx.equalityExpression(), ctx.relationalExpression(), Logic::equality );
                     break;
@@ -139,14 +128,11 @@ public class ExpressionCompiler
     @Override
     public void enterRelationalExpression( JobParser.RelationalExpressionContext ctx )
     {
-        if( ctx.relationalExpression() == null )
-        {
+        if( ctx.relationalExpression() == null ) {
             enterRule( ctx.shiftExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "<":
                     biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::lessThan );
                     break;
@@ -166,25 +152,20 @@ public class ExpressionCompiler
     @Override
     public void enterShiftExpression( JobParser.ShiftExpressionContext ctx )
     {
-        if( ctx.shiftExpression() == null )
-        {
+        if( ctx.shiftExpression() == null ) {
             enterRule( ctx.additiveExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "<":
                     biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftLeft );
                     break;
                 case ">":
-                    if( ctx.getChildCount() == 5 )
-                    {
+                    if( ctx.getChildCount() == 5 ) {
                         // >>>
                         biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftRightClear );
                     }
-                    else
-                    {
+                    else {
                         // >>
                         biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftRight );
                     }
@@ -196,14 +177,11 @@ public class ExpressionCompiler
     @Override
     public void enterAdditiveExpression( JobParser.AdditiveExpressionContext ctx )
     {
-        if( ctx.additiveExpression() == null )
-        {
+        if( ctx.additiveExpression() == null ) {
             enterRule( ctx.multiplicativeExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "+":
                     biop( ctx.additiveExpression(), ctx.multiplicativeExpression(), Arithmetic::add );
                     break;
@@ -217,14 +195,11 @@ public class ExpressionCompiler
     @Override
     public void enterMultiplicativeExpression( JobParser.MultiplicativeExpressionContext ctx )
     {
-        if( ctx.multiplicativeExpression() == null )
-        {
+        if( ctx.multiplicativeExpression() == null ) {
             enterRule( ctx.unaryExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "*":
                     biop( ctx.multiplicativeExpression(), ctx.unaryExpression(), Arithmetic::mult );
                     break;
@@ -246,11 +221,9 @@ public class ExpressionCompiler
 
         enterRule( ctx.unaryExpressionNotPlusMinus() );
 
-        if( ctx.unaryExpression() != null )
-        {
+        if( ctx.unaryExpression() != null ) {
             enterRule( ctx.unaryExpression() );
-            if( "-".equals( ctx.getChild( 0 ).getText() ) )
-            {
+            if( "-".equals( ctx.getChild( 0 ).getText() ) ) {
                 expression = Arithmetic.negate( expression );
             }
         }
@@ -271,11 +244,9 @@ public class ExpressionCompiler
     @Override
     public void enterUnaryExpressionNotPlusMinus( JobParser.UnaryExpressionNotPlusMinusContext ctx )
     {
-        if( ctx.unaryExpression() != null )
-        {
+        if( ctx.unaryExpression() != null ) {
             enterRule( ctx.unaryExpression() );
-            switch( ctx.getChild( 0 ).getText() )
-            {
+            switch( ctx.getChild( 0 ).getText() ) {
                 case "~":
                     expression = Arithmetic.tilde( expression );
                     break;
@@ -284,8 +255,7 @@ public class ExpressionCompiler
                     break;
             }
         }
-        else
-        {
+        else {
             enterRule( ctx.postfixExpression() );
         }
     }
@@ -293,14 +263,12 @@ public class ExpressionCompiler
     @Override
     public void enterPostfixExpression( JobParser.PostfixExpressionContext ctx )
     {
-        if( ctx.expressionName() != null )
-        {
+        if( ctx.expressionName() != null ) {
             enterRule( ctx.expressionName() );
             final String varName = name;
             expression = scope -> scope.getVar( varName );
         }
-        else
-        {
+        else {
             enterRule( ctx.primary() );
 
             // Postfix not supported
@@ -322,13 +290,6 @@ public class ExpressionCompiler
     }
 
     @Override
-    public void enterPrimary( JobParser.PrimaryContext ctx )
-    {
-        enterRule( ctx.literal() );
-        enterRule( ctx.expression() );
-    }
-
-    @Override
     public void enterLiteral( JobParser.LiteralContext ctx )
     {
         op( ctx.BooleanLiteral(), n -> Boolean.valueOf( n.getText() ) ? Logic.trueOp() : Logic.falseOp() );
@@ -337,8 +298,7 @@ public class ExpressionCompiler
         op( ctx.StringLiteral(), n -> Constants.constant( getString( n ) ) );
         op( ctx.NullLiteral(), n -> scope -> null );
 
-        if( ctx.CharacterLiteral() != null )
-        {
+        if( ctx.CharacterLiteral() != null ) {
             throw new UnsupportedOperationException( "Character literals currently not supported" );
         }
         //op( ctx.CharacterLiteral(), n -> null );
@@ -346,13 +306,6 @@ public class ExpressionCompiler
 
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Assignment">
-    @Override
-    public void enterAssignmentExpression( JobParser.AssignmentExpressionContext ctx )
-    {
-        enterRule( ctx.conditionalExpression() );
-        enterRule( ctx.assignment() );
-    }
-
     @Override
     public void enterAssignment( JobParser.AssignmentContext ctx )
     {
@@ -362,8 +315,7 @@ public class ExpressionCompiler
         enterRule( ctx.expression() );
 
         final String op = ctx.assignmentOperator().getText();
-        switch( op )
-        {
+        switch( op ) {
             case "=":
                 expression = Assignment.setVariable( varName, expression );
                 break;
@@ -381,12 +333,10 @@ public class ExpressionCompiler
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
-        if( ctx.ambiguousName() == null )
-        {
+        if( ctx.ambiguousName() == null ) {
             name = ctx.Identifier().getText();
         }
-        else
-        {
+        else {
             ambiguousName = new StringJoiner( "." );
             enterRule( ctx.ambiguousName() );
             ambiguousName.add( ctx.Identifier().getText() );
@@ -406,16 +356,54 @@ public class ExpressionCompiler
         enterRule( ctx.ambiguousName() );
         ambiguousName.add( ctx.Identifier().getText() );
     }
-    //</editor-fold>
 
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Collections">
+    @Override
+    public void enterCollectionClear( JobParser.CollectionClearContext ctx )
+    {
+        expression = CollectionOp.clear( expression );
+    }
+
+    @Override
+    public void enterCollectionAppend( JobParser.CollectionAppendContext ctx )
+    {
+        ExpressionOperation assign = expression;
+
+        enterRule( ctx.expression() );
+
+        expression = CollectionOp.append( assign, expression );
+    }
+
+    @Override
+    public void enterCollectionPrepend( JobParser.CollectionPrependContext ctx )
+    {
+        ExpressionOperation assign = expression;
+
+        enterRule( ctx.expression() );
+
+        expression = CollectionOp.prepend( assign, expression );
+    }
+
+    @Override
+    public void enterCollectionNewList( JobParser.CollectionNewListContext ctx )
+    {
+        if( ctx.expression() == null ) {
+            expression = CollectionOp.newList();
+        }
+        else {
+            enterRule( ctx.expression() );
+            expression = CollectionOp.newList( expression );
+        }
+    }
+
+    //</editor-fold>
     private void biop( ParserRuleContext lc, ParserRuleContext rc, BiOp op )
     {
-        if( lc == null )
-        {
+        if( lc == null ) {
             enterRule( rc );
         }
-        else
-        {
+        else {
             enterRule( lc );
             ExpressionOperation lhs = expression;
 
@@ -426,8 +414,7 @@ public class ExpressionCompiler
 
     private <T> void op( T val, Function<T, ExpressionOperation> mapper )
     {
-        if( val != null )
-        {
+        if( val != null ) {
             expression = mapper.apply( val );
         }
     }

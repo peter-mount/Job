@@ -43,11 +43,11 @@ public class CompilationUnitCompiler
 
         // Optional declare { }
         enterRule( ctx.declare(), blockCompiler );
-        declareBlock=blockCompiler.getBlock();
-        
+        declareBlock = blockCompiler.getBlock();
+
         // Optional output { }
         enterRule( ctx.output(), blockCompiler );
-        outputBlock=blockCompiler.getBlock();
+        outputBlock = blockCompiler.getBlock();
 
         // The main body
         block = blockCompiler.getBlock( ctx.block(), false );
@@ -63,18 +63,6 @@ public class CompilationUnitCompiler
     public void enterJobDefinition( JobDefinitionContext ctx )
     {
         jobDefinitionContext = ctx;
-    }
-
-    @Override
-    public void enterOutput( OutputContext ctx )
-    {
-        enterRule( ctx.outputStatements() );
-    }
-
-    @Override
-    public void enterOutputStatements( OutputStatementsContext ctx )
-    {
-        enterRule( ctx.outputStatement() );
     }
 
     @Override

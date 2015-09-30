@@ -5,10 +5,8 @@
  */
 package uk.trainwatch.job.lang;
 
-import java.util.Collection;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -52,36 +50,6 @@ public abstract class AbstractCompiler
             ) );
         }
         return null;
-    }
-
-    public final void enterRule( Collection<? extends ParserRuleContext> l )
-    {
-        if( l != null && !l.isEmpty() )
-        {
-            l.forEach( this::enterRule );
-        }
-    }
-
-    protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
-    {
-        if( l != null && !l.isEmpty() )
-        {
-            l.forEach( r -> enterRule( r, ptl ) );
-        }
-    }
-
-    public final void enterRule( ParserRuleContext ctx )
-    {
-        enterRule( ctx, this );
-    }
-
-    protected void enterRule( ParserRuleContext ctx, ParseTreeListener l )
-    {
-        //System.out.printf( "enterRule %s %s %s\n",ctx==null?null:ctx.getClass().getSimpleName(), l.getClass().getSimpleName(), ctx == null ? null : ctx.getText() );
-        if( ctx != null )
-        {
-            ctx.enterRule( l );
-        }
     }
 
 }

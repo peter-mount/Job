@@ -61,14 +61,11 @@ public class BlockCompiler
 
     public Statement getBlock( ParserRuleContext ctx, boolean declare )
     {
-        try( BlockScope scope = begin( declare ) )
-        {
-            if( ctx instanceof JobParser.BlockContext )
-            {
+        try( BlockScope scope = begin( declare ) ) {
+            if( ctx instanceof JobParser.BlockContext ) {
                 enterRule( ((JobParser.BlockContext) ctx).blockStatements() );
             }
-            else
-            {
+            else {
                 enterRule( ctx );
             }
             return scope.getStatement();
@@ -113,16 +110,13 @@ public class BlockCompiler
             // Empty then do nothing. This is better than an empty block
             // as we'll not even create a sub Scope etc when invoked
             boolean nop = statements.isEmpty();
-            if( nop )
-            {
+            if( nop ) {
                 block = Operation.nop();
             }
-            else if( declare )
-            {
+            else if( declare ) {
                 block = Block.declare( statements );
             }
-            else
-            {
+            else {
                 block = Block.block( statements );
             }
             return block;
@@ -132,8 +126,7 @@ public class BlockCompiler
     @Override
     public void enterBlock( JobParser.BlockContext ctx )
     {
-        try( BlockScope st = new BlockScope() )
-        {
+        try( BlockScope st = new BlockScope() ) {
             enterRule( ctx.blockStatements() );
             block = st.getStatement();
         }
@@ -143,53 +136,6 @@ public class BlockCompiler
 
     //<editor-fold defaultstate="collapsed" desc="General Statement processing">
     @Override
-    public void enterBlockStatements( JobParser.BlockStatementsContext ctx )
-    {
-        enterRule( ctx.blockStatement() );
-    }
-
-    @Override
-    public void enterBlockStatement( JobParser.BlockStatementContext ctx )
-    {
-        enterRule( ctx.localVariableDeclarationStatement() );
-        enterRule( ctx.statement() );
-    }
-
-    @Override
-    public void enterStatement( JobParser.StatementContext ctx )
-    {
-        enterRule( ctx.statementWithoutTrailingSubstatement() );
-        enterRule( ctx.ifThenStatement() );
-        enterRule( ctx.ifThenElseStatement() );
-        enterRule( ctx.forStatement() );
-        enterRule( ctx.whileStatement() );
-    }
-
-    @Override
-    public void enterStatementWithoutTrailingSubstatement( JobParser.StatementWithoutTrailingSubstatementContext ctx )
-    {
-        enterRule( ctx.block() );
-        enterRule( ctx.expressionStatement() );
-        enterRule( ctx.doStatement() );
-    }
-
-    @Override
-    public void enterExpressionStatement( JobParser.ExpressionStatementContext ctx )
-    {
-        enterRule( ctx.statementExpression() );
-    }
-
-    @Override
-    public void enterStatementExpression( JobParser.StatementExpressionContext ctx )
-    {
-        // Although assignment is a form of statement it's handled entirely by ExpressionCompiler
-        //enterRule( ctx.assignment(), expressionCompiler.reset() );
-        enterRule( ctx.assignment() );
-
-        enterRule( ctx.logStatement() );
-    }
-
-    @Override
     public void enterAssignment( JobParser.AssignmentContext ctx )
     {
         // Assignment is actually handled by expressionCompiler
@@ -197,12 +143,6 @@ public class BlockCompiler
         expressionCompiler.reset().enterAssignment( ctx );
         ExpressionOperation expr = expressionCompiler.getExpression();
         statements.add( scope -> expr.invoke( scope ) );
-    }
-
-    @Override
-    public void enterStatementExpressionList( JobParser.StatementExpressionListContext ctx )
-    {
-        enterRule( ctx.statementExpression() );
     }
 
     //</editor-fold>
@@ -257,12 +197,10 @@ public class BlockCompiler
     @Override
     public void enterForInit( JobParser.ForInitContext ctx )
     {
-        if( ctx.localVariableDeclaration() == null )
-        {
+        if( ctx.localVariableDeclaration() == null ) {
             enterRule( ctx.statementExpressionList() );
         }
-        else
-        {
+        else {
             enterRule( ctx.localVariableDeclaration() );
         }
     }
@@ -311,24 +249,6 @@ public class BlockCompiler
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Local Variable declaration">
     @Override
-    public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
-    {
-        enterRule( ctx.localVariableDeclaration() );
-    }
-
-    @Override
-    public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
-    {
-        enterRule( ctx.variableDeclaratorList() );
-    }
-
-    @Override
-    public void enterVariableDeclaratorList( JobParser.VariableDeclaratorListContext ctx )
-    {
-        enterRule( ctx.variableDeclarator() );
-    }
-
-    @Override
     public void enterVariableDeclarator( JobParser.VariableDeclaratorContext ctx )
     {
         enterRule( ctx.variableDeclaratorId() );
@@ -356,24 +276,13 @@ public class BlockCompiler
     @Override
     public void enterDeclare( JobParser.DeclareContext ctx )
     {
-        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) )
-        {
+        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) ) {
             enterRule( ctx.declareStatements() );
             block = st.getStatement();
         }
     }
 
-    @Override
-    public void enterDeclareStatements( JobParser.DeclareStatementsContext ctx )
-    {
-        enterRule( ctx.declareStatement() );
-    }
 
-    @Override
-    public void enterDeclareStatement( JobParser.DeclareStatementContext ctx )
-    {
-        enterRule( ctx.localVariableDeclarationStatement() );
-    }
 //</editor-fold>
 
     @Override
@@ -381,8 +290,7 @@ public class BlockCompiler
     {
         Level level;
         String l = ctx.getChild( 0 ).getText();
-        switch( l )
-        {
+        switch( l ) {
             case "log":
                 level = Level.INFO;
                 break;

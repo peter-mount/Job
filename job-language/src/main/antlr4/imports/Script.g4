@@ -184,6 +184,7 @@ expression
 
 assignmentExpression
     :    conditionalExpression
+    |    collectionExpression
     |    assignment
     ;
 
@@ -317,6 +318,7 @@ postDecrementExpression_lf_postfixExpression
 primary
     :    literal
     |    '(' expression ')'
+    |    newObject
 //  |    fieldAccess
 //  |    arrayAccess
 //  |    methodInvocation
@@ -340,6 +342,41 @@ methodInvocation_lf_primary
 argumentList
         :       expression (',' expression)*
         ;
+
+newObject
+    :   assignment
+    |    'new' newObjectList
+    ;
+
+newObjectList
+    :   collectionNewList
+    |   collectionNewSet
+    |   collectionNewQueue
+    |   collectionNewDeque
+    ;
+
+collectionNewList   : 'list' '(' expression? ')'    ;
+collectionNewSet    : 'set' '(' expression? ')'     ;
+collectionNewQueue  : 'queue' '(' expression? ')'   ;
+collectionNewDeque  : 'deque' '(' expression? ')'   ;
+
+collectionExpression
+    :   collectionAppend
+    |   collectionPrepend
+    |   collectionClear
+    ;
+
+collectionAppend
+    :   '.' 'append' '(' expression ')'
+    ;
+
+collectionPrepend
+    :   '.' 'prepend' '(' expression ')'
+    ;
+
+collectionClear
+    :   '.' 'clear' '(' ')'
+    ;
 
 /*
  * Our logging statements

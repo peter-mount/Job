@@ -30,6 +30,20 @@ public abstract class AbstractCompilerTest
         extends AbstractTest
 {
 
+    protected final void runTest( String n )
+            throws Throwable
+    {
+        try {
+            Job job = compile( n );
+            execute( job );
+            System.out.println( n + " Passed" );
+        }
+        catch( Throwable ex ) {
+            System.out.println( n + " Failed: " + ex );
+            throw ex;
+        }
+    }
+
     /**
      * Compile a job
      * <p>
@@ -60,7 +74,7 @@ public abstract class AbstractCompilerTest
             throws IOException
     {
         Job job = compileJob( n );
-        assertNotNull( "No Job from compilation",job );
+        assertNotNull( "No Job from compilation", job );
         assertEquals( "Job id", n, job.getId() );
         return job;
     }
@@ -121,7 +135,7 @@ public abstract class AbstractCompilerTest
                                               r -> String.format( "%-6.6s%-6.6s %s", n, r.getLevel(), r.getMessage() ),
                                               s -> {
                                                   log.add( s );
-                                                  System.out.println( s );
+                                                  //System.out.println( s );
                                               } );
         logger.setLevel( Level.FINE );
 

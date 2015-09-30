@@ -1,0 +1,13 @@
+/*
+ * collection1  Test lists
+ */
+job "collection1";
+run as "test";
+{
+    l = new list();
+    log l;
+
+    for( a=0; a<10; a=a+1 )
+        l.append(a);
+    log l;
+}

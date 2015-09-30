@@ -8,15 +8,4 @@ run as "test";
     debug "This is some debugging";
     warn "A warning";
     severe "Something went wrong";
-
-    // Test addition
-    a = 7 + 3;
-    log "Sum is " + a;
-
-    log "Sub is " + (7-3);
-    log "Mult is " + (5 * 5 );
-    log "Div is " + (25/5);
-    log "Mod is " + (7 % 2);
-
-    log "Test complete";
 }

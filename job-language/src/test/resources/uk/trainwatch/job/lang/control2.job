@@ -1,0 +1,21 @@
+/*
+ * control2     Test if()
+ */
+job "control2";
+run as "test";
+{
+    // Test equality
+    a = 1;
+    b = 2;
+    if( a == b )
+        log "== 1 true";
+    else
+        log "== 1 false";
+
+    a = b;
+    if( a == b )
+        log "== 2 true";
+    else
+        log "== 2 false";
+
+}

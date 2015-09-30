@@ -54,10 +54,9 @@ tests.each {
                 out.println "";
                 out.println "\t@Test( timeout = 10000L )";
                 out.println "\tpublic void " + name + "()";
-                out.println "\t\tthrows Exception";
+                out.println "\t\tthrows Throwable";
                 out.println "\t{";
-                out.println "\t\tJob job = compile( \"" + name + "\");";
-                out.println "\t\texecute(job);";
+                out.println "\t\trunTest( \"" + name + "\");";
                 out.println "\t}";
             }
 
