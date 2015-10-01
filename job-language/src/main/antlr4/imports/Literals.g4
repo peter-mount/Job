@@ -49,15 +49,6 @@ DEBUG : 'debug';
 WARN : 'warn';
 SEVERE : 'severe';
 
-LIST : 'list';
-SET : 'set';
-QUEUE : 'queue';
-DEQUE : 'deque';
-
-APPEND : 'append(';
-PREPEND : 'prepend(';
-CLEAR : 'clear()';
-
 // §3.9 Keywords
 
 ABSTRACT : 'abstract';
