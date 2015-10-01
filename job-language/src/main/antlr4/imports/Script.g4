@@ -348,33 +348,27 @@ postDecrementExpression_lf_postfixExpression
  */
 
 primary
-    :    literal
+    :  (  literal
     |    '(' expression ')'
-//  |    fieldAccess
-//  |    methodInvocation
-//  |    methodReference
-    |   'new' Identifier ('.' Identifier)* '(' argumentList? ')'
-    |   expressionName '.' 'new' Identifier '(' argumentList? ')'
-//    |   primary '.' 'new' Identifier '(' argumentList? ')'
+    |   newObject
+    ) ( methodInvocation )*
     ;
 
-stringExpression
-    : ( StringLiteral | expression )
+newObject
+    :   'new' Identifier ('.' Identifier)* '(' argumentList? ')'
     ;
 
 methodInvocation
-        :       methodName '(' argumentList? ')'
-        |       typeName '.' Identifier '(' argumentList? ')'
-        |       expressionName '.' Identifier '(' argumentList? ')'
-        |       primary '.' Identifier '(' argumentList? ')'
-        ;
-methodInvocation_lf_primary
-        :       '.' Identifier '(' argumentList? ')'
-        ;
+    :   '.' methodName '(' argumentList? ')'
+    ;
 
 argumentList
         :       expression (',' expression)*
         ;
+
+stringExpression
+    : ( StringLiteral | expression )
+    ;
 
 /*
  * Our logging statements

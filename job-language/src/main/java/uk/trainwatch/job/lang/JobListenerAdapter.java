@@ -817,9 +817,10 @@ public class JobListenerAdapter
     @Override
     public void enterPrimary( JobParser.PrimaryContext ctx )
     {
-        enterRule( ctx.argumentList() );
         enterRule( ctx.expression() );
         enterRule( ctx.literal() );
+        enterRule( ctx.newObject() );
+        enterRule( ctx.methodInvocation() );
     }
 
     @Override
@@ -903,6 +904,17 @@ public class JobListenerAdapter
     }
 
     @Override
+    public void enterNewObject( JobParser.NewObjectContext ctx )
+    {
+    }
+
+    @Override
+    public void exitNewObject( JobParser.NewObjectContext ctx )
+    {
+    }
+
+    
+    @Override
     public void enterMethodName( JobParser.MethodNameContext ctx )
     {
     }
@@ -919,16 +931,6 @@ public class JobListenerAdapter
 
     @Override
     public void exitMethodInvocation( JobParser.MethodInvocationContext ctx )
-    {
-    }
-
-    @Override
-    public void enterMethodInvocation_lf_primary( JobParser.MethodInvocation_lf_primaryContext ctx )
-    {
-    }
-
-    @Override
-    public void exitMethodInvocation_lf_primary( JobParser.MethodInvocation_lf_primaryContext ctx )
     {
     }
 

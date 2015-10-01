@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Objects;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
@@ -22,7 +23,8 @@ public class TypeOp
 
     public static ExpressionOperation[] toArray( Collection<ExpressionOperation> col )
     {
-        if( col == null || col.isEmpty() ) {
+        if( col == null || col.isEmpty() )
+        {
             return new ExpressionOperation[0];
         }
         return col.toArray( new ExpressionOperation[col.size()] );
@@ -31,12 +33,14 @@ public class TypeOp
     public static Object[] invokeArguments( Scope s, ExpressionOperation... exp )
             throws Exception
     {
-        if( exp == null ) {
+        if( exp == null )
+        {
             return new Object[0];
         }
 
         Object args[] = new Object[exp.length];
-        for( int i = 0; i < exp.length; i++ ) {
+        for( int i = 0; i < exp.length; i++ )
+        {
             args[i] = exp[i].invoke( s );
         }
         return args;
@@ -44,8 +48,10 @@ public class TypeOp
 
     public static ExpressionOperation construct( String type, ExpressionOperation... exp )
     {
-        return s -> {
-            try {
+        return s ->
+        {
+            try
+            {
                 String realType = s.resolveType( type );
                 Class clazz = Class.forName( realType );
 
@@ -54,14 +60,38 @@ public class TypeOp
                 return MethodHandles.lookup()
                         .findConstructor( clazz, MethodType.methodType( void.class ) )
                         .invokeWithArguments( args );
-            }
-            catch( Exception ex ) {
+            } catch( Exception ex )
+            {
                 throw ex;
-            }
-            catch( Throwable ex ) {
+            } catch( Throwable ex )
+            {
                 throw new InvocationTargetException( ex );
             }
         };
     }
 
+    public static ExpressionOperation invoke( ExpressionOperation srcExp, String methodName, ExpressionOperation... argExp )
+    {
+        return s ->
+        {
+            try
+            {
+                Object obj = Objects.requireNonNull( srcExp.invoke( s ), "Cannot dereference null" );
+
+                Class clazz = obj.getClass();
+
+                Object args[] = invokeArguments( s, argExp );
+
+                return MethodHandles.lookup()
+                        .findConstructor( clazz, MethodType.methodType( Object.class ) )
+                        .invokeWithArguments( args );
+            } catch( Exception ex )
+            {
+                throw ex;
+            } catch( Throwable ex )
+            {
+                throw new InvocationTargetException( ex );
+            }
+        };
+    }
 }
