@@ -5,7 +5,6 @@
  */
 package uk.trainwatch.job.lang.block;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;

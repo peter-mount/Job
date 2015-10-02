@@ -4,5 +4,16 @@
 job "for2";
 run as "test";
 {
-    log "Holder";
+    list = new List();
+
+    // Populate the collection
+    for(i=0;i<10;i=i+1) list.add(i);
+
+    // should be 10
+    log "size="+(list.size());
+
+    // Now write each entry out
+    for(e:list)
+        log e;
+
 }

@@ -343,6 +343,7 @@ public class ExpressionCompiler
         enterRule( ctx.methodName() );
         String methodName = name;
 
+        args=null;
         enterRule( ctx.argumentList() );
 
         expression = TypeOp.invoke( srcExp, methodName, TypeOp.toArray( args ) );

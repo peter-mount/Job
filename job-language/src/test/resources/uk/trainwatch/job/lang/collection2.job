@@ -7,7 +7,26 @@ run as "test";
     l = new List();
     log l;
 
+    // Add 10 numbers
     for( a=0; a<10; a=a+1 )
         l.add(a);
     log l;
+    // Should contain 10
+    log l.size();
+
+    // Remove even values
+    for( a=0; a<10; a=a+2 )
+        l.remove(a);
+    log l;
+
+    // should contain 5
+    log l.size();
+
+    // clear
+    l.clear();
+    log l;
+
+    // Should be empty
+    log l.size();
+    log l.isEmpty();
 }
