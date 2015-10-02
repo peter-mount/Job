@@ -42,7 +42,6 @@ public class JobListenerAdapter
 
     protected final void enterRule( ParserRuleContext ctx, ParseTreeListener l )
     {
-        //System.out.printf( "enterRule %s %s %s\n",ctx==null?null:ctx.getClass().getSimpleName(), l.getClass().getSimpleName(), ctx == null ? null : ctx.getText() );
         if( ctx != null )
         {
             ctx.enterRule( l );

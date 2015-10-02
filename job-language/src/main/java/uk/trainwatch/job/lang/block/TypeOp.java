@@ -5,14 +5,13 @@
  */
 package uk.trainwatch.job.lang.block;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
-import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -49,7 +48,7 @@ public class TypeOp
 
     public static ExpressionOperation construct( String type, ExpressionOperation... exp )
     {
-        return (s,a) ->
+        return ( s, a ) ->
         {
             try
             {
@@ -71,9 +70,10 @@ public class TypeOp
         };
     }
 
+    @SuppressWarnings( "ThrowableInstanceNotThrown" )
     public static ExpressionOperation invoke( ExpressionOperation srcExp, String methodName, ExpressionOperation... argExp )
     {
-        return (s,a) ->
+        return ( s, a ) ->
         {
             try
             {
@@ -83,9 +83,16 @@ public class TypeOp
 
                 Object args[] = invokeArguments( s, argExp );
 
-                return MethodHandles.lookup()
-                        .findVirtual( clazz, methodName, MethodType.methodType( Object.class ) )
+                // Not ideal but appears to work, locates the first method with same name and number of arguments
+                return MethodHandles.publicLookup().unreflect(
+                        Stream.of( clazz.getMethods() ).
+                        filter( m -> methodName.equals( m.getName() ) ).
+                        filter( m -> m.getParameterCount() == args.length ).
+                        findAny().orElseThrow( () -> new NoSuchMethodException( methodName + " in " + clazz ) )
+                )
+                        .bindTo( obj )
                         .invokeWithArguments( args );
+
             } catch( Exception ex )
             {
                 throw ex;

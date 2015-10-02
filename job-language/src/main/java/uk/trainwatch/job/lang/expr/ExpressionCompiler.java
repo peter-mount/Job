@@ -7,7 +7,6 @@ package uk.trainwatch.job.lang.expr;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;

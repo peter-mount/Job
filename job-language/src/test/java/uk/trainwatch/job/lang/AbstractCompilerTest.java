@@ -33,12 +33,13 @@ public abstract class AbstractCompilerTest
     protected final void runTest( String n )
             throws Throwable
     {
-        try {
+        try
+        {
             Job job = compile( n );
             execute( job );
             System.out.println( n + " Passed" );
-        }
-        catch( Throwable ex ) {
+        } catch( Throwable ex )
+        {
             System.out.println( n + " Failed: " + ex );
             throw ex;
         }
@@ -47,16 +48,15 @@ public abstract class AbstractCompilerTest
     /**
      * Compile a job
      * <p>
-     * @param t
-     *          <p>
-     * @return
-     *         <p>
+     * @param t <p>
+     * @return <p>
      * @throws IOException
      */
     protected final Job compileJob( String n )
             throws IOException
     {
-        try( InputStream is = getScript( n + ".job" ) ) {
+        try( InputStream is = getScript( n + ".job" ) )
+        {
             return Compiler.compile( new ANTLRInputStream( is ) );
         }
     }
@@ -64,10 +64,8 @@ public abstract class AbstractCompilerTest
     /**
      * Compile a job and ensure the top Job object is correct
      * <p>
-     * @param n
-     *          <p>
-     * @return
-     *         <p>
+     * @param n <p>
+     * @return <p>
      * @throws IOException
      */
     protected final Job compile( String n )
@@ -82,10 +80,11 @@ public abstract class AbstractCompilerTest
     protected final List<String> getLines( String n )
             throws IOException
     {
-        try( BufferedReader r = new BufferedReader( new InputStreamReader( getClass().getResourceAsStream( n ) ) ) ) {
+        try( BufferedReader r = new BufferedReader( new InputStreamReader( getClass().getResourceAsStream( n ) ) ) )
+        {
             return r.lines().collect( Collectors.toList() );
-        }
-        catch( NullPointerException ex ) {
+        } catch( NullPointerException ex )
+        {
             return Collections.emptyList();
         }
     }
@@ -96,23 +95,28 @@ public abstract class AbstractCompilerTest
         List<String> expectedLog = getLines( n + ".log" );
 
         // No .log file or it's empty then don't test the log
-        if( expectedLog.isEmpty() ) {
+        if( expectedLog.isEmpty() )
+        {
             return;
         }
 
         int es = expectedLog.size();
         int l = 0;
-        for( String line: log ) {
-            if( l < es ) {
+        for( String line : log )
+        {
+            if( l < es )
+            {
                 assertEquals( "Line " + l, expectedLog.get( l ), line );
             }
-            else {
+            else
+            {
                 fail( "Extra line " + l + ": " + line );
             }
             l++;
         }
 
-        if( es > log.size() ) {
+        if( es > log.size() )
+        {
             fail( "Missing last " + (es - log.size()) + " lines" );
         }
     }
@@ -120,8 +124,7 @@ public abstract class AbstractCompilerTest
     /**
      * Execute a job
      * <p>
-     * @param job
-     *            <p>
+     * @param job <p>
      * @throws Exception
      */
     protected final void execute( Job job )
@@ -133,10 +136,8 @@ public abstract class AbstractCompilerTest
 
         Logger logger = LogHandler.getLogger( "test." + n,
                                               r -> String.format( "%-6.6s%-6.6s %s", n, r.getLevel(), r.getMessage() ),
-                                              s -> {
-                                                  log.add( s );
-                                                  //System.out.println( s );
-                                              } );
+                                              log::add );
+
         logger.setLevel( Level.FINE );
 
         final Scope scope = Scope.newInstance( logger );
