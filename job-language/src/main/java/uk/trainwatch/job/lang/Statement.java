@@ -13,14 +13,14 @@ import uk.trainwatch.job.Scope;
  */
 @FunctionalInterface
 public interface Statement
-        extends Operation<Void>
+        extends Operation<Void,Void>
 {
 
     void invokeStatement( Scope scope )
             throws Exception;
 
     @Override
-    default Void invoke( Scope scope )
+    default Void invoke( Scope scope, Void... args )
             throws Exception
     {
         invokeStatement( scope );

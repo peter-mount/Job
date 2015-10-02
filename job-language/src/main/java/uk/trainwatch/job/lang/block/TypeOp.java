@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Objects;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -48,7 +49,7 @@ public class TypeOp
 
     public static ExpressionOperation construct( String type, ExpressionOperation... exp )
     {
-        return s ->
+        return (s,a) ->
         {
             try
             {
@@ -72,7 +73,7 @@ public class TypeOp
 
     public static ExpressionOperation invoke( ExpressionOperation srcExp, String methodName, ExpressionOperation... argExp )
     {
-        return s ->
+        return (s,a) ->
         {
             try
             {
@@ -83,7 +84,7 @@ public class TypeOp
                 Object args[] = invokeArguments( s, argExp );
 
                 return MethodHandles.lookup()
-                        .findConstructor( clazz, MethodType.methodType( Object.class ) )
+                        .findVirtual( clazz, methodName, MethodType.methodType( Object.class ) )
                         .invokeWithArguments( args );
             } catch( Exception ex )
             {

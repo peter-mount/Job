@@ -12,12 +12,13 @@ import uk.trainwatch.job.Scope;
  * <p>
  * @author peter
  * @param <R> type of return value
+ * @param <T>
  */
 @FunctionalInterface
-public interface Operation<R>
+public interface Operation<R,T>
 {
 
-    R invoke( Scope scope )
+    R invoke( Scope scope, T... args )
             throws Exception;
 
     /**

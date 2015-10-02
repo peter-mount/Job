@@ -61,7 +61,6 @@ variableDeclaratorId
 
 variableInitializer
     :    expression
-//  |    arrayInitializer
     ;
 
 block
@@ -121,7 +120,6 @@ statementExpression
 //  |    preDecrementExpression
 //  |    postIncrementExpression
 //  |    postDecrementExpression
-    |    methodInvocation
 //  |    classInstanceCreationExpression
     |   logStatement
     ;
@@ -167,34 +165,20 @@ statementExpressionList
 enhancedForStatement
     :    'for' '('  variableDeclaratorId ':' expression ')' statement
     ;
-packageName
-        :       Identifier
-        |       packageName '.' Identifier
-        ;
-
-typeName
-        :       Identifier
-        |       packageOrTypeName '.' Identifier
-        ;
-
-packageOrTypeName
-        :       Identifier
-        |       packageOrTypeName '.' Identifier
-        ;
 
 expressionName
     :    Identifier
-    |    ambiguousName '.' Identifier
+//    |    ambiguousName '.' Identifier
     ;
 
 methodName
     :    Identifier
     ;
 
-ambiguousName
-    :    Identifier
-    |    ambiguousName '.' Identifier
-    ;
+//ambiguousName
+//    :    Identifier
+//    |    ambiguousName '.' Identifier
+//    ;
 
 assignmentOperator
     :    '='
@@ -209,6 +193,7 @@ assignmentOperator
     |    '&='
     |    '^='
     |    '|='
+    |   '.'
     ;
 
 expression
@@ -226,7 +211,6 @@ assignment
 
 leftHandSide
     :    expressionName
-//  |    fieldAccess
 //  |    arrayAccess
     ;
 
@@ -315,7 +299,6 @@ unaryExpressionNotPlusMinus
     :    postfixExpression
     |    '~' unaryExpression
     |    '!' unaryExpression
-//  |    castExpression
     ;
 
 postfixExpression
@@ -348,26 +331,26 @@ postDecrementExpression_lf_postfixExpression
  */
 
 primary
-    :  (  literal
-    |    '(' expression ')'
-    |   newObject
-    ) ( methodInvocation )*
+    :   literal
+        |    '(' expression ')'
+        |   newObject
+      | methodInvocation
     ;
 
 newObject
-    :   'new' Identifier ('.' Identifier)* '(' argumentList? ')'
+    :   'new' Identifier '(' argumentList? ')'
     ;
 
 methodInvocation
-    :   '.' methodName '(' argumentList? ')'
+    :   methodName '(' argumentList? ')'
     ;
 
 argumentList
-        :       expression (',' expression)*
-        ;
+    :   expression (',' expression)*
+    ;
 
 stringExpression
-    : ( StringLiteral | expression )
+    :   ( StringLiteral | expression )
     ;
 
 /*

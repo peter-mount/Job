@@ -14,7 +14,7 @@ public class Constants
 
     public static ExpressionOperation constant( Object v )
     {
-        return s -> v;
+        return (s,a) -> v;
     }
 
     public static Number toNumber( Object v )

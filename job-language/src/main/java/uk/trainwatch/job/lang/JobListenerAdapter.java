@@ -6,8 +6,6 @@
 package uk.trainwatch.job.lang;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -23,14 +21,16 @@ public class JobListenerAdapter
 
     public final void enterRule( Collection<? extends ParserRuleContext> l )
     {
-        if( l != null && !l.isEmpty() ) {
+        if( l != null && !l.isEmpty() )
+        {
             l.forEach( this::enterRule );
         }
     }
 
     protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
     {
-        if( l != null && !l.isEmpty() ) {
+        if( l != null && !l.isEmpty() )
+        {
             l.forEach( r -> enterRule( r, ptl ) );
         }
     }
@@ -43,7 +43,8 @@ public class JobListenerAdapter
     protected final void enterRule( ParserRuleContext ctx, ParseTreeListener l )
     {
         //System.out.printf( "enterRule %s %s %s\n",ctx==null?null:ctx.getClass().getSimpleName(), l.getClass().getSimpleName(), ctx == null ? null : ctx.getText() );
-        if( ctx != null ) {
+        if( ctx != null )
+        {
             ctx.enterRule( l );
         }
     }
@@ -70,16 +71,6 @@ public class JobListenerAdapter
     public void exitJobDefinition( JobParser.JobDefinitionContext ctx )
     {
 
-    }
-
-    @Override
-    public void enterImportDeclaration( JobParser.ImportDeclarationContext ctx )
-    {
-    }
-
-    @Override
-    public void exitImportDeclaration( JobParser.ImportDeclarationContext ctx )
-    {
     }
 
     @Override
@@ -502,18 +493,6 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterAmbiguousName( JobParser.AmbiguousNameContext ctx )
-    {
-
-    }
-
-    @Override
-    public void exitAmbiguousName( JobParser.AmbiguousNameContext ctx )
-    {
-
-    }
-
-    @Override
     public void enterAssignmentOperator( JobParser.AssignmentOperatorContext ctx )
     {
 
@@ -779,13 +758,15 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterPostIncrementExpression_lf_postfixExpression( JobParser.PostIncrementExpression_lf_postfixExpressionContext ctx )
+    public void enterPostIncrementExpression_lf_postfixExpression(
+            JobParser.PostIncrementExpression_lf_postfixExpressionContext ctx )
     {
 
     }
 
     @Override
-    public void exitPostIncrementExpression_lf_postfixExpression( JobParser.PostIncrementExpression_lf_postfixExpressionContext ctx )
+    public void exitPostIncrementExpression_lf_postfixExpression(
+            JobParser.PostIncrementExpression_lf_postfixExpressionContext ctx )
     {
 
     }
@@ -803,13 +784,15 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterPostDecrementExpression_lf_postfixExpression( JobParser.PostDecrementExpression_lf_postfixExpressionContext ctx )
+    public void enterPostDecrementExpression_lf_postfixExpression(
+            JobParser.PostDecrementExpression_lf_postfixExpressionContext ctx )
     {
 
     }
 
     @Override
-    public void exitPostDecrementExpression_lf_postfixExpression( JobParser.PostDecrementExpression_lf_postfixExpressionContext ctx )
+    public void exitPostDecrementExpression_lf_postfixExpression(
+            JobParser.PostDecrementExpression_lf_postfixExpressionContext ctx )
     {
 
     }
@@ -874,36 +857,6 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterPackageName( JobParser.PackageNameContext ctx )
-    {
-    }
-
-    @Override
-    public void exitPackageName( JobParser.PackageNameContext ctx )
-    {
-    }
-
-    @Override
-    public void enterTypeName( JobParser.TypeNameContext ctx )
-    {
-    }
-
-    @Override
-    public void exitTypeName( JobParser.TypeNameContext ctx )
-    {
-    }
-
-    @Override
-    public void enterPackageOrTypeName( JobParser.PackageOrTypeNameContext ctx )
-    {
-    }
-
-    @Override
-    public void exitPackageOrTypeName( JobParser.PackageOrTypeNameContext ctx )
-    {
-    }
-
-    @Override
     public void enterNewObject( JobParser.NewObjectContext ctx )
     {
     }
@@ -913,7 +866,6 @@ public class JobListenerAdapter
     {
     }
 
-    
     @Override
     public void enterMethodName( JobParser.MethodNameContext ctx )
     {

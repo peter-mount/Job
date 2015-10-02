@@ -5,13 +5,10 @@
  */
 package uk.trainwatch.job.lang.expr;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.lang.AbstractCompiler;
@@ -26,30 +23,24 @@ public class ExpressionCompiler
         extends AbstractCompiler
 {
 
-    private final Deque<ExpressionOperation> stack = new ArrayDeque<>();
     private ExpressionOperation expression;
     private String name;
-    private StringJoiner ambiguousName;
     private List<ExpressionOperation> args;
-
-    private void push( ExpressionOperation op )
-    {
-        stack.push( op == null ? s -> null : op );
-    }
-
-    private ExpressionOperation pop()
-    {
-        return stack.pop();
-    }
 
     public ExpressionOperation getExpression()
     {
         return expression;
     }
 
+    public String getName()
+    {
+        return name;
+    }
+
     public ExpressionCompiler reset()
     {
         expression = null;
+        name = null;
         return this;
     }
 
@@ -295,8 +286,7 @@ public class ExpressionCompiler
         if( ctx.expressionName() != null )
         {
             enterRule( ctx.expressionName() );
-            final String varName = name;
-            expression = scope -> scope.getVar( varName );
+            expression = Assignment.getVariable( name );
         }
         else
         {
@@ -327,7 +317,7 @@ public class ExpressionCompiler
         op( ctx.FloatingPointLiteral(), n -> Constants.constant( Float.valueOf( n.getText() ) ) );
         op( ctx.IntegerLiteral(), n -> Constants.constant( Integer.valueOf( n.getText() ) ) );
         op( ctx.StringLiteral(), n -> Constants.constant( getString( n ) ) );
-        op( ctx.NullLiteral(), n -> scope -> null );
+        op( ctx.NullLiteral(), n -> ( s, a ) -> null );
 
         if( ctx.CharacterLiteral() != null )
         {
@@ -339,10 +329,7 @@ public class ExpressionCompiler
     @Override
     public void enterNewObject( JobParser.NewObjectContext ctx )
     {
-        String type = ctx.Identifier()
-                .stream()
-                .map( TerminalNode::getText )
-                .collect( Collectors.joining( "." ) );
+        String type = ctx.Identifier().getText();
 
         enterRule( ctx.argumentList() );
 
@@ -381,18 +368,24 @@ public class ExpressionCompiler
     @Override
     public void enterAssignment( JobParser.AssignmentContext ctx )
     {
-        enterRule( ctx.leftHandSide() );
-        final String varName = name;
-        System.out.println( varName );
-
-        enterRule( ctx.expression() );
-
+        String varName;
         final String op = ctx.assignmentOperator().getText();
         switch( op )
         {
             case "=":
+                enterRule( ctx.leftHandSide() );
+                varName = name;
+                enterRule( ctx.expression() );
                 expression = Assignment.setVariable( varName, expression );
                 break;
+
+            // invoke method on object in variable
+            case ".":
+                enterRule( ctx.leftHandSide() );
+                expression = Assignment.getVariable( name );
+                enterRule( ctx.expression() );
+                break;
+
             default:
                 throw new IllegalArgumentException( "Unsupported assignment " + op );
         }
@@ -407,30 +400,13 @@ public class ExpressionCompiler
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
-        if( ctx.ambiguousName() == null )
-        {
-            name = ctx.Identifier().getText();
-        }
-        else
-        {
-            ambiguousName = new StringJoiner( "." );
-            enterRule( ctx.ambiguousName() );
-            ambiguousName.add( ctx.Identifier().getText() );
-            name = ambiguousName.toString();
-        }
+        name = ctx.Identifier().getText();
     }
 
     @Override
     public void enterMethodName( JobParser.MethodNameContext ctx )
     {
         name = ctx.Identifier().getText();
-    }
-
-    @Override
-    public void enterAmbiguousName( JobParser.AmbiguousNameContext ctx )
-    {
-        enterRule( ctx.ambiguousName() );
-        ambiguousName.add( ctx.Identifier().getText() );
     }
 
     //</editor-fold>

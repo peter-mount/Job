@@ -16,9 +16,9 @@ public class Arithmetic
 
     public static ExpressionOperation add( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> {
-            Object lv = lhs.invoke( scope );
-            Object rv = rhs.invoke( scope );
+        return (s,a) -> {
+            Object lv = lhs.invoke( s );
+            Object rv = rhs.invoke( s );
             
             // Handle appending to a string
             if( lv instanceof String || rv instanceof String ) {
@@ -51,9 +51,9 @@ public class Arithmetic
 
     public static ExpressionOperation sub( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> {
-            Number l = Constants.toNumber( lhs.invoke( scope ) );
-            Number r = Constants.toNumber( rhs.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = Constants.toNumber( rhs.invoke( s ) );
             if( l instanceof Integer ) {
                 return l.intValue() - r.intValue();
             }
@@ -78,9 +78,9 @@ public class Arithmetic
 
     public static ExpressionOperation mult( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> {
-            Number l = Constants.toNumber( lhs.invoke( scope ) );
-            Number r = Constants.toNumber( rhs.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = Constants.toNumber( rhs.invoke( s ) );
             if( l instanceof Integer ) {
                 return l.intValue() * r.intValue();
             }
@@ -105,9 +105,9 @@ public class Arithmetic
 
     public static ExpressionOperation div( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> {
-            Number l = Constants.toNumber( lhs.invoke( scope ) );
-            Number r = Constants.toNumber( rhs.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = Constants.toNumber( rhs.invoke( s ) );
             if( l instanceof Integer ) {
                 return l.intValue() / r.intValue();
             }
@@ -132,9 +132,9 @@ public class Arithmetic
 
     public static ExpressionOperation mod( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> {
-            Number l = Constants.toNumber( lhs.invoke( scope ) );
-            Number r = Constants.toNumber( rhs.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = Constants.toNumber( rhs.invoke( s ) );
             if( l instanceof Integer ) {
                 return l.intValue() % r.intValue();
             }
@@ -159,8 +159,8 @@ public class Arithmetic
 
     public static ExpressionOperation negate( ExpressionOperation expr )
     {
-        return scope -> {
-            Number l = Constants.toNumber( expr.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( expr.invoke( s ) );
             if( l instanceof Integer ) {
                 return -l.intValue();
             }
@@ -185,8 +185,8 @@ public class Arithmetic
 
     public static ExpressionOperation tilde( ExpressionOperation expr )
     {
-        return scope -> {
-            Number l = Constants.toNumber( expr.invoke( scope ) );
+        return (s,a) -> {
+            Number l = Constants.toNumber( expr.invoke( s ) );
             if( l instanceof Integer ) {
                 return ~l.intValue();
             }
@@ -205,7 +205,7 @@ public class Arithmetic
 
     public static ExpressionOperation not( ExpressionOperation expr )
     {
-        return scope -> !Logic.isTrue( expr.invoke( scope ) );
+        return (s,a) -> !Logic.isTrue( expr.invoke( s ) );
     }
 
 }

@@ -1,13 +1,13 @@
 /*
- * collection1  Test new collections
+ * collection2  Test list manipulation
  */
-job "collection1";
+job "collection2";
 run as "test";
 {
     l = new List();
     log l;
 
     for( a=0; a<10; a=a+1 )
-        l.append(a);
+        l.add(a);
     log l;
 }

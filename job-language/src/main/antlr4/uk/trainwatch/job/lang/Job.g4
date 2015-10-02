@@ -39,7 +39,7 @@ grammar Job;
 import Script,Literals;
 
 compilationUnit
-    :   jobDefinition importDeclaration* output? declare? block EOF
+    :   jobDefinition output? declare? block EOF
     ;
 
 jobDefinition
@@ -47,9 +47,6 @@ jobDefinition
     |   'job' StringLiteral ';' 'run' 'as' StringLiteral ';'
     ;
 
-importDeclaration
-    :   'import' typeName ';'
-    ;
 output
     :   'output' '{' outputStatements* '}'
     ;

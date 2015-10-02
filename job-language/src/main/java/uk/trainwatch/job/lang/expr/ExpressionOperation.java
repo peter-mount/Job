@@ -13,7 +13,7 @@ import uk.trainwatch.job.lang.Operation;
  */
 @FunctionalInterface
 public interface ExpressionOperation
-        extends Operation<Object>
+        extends Operation<Object,Object>
 {
 
 }

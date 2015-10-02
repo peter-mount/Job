@@ -61,11 +61,14 @@ public class BlockCompiler
 
     public Statement getBlock( ParserRuleContext ctx, boolean declare )
     {
-        try( BlockScope scope = begin( declare ) ) {
-            if( ctx instanceof JobParser.BlockContext ) {
+        try( BlockScope scope = begin( declare ) )
+        {
+            if( ctx instanceof JobParser.BlockContext )
+            {
                 enterRule( ((JobParser.BlockContext) ctx).blockStatements() );
             }
-            else {
+            else
+            {
                 enterRule( ctx );
             }
             return scope.getStatement();
@@ -110,13 +113,16 @@ public class BlockCompiler
             // Empty then do nothing. This is better than an empty block
             // as we'll not even create a sub Scope etc when invoked
             boolean nop = statements.isEmpty();
-            if( nop ) {
+            if( nop )
+            {
                 block = Operation.nop();
             }
-            else if( declare ) {
+            else if( declare )
+            {
                 block = Block.declare( statements );
             }
-            else {
+            else
+            {
                 block = Block.block( statements );
             }
             return block;
@@ -126,7 +132,8 @@ public class BlockCompiler
     @Override
     public void enterBlock( JobParser.BlockContext ctx )
     {
-        try( BlockScope st = new BlockScope() ) {
+        try( BlockScope st = new BlockScope() )
+        {
             enterRule( ctx.blockStatements() );
             block = st.getStatement();
         }
@@ -197,10 +204,12 @@ public class BlockCompiler
     @Override
     public void enterForInit( JobParser.ForInitContext ctx )
     {
-        if( ctx.localVariableDeclaration() == null ) {
+        if( ctx.localVariableDeclaration() == null )
+        {
             enterRule( ctx.statementExpressionList() );
         }
-        else {
+        else
+        {
             enterRule( ctx.localVariableDeclaration() );
         }
     }
@@ -276,21 +285,21 @@ public class BlockCompiler
     @Override
     public void enterDeclare( JobParser.DeclareContext ctx )
     {
-        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) ) {
+        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) )
+        {
             enterRule( ctx.declareStatements() );
             block = st.getStatement();
         }
     }
 
-
 //</editor-fold>
-
     @Override
     public void enterLogStatement( JobParser.LogStatementContext ctx )
     {
         Level level;
         String l = ctx.getChild( 0 ).getText();
-        switch( l ) {
+        switch( l )
+        {
             case "log":
                 level = Level.INFO;
                 break;

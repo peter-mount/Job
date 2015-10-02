@@ -23,7 +23,7 @@ public class CollectionOp
 
     public static ExpressionOperation clear( ExpressionOperation assign )
     {
-        return s -> {
+        return (s,a) -> {
             Collection c = (Collection) Objects.requireNonNull( assign.invoke( s ), "Null collection" );
             c.clear();
             return c;
@@ -32,7 +32,7 @@ public class CollectionOp
 
     public static ExpressionOperation append( ExpressionOperation assign, ExpressionOperation exp )
     {
-        return s -> {
+        return (s,a) -> {
             Collection c = (Collection) Objects.requireNonNull( assign.invoke( s ), "Null collection" );
             c.add( exp.invoke( s ) );
             return c;
@@ -41,7 +41,7 @@ public class CollectionOp
 
     public static ExpressionOperation prepend( ExpressionOperation assign, ExpressionOperation exp )
     {
-        return s -> {
+        return (s,a) -> {
             Collection c = Objects.requireNonNull( (Collection) assign.invoke( s ), "Null collection" );
             Object val = exp.invoke( s );
             if( c instanceof List ) {
@@ -59,12 +59,12 @@ public class CollectionOp
 
     public static ExpressionOperation newList()
     {
-        return s -> new ArrayList<>();
+        return (s,a) -> new ArrayList<>();
     }
 
     public static ExpressionOperation newList( ExpressionOperation exp )
     {
-        return s -> {
+        return (s,a) -> {
             Object val = exp.invoke( s );
             if( val instanceof Collection ) {
                 return new ArrayList<>( (Collection) val );

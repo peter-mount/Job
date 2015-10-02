@@ -30,12 +30,12 @@ public class Logic
 
     public static ExpressionOperation trueOp()
     {
-        return s -> Boolean.TRUE;
+        return (s,a) -> Boolean.TRUE;
     }
 
     public static ExpressionOperation falseOp()
     {
-        return s -> Boolean.FALSE;
+        return (s,a) -> Boolean.FALSE;
     }
 
     /**
@@ -49,7 +49,7 @@ public class Logic
     public static ExpressionOperation conditional( ExpressionOperation expr, ExpressionOperation trueExpr,
                                                    ExpressionOperation falseExpr )
     {
-        return scope -> isTrue( expr.invoke( scope ) ) ? trueExpr.invoke( scope ) : falseExpr.invoke( scope );
+        return (s,a) -> isTrue( expr.invoke( s ) ) ? trueExpr.invoke( s ) : falseExpr.invoke( s );
     }
 
     /**
@@ -61,7 +61,7 @@ public class Logic
      */
     public static ExpressionOperation conditionalOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> isTrue( lhs.invoke( scope ) ) || isTrue( rhs.invoke( scope ) );
+        return (s,a) -> isTrue( lhs.invoke( s ) ) || isTrue( rhs.invoke( s ) );
     }
 
     /**
@@ -73,7 +73,7 @@ public class Logic
      */
     public static ExpressionOperation conditionalAnd( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> isTrue( lhs.invoke( scope ) ) && isTrue( rhs.invoke( scope ) );
+        return (s,a) -> isTrue( lhs.invoke( s ) ) && isTrue( rhs.invoke( s ) );
     }
 
     /**
@@ -85,7 +85,7 @@ public class Logic
      */
     public static ExpressionOperation inclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() | Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() | Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     /**
@@ -97,22 +97,22 @@ public class Logic
      */
     public static ExpressionOperation exclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() ^ Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() ^ Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation and( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() & Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() & Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation equality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> lhs.invoke( scope ) == rhs.invoke( scope );
+        return (s,a) -> lhs.invoke( s ) == rhs.invoke( s );
     }
 
     public static ExpressionOperation inequality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> lhs.invoke( scope ) != rhs.invoke( scope );
+        return (s,a) -> lhs.invoke( s ) != rhs.invoke( s );
     }
 
     private static int compare( Scope scope, ExpressionOperation lhs, ExpressionOperation rhs )
@@ -125,37 +125,37 @@ public class Logic
 
     public static ExpressionOperation lessThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> compare( scope, lhs, rhs ) < 0;
+        return (s,a) -> compare( s, lhs, rhs ) < 0;
     }
 
     public static ExpressionOperation lessThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> compare( scope, lhs, rhs ) <= 0;
+        return (s,a) -> compare( s, lhs, rhs ) <= 0;
     }
 
     public static ExpressionOperation greaterThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> compare( scope, lhs, rhs ) >= 0;
+        return (s,a) -> compare( s, lhs, rhs ) >= 0;
     }
 
     public static ExpressionOperation greaterThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> compare( scope, lhs, rhs ) > 0;
+        return (s,a) -> compare( s, lhs, rhs ) > 0;
     }
 
     public static ExpressionOperation shiftLeft( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() << Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() << Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation shiftRight( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() >> Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation shiftRightClear( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return scope -> Constants.toNumber( lhs.invoke( scope ) ).longValue() >> Constants.toNumber( rhs.invoke( scope ) ).longValue();
+        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
 }
