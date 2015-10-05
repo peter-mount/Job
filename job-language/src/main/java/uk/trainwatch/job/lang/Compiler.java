@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import uk.trainwatch.job.Job;
-import uk.trainwatch.job.lang.JobParser.*;
 
 /**
  *

@@ -11,7 +11,7 @@ def sourceDir = new File( project.basedir, "src/test/resources" );
 // Work out the test classes based on job name, eg scope1.job becomes Scope
 def tests = [] as Set;
 sourceDir.eachDirRecurse {
-    it.eachFileMatch( ~/.*\.job/ ) {
+    it.eachFileMatch( ~/lang\/.*\.job/ ) {
         file -> n = file.toString();
         if((m = n =~ /([a-zA-Z][a-zA-Z_]*?)([0-9]*?).job$/))
             tests << m.group(1);
@@ -25,7 +25,7 @@ tests.each {
 
         jobs = [];
         sourceDir.eachDirRecurse {
-            it.eachFileMatch( ~/${test}.*\.job/ ) {
+            it.eachFileMatch( ~/lang\/${test}.*\.job/ ) {
                 file -> jobs << file.name.replace(".job","");
             }
         };

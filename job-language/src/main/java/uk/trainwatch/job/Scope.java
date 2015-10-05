@@ -6,6 +6,7 @@
 package uk.trainwatch.job;
 
 import java.util.logging.Logger;
+import javax.script.Bindings;
 
 /**
  *
@@ -58,7 +59,6 @@ public interface Scope
      * @param name variable name
      * @param val  value to set
      * <p>
-     * @return original value or null if not present
      */
     <T> void setVar( String name, T val );
 
@@ -76,7 +76,7 @@ public interface Scope
     String resolveType( String type );
 
     static interface GlobalScope
-            extends Scope
+            extends Scope, Bindings
     {
 
         void setLogger( Logger logger );

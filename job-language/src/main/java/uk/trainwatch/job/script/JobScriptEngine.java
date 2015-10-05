@@ -5,12 +5,18 @@
  */
 package uk.trainwatch.job.script;
 
+import uk.trainwatch.job.util.HashBindings;
 import java.io.Reader;
+import java.io.StringReader;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import uk.trainwatch.job.Job;
+import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.lang.Compiler;
 
 /**
  *
@@ -32,14 +38,37 @@ public class JobScriptEngine
     public Object eval( String script, ScriptContext context )
             throws ScriptException
     {
-        throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
+        return eval( new StringReader( script ), context );
     }
 
     @Override
     public Object eval( Reader reader, ScriptContext context )
             throws ScriptException
     {
-        throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
+        try
+        {
+            Job job = Compiler.compile( new ANTLRInputStream( reader ) );
+
+            Scope scope;
+
+            Bindings b = context.getBindings( ScriptContext.ENGINE_SCOPE );
+            if( b instanceof Scope )
+            {
+                scope = (Scope) b;
+            }
+            else
+            {
+                scope = Scope.newInstance();
+                ctx.setBindings( (Bindings) scope, ScriptContext.ENGINE_SCOPE );
+            }
+
+            job.invoke( scope );
+
+            return null;
+        } catch( Exception ex )
+        {
+            throw new ScriptException( ex );
+        }
     }
 
     @Override
@@ -60,14 +89,14 @@ public class JobScriptEngine
     public Object eval( String script, Bindings n )
             throws ScriptException
     {
-        return eval( script, new JobScriptContext( ctx, n ) );
+        return eval( script, new JobScriptContext( null, n ) );
     }
 
     @Override
     public Object eval( Reader reader, Bindings n )
             throws ScriptException
     {
-        return eval( reader, new JobScriptContext( ctx, n ) );
+        return eval( reader, new JobScriptContext( null, n ) );
     }
 
     @Override
@@ -97,7 +126,7 @@ public class JobScriptEngine
     @Override
     public Bindings createBindings()
     {
-        return new JobBindings();
+        return new HashBindings();
     }
 
     @Override

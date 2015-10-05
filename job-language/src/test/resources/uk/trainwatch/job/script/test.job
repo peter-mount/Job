@@ -1,0 +1,18 @@
+/*
+ * Simple script used to test JSR-223 support
+ */
+job "JSR-223";
+run as "test";
+declare {
+    finalA = 0;
+}
+{
+    log "Count 0..10";
+    log "Before a="+a;
+    for( a=0; a<10; a=a+1 )
+        log "a="+a;
+    log "After a="+a;
+
+    while( finalA < 10 )
+        finalA = finalA + 1;
+}

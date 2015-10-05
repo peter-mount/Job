@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.script;
 
+import uk.trainwatch.job.util.HashBindings;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -26,13 +27,16 @@ public class JobScriptContext
 
     public JobScriptContext()
     {
-        bindings.put( ENGINE_SCOPE, new JobBindings() );
-        bindings.put( GLOBAL_SCOPE, new JobBindings() );
+        bindings.put( ENGINE_SCOPE, new HashBindings() );
+        bindings.put( GLOBAL_SCOPE, new HashBindings() );
     }
 
     JobScriptContext( JobScriptContext parent, Bindings b )
     {
-        bindings.putAll( parent.bindings);
+        if( parent != null )
+        {
+            bindings.putAll( parent.bindings );
+        }
         bindings.put( ENGINE_SCOPE, b );
     }
 
@@ -51,21 +55,21 @@ public class JobScriptContext
     @Override
     public void setAttribute( String name, Object value, int scope )
     {
-        bindings.computeIfAbsent( scope, s -> new JobBindings() )
+        bindings.computeIfAbsent( scope, s -> new HashBindings() )
                 .put( name, value );
     }
 
     @Override
     public Object getAttribute( String name, int scope )
     {
-        return bindings.computeIfAbsent( scope, s -> new JobBindings() )
+        return bindings.computeIfAbsent( scope, s -> new HashBindings() )
                 .get( name );
     }
 
     @Override
     public Object removeAttribute( String name, int scope )
     {
-        return bindings.computeIfAbsent( scope, s -> new JobBindings() )
+        return bindings.computeIfAbsent( scope, s -> new HashBindings() )
                 .remove( name );
     }
 
