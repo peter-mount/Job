@@ -149,7 +149,7 @@ public class BlockCompiler
         // so create an Expression & wrap it into a Statement
         expressionCompiler.reset().enterAssignment( ctx );
         ExpressionOperation expr = expressionCompiler.getExpression();
-        statements.add( scope -> expr.invoke( scope ) );
+        statements.add( ( s, a ) -> expr.invoke( s, a ) );
     }
 
     //</editor-fold>
@@ -265,7 +265,7 @@ public class BlockCompiler
 
         enterRule( ctx.variableInitializer() );
         ExpressionOperation expr = expressionCompiler.getExpression();
-        statements.add( s -> Assignment.setVariable( varName, expr ).invoke( s ) );
+        statements.add( ( s, a ) -> Assignment.setVariable( varName, expr ).invoke( s, a ) );
     }
 
     @Override
@@ -325,6 +325,12 @@ public class BlockCompiler
         ExpressionOperation expr = expressionCompiler.getExpression();
 
         statements.add( Log.log( level, expr ) );
+    }
+
+    @Override
+    public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
+    {
+        enterRule( ctx, expressionCompiler.reset() );
     }
 
 }

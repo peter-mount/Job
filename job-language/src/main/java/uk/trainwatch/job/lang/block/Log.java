@@ -21,12 +21,12 @@ public class Log
     {
         Objects.requireNonNull( level, "No level" );
         Objects.requireNonNull( expr, "No expression" );
-        return scope -> {
+        return (s,a) -> {
             try {
-                scope.getLogger().
+                s.getLogger().
                         log( level, () -> {
                             try {
-                                return Objects.toString( expr.invoke( scope ) );
+                                return Objects.toString( expr.invoke( s ) );
                             }
                             catch( Exception ex ) {
                                 throw new RuntimeException( ex );

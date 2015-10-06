@@ -15,20 +15,28 @@ import uk.trainwatch.job.Scope;
  * @param <T>
  */
 @FunctionalInterface
-public interface Operation<R,T>
+public interface Operation<R, T>
 {
 
     R invoke( Scope scope, T... args )
             throws Exception;
 
     /**
-     * A no operation
+     * A nop operation
+     * 
+     * @param <O>
+     * @param <R>
+     * @param <T>
      * @return 
      */
-    static Statement nop()
+    static <O extends Operation<R, T>, R, T> O nop()
     {
-        return s -> {
-        };
+        Operation<R, T> o = ( s, a )
+                ->
+                {
+                    return null;
+                };
+        return (O) o;
     }
 
 }

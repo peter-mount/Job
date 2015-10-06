@@ -122,6 +122,7 @@ statementExpression
 //  |    postDecrementExpression
 //  |    classInstanceCreationExpression
     |   logStatement
+    |   extensionStatement
     ;
 
 ifThenStatement
@@ -363,4 +364,7 @@ logStatement
     |   'severe' stringExpression
     ;
 
-
+// A statement defined in an extension
+extensionStatement
+    :   methodName '(' argumentList? ')'
+    ;

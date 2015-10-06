@@ -33,7 +33,7 @@ class Block
         }
 
         Statement body[] = toArray( statements );
-        return scope -> {
+        return (scope, args) -> {
             for( Statement s: body ) {
                 s.invoke( scope );
             }
@@ -48,7 +48,7 @@ class Block
         }
 
         Statement body[] = toArray( statements );
-        return scope -> {
+        return (scope, args) -> {
             try( Scope child = scope.begin() ) {
                 for( Statement s: body ) {
                     s.invoke( child );

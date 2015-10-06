@@ -21,53 +21,53 @@ public class Control
 
     public static Statement ifThen( ExpressionOperation exp, Statement trueBlock )
     {
-        return s ->
+        return (s, args) ->
         {
             Objects.requireNonNull( exp, "No if exp" );
             Objects.requireNonNull( trueBlock, "No if trueBlock" );
             if( Logic.isTrue( exp.invoke( s ) ) )
             {
-                trueBlock.invokeStatement( s );
+                trueBlock.invokeStatement(s, null );
             }
         };
     }
 
     public static Statement ifThenElse( ExpressionOperation exp, Statement trueBlock, Statement falseBlock )
     {
-        return s ->
+        return (s, args) ->
         {
             Objects.requireNonNull( exp, "No if exp" );
             Objects.requireNonNull( trueBlock, "No if trueBlock" );
             Objects.requireNonNull( falseBlock, "No if falseBlock" );
             if( Logic.isTrue( exp.invoke( s ) ) )
             {
-                trueBlock.invokeStatement( s );
+                trueBlock.invokeStatement(s, null );
             }
             else
             {
-                falseBlock.invokeStatement( s );
+                falseBlock.invokeStatement(s, null );
             }
         };
     }
 
     public static Statement whileLoop( ExpressionOperation exp, Statement statement )
     {
-        return s ->
+        return (s, args) ->
         {
             while( Logic.isTrue( exp.invoke( s ) ) )
             {
-                statement.invokeStatement( s );
+                statement.invokeStatement(s, null );
             }
         };
     }
 
     public static Statement doWhile( Statement statement, ExpressionOperation exp )
     {
-        return s ->
+        return (s, args) ->
         {
             do
             {
-                statement.invokeStatement( s );
+                statement.invokeStatement(s, null );
             } while( Logic.isTrue( exp.invoke( s ) ) );
         };
     }
@@ -83,15 +83,15 @@ public class Control
      */
     public static Statement basicFor( Statement init, ExpressionOperation exp, Statement update, Statement statement )
     {
-        return scope ->
+        return (scope, args) ->
         {
             try( Scope s = scope.begin() )
             {
-                init.invokeStatement( s );
+                init.invokeStatement(s, null );
                 while( Logic.isTrue( exp.invoke( s ) ) )
                 {
-                    statement.invokeStatement( s );
-                    update.invokeStatement( s );
+                    statement.invokeStatement(s, null );
+                    update.invokeStatement(s, null );
                 }
             }
         };
@@ -99,7 +99,7 @@ public class Control
 
     public static Statement enhancedFor( String name, ExpressionOperation exp, Statement statement )
     {
-        return scope ->
+        return (scope, args) ->
         {
             try( Scope s = scope.begin() )
             {
@@ -109,17 +109,17 @@ public class Control
                     for( Object val : (Iterable) col )
                     {
                         s.setVar( name, val );
-                        statement.invokeStatement( s );
+                        statement.invokeStatement(s, null );
                     }
                 }
                 else if( col instanceof Stream )
                 {
-                    ((Stream<Object>) col).forEach( val ->
+                    ((Stream<Object>) col).forEach(val ->
                     {
                         try
                         {
                             s.setVar( name, val );
-                            statement.invokeStatement( s );
+                            statement.invokeStatement(s, null );
                         } catch( Exception ex )
                         {
                             throw new RuntimeException( ex );

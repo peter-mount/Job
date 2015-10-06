@@ -49,7 +49,7 @@ class JobImpl
     }
 
     @Override
-    public void invokeStatement( Scope scope )
+    public void invokeStatement( Scope scope, Object... args)
             throws Exception
     {
         scope.getLogger().log( Level.FINE, () -> "Starting " + id );

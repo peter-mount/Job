@@ -895,4 +895,15 @@ public class JobListenerAdapter
     {
     }
 
+    @Override
+    public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitExtensionStatement( JobParser.ExtensionStatementContext ctx )
+    {
+    }
+
+    
 }

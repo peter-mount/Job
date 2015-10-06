@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.ext.ExtensionManager;
+import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -101,5 +103,11 @@ public class TypeOp
                 throw new InvocationTargetException( ex );
             }
         };
+    }
+
+    public static ExpressionOperation invokeExtension( String methodName, ExpressionOperation... argExp )
+    {
+        return ( s, a ) -> Objects.requireNonNull( ExtensionManager.INSTANCE.getStatement( methodName ), "Cannot locate " + methodName )
+                .invoke( s, invokeArguments(s,argExp ) );
     }
 }

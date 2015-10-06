@@ -350,6 +350,20 @@ public class ExpressionCompiler
     }
 
     @Override
+    public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
+    {
+        enterRule( ctx.methodName() );
+        String methodName = name;
+
+        args=null;
+        enterRule( ctx.argumentList() );
+
+        expression = TypeOp.invokeExtension( methodName, TypeOp.toArray( args ) );
+    }
+    
+    
+
+    @Override
     public void enterArgumentList( JobParser.ArgumentListContext ctx )
     {
         args = new LinkedList<>();

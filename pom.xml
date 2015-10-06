@@ -14,6 +14,7 @@
     
     <modules>
         <module>job-language</module>
+        <module>job-output</module>
     </modules>
     
     <properties>
