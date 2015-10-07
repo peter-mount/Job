@@ -1,0 +1,12 @@
+/*
+ * return1  Test return statement
+ */
+job "return1";
+run as "test";
+{
+    func = (a,b,c) -> {
+        return a + b + c;
+    };
+
+    log func(7,3,5);
+}

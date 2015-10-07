@@ -99,10 +99,10 @@ statementWithoutTrailingSubstatement
 //  |    assertStatement
 //  |    switchStatement
     |    doStatement
-//  |    breakStatement
-//  |    continueStatement
-//  |    returnStatement
-//  |    throwStatement
+    |    breakStatement
+    |    continueStatement
+    |    returnStatement
+    |    throwStatement
 //  |    tryStatement
     ;
 
@@ -158,6 +158,22 @@ forInit
 forUpdate
     :    statementExpressionList
     ;
+
+breakStatement
+        :       'break' Identifier? ';'
+        ;
+
+continueStatement
+        :       'continue' Identifier? ';'
+        ;
+
+returnStatement
+        :       'return' expression? ';'
+        ;
+
+throwStatement
+        :       'throw' expression ';'
+        ;
 
 statementExpressionList
     :    statementExpression (',' statementExpression)*

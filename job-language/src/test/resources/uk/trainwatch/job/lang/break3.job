@@ -1,0 +1,11 @@
+// Break out of a do while loop
+job "break3";
+run as "test";
+{
+    i=0;
+    do {
+        if(i>5) break;
+        log i;
+        i=i+1;
+    } while(i<10);
+}

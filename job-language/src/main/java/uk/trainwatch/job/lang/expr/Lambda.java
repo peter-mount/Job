@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import uk.trainwatch.job.AbstractScope;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Operation;
+import uk.trainwatch.job.lang.block.Block;
 import uk.trainwatch.job.lang.block.TypeOp;
 
 /**
@@ -48,7 +49,14 @@ public class Lambda
             for( int i = 0; i < params.length; i++ ) {
                 s1.setLocalVar( params[i], args[i] );
             }
-            return lambda.invoke( s1, args );
+            try {
+                return lambda.invoke( s1, args );
+            }
+            catch( Block.Return ex ) {
+                return ex.getValue();
+            }catch( Block.ControlException ex) {
+                return null;
+            }
         }
     }
 

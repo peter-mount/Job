@@ -257,6 +257,37 @@ public class BlockCompiler
     }
 //</editor-fold>
 
+    @Override
+    public void enterThrowStatement( JobParser.ThrowStatementContext ctx )
+    {
+        statements.add( Block.throwOp( expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) ) ) );
+    }
+
+    @Override
+    public void enterBreakStatement( JobParser.BreakStatementContext ctx )
+    {
+        statements.add( Block.breakOp() );
+    }
+
+    @Override
+    public void enterContinueStatement( JobParser.ContinueStatementContext ctx )
+    {
+        statements.add( Block.continueOp() );
+    }
+
+    @Override
+    public void enterReturnStatement( JobParser.ReturnStatementContext ctx )
+    {
+        if( ctx.expression() == null ) {
+            statements.add( Block.returnOp() );
+        }
+        else {
+            statements.add( Block.returnOp(
+                    expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) )
+            ) );
+        }
+    }
+
     //<editor-fold defaultstate="collapsed" desc="Global declaration section">
     @Override
     public void enterDeclare( JobParser.DeclareContext ctx )

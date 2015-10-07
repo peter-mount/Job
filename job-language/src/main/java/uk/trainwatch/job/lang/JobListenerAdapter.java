@@ -20,16 +20,14 @@ public class JobListenerAdapter
 
     public final void enterRule( Collection<? extends ParserRuleContext> l )
     {
-        if( l != null && !l.isEmpty() )
-        {
+        if( l != null && !l.isEmpty() ) {
             l.forEach( this::enterRule );
         }
     }
 
     public final void enterRule( ParserRuleContext ctx )
     {
-        if( ctx != null )
-        {
+        if( ctx != null ) {
             ctx.enterRule( this );
         }
     }
@@ -295,8 +293,13 @@ public class JobListenerAdapter
     public void enterStatementWithoutTrailingSubstatement( JobParser.StatementWithoutTrailingSubstatementContext ctx )
     {
         enterRule( ctx.block() );
-        enterRule( ctx.expressionStatement() );
+        enterRule( ctx.breakStatement() );
+        enterRule( ctx.continueStatement() );
         enterRule( ctx.doStatement() );
+        enterRule( ctx.emptyStatement() );
+        enterRule( ctx.expressionStatement() );
+        enterRule( ctx.returnStatement() );
+        enterRule( ctx.throwStatement() );
     }
 
     @Override
@@ -332,10 +335,8 @@ public class JobListenerAdapter
     @Override
     public void enterStatementExpression( JobParser.StatementExpressionContext ctx )
     {
-        // Although assignment is a form of statement it's handled entirely by ExpressionCompiler
-        //enterRule( ctx.assignment(), expressionCompiler.reset() );
         enterRule( ctx.assignment() );
-
+        enterRule( ctx.extensionStatement() );
         enterRule( ctx.logStatement() );
     }
 
@@ -930,6 +931,46 @@ public class JobListenerAdapter
 
     @Override
     public void exitLambdaBody( JobParser.LambdaBodyContext ctx )
+    {
+    }
+
+    @Override
+    public void enterThrowStatement( JobParser.ThrowStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitThrowStatement( JobParser.ThrowStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void enterBreakStatement( JobParser.BreakStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitBreakStatement( JobParser.BreakStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void enterContinueStatement( JobParser.ContinueStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitContinueStatement( JobParser.ContinueStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void enterReturnStatement( JobParser.ReturnStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitReturnStatement( JobParser.ReturnStatementContext ctx )
     {
     }
 

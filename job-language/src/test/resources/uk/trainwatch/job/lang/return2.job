@@ -1,0 +1,17 @@
+/*
+ * return2  Test return statement
+ */
+job "return2";
+run as "test";
+{
+    func = (a,b,c) -> {
+        if(a) {
+            return b + c;
+        } else {
+            return b - c;
+        }
+    };
+
+    log func(true,7,3);
+    log func(false,7,3);
+}

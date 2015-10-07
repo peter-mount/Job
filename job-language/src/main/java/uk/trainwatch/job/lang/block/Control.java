@@ -21,54 +21,64 @@ public class Control
 
     public static Statement ifThen( ExpressionOperation exp, Statement trueBlock )
     {
-        return (s, args) ->
-        {
+        return ( s, args ) -> {
             Objects.requireNonNull( exp, "No if exp" );
             Objects.requireNonNull( trueBlock, "No if trueBlock" );
-            if( Logic.isTrue( exp.invoke( s ) ) )
-            {
-                trueBlock.invokeStatement(s, null );
+            if( Logic.isTrue( exp.invoke( s ) ) ) {
+                trueBlock.invokeStatement( s );
             }
         };
     }
 
     public static Statement ifThenElse( ExpressionOperation exp, Statement trueBlock, Statement falseBlock )
     {
-        return (s, args) ->
-        {
+        return ( s, args ) -> {
             Objects.requireNonNull( exp, "No if exp" );
             Objects.requireNonNull( trueBlock, "No if trueBlock" );
             Objects.requireNonNull( falseBlock, "No if falseBlock" );
-            if( Logic.isTrue( exp.invoke( s ) ) )
-            {
-                trueBlock.invokeStatement(s, null );
+            if( Logic.isTrue( exp.invoke( s ) ) ) {
+                trueBlock.invokeStatement( s );
             }
-            else
-            {
-                falseBlock.invokeStatement(s, null );
+            else {
+                falseBlock.invokeStatement( s );
             }
         };
     }
 
     public static Statement whileLoop( ExpressionOperation exp, Statement statement )
     {
-        return (s, args) ->
-        {
-            while( Logic.isTrue( exp.invoke( s ) ) )
-            {
-                statement.invokeStatement(s, null );
+        return ( s, args ) -> {
+            try {
+                while( Logic.isTrue( exp.invoke( s ) ) ) {
+                    try {
+                        statement.invokeStatement( s );
+                    }
+                    catch( Block.Continue ex ) {
+                        // Ignore
+                    }
+                }
+            }
+            catch( Block.Break ex ) {
             }
         };
     }
 
     public static Statement doWhile( Statement statement, ExpressionOperation exp )
     {
-        return (s, args) ->
-        {
-            do
-            {
-                statement.invokeStatement(s, null );
-            } while( Logic.isTrue( exp.invoke( s ) ) );
+        return ( s, args ) -> {
+            try {
+                do {
+                    try {
+                        statement.invokeStatement( s );
+                    }
+                    catch( Block.Continue ex ) {
+                        // Ignore
+                    }
+                }
+                while( Logic.isTrue( exp.invoke( s ) ) );
+            }
+            catch( Block.Break ex ) {
+            }
         };
     }
 
@@ -79,60 +89,70 @@ public class Control
      * @param exp
      * @param update
      * @param statement
+     *                  <p>
      * @return
      */
     public static Statement basicFor( Statement init, ExpressionOperation exp, Statement update, Statement statement )
     {
-        return (scope, args) ->
-        {
-            try( Scope s = scope.begin() )
-            {
-                init.invokeStatement(s, null );
-                while( Logic.isTrue( exp.invoke( s ) ) )
-                {
-                    statement.invokeStatement(s, null );
-                    update.invokeStatement(s, null );
+        return ( scope, args ) -> {
+            try( Scope s = scope.begin() ) {
+                init.invokeStatement( s );
+                while( Logic.isTrue( exp.invoke( s ) ) ) {
+                    try {
+                        statement.invokeStatement( s );
+                    }
+                    catch( Block.Continue ex ) {
+                        // Ignore
+                    }
+                    update.invokeStatement( s );
                 }
+            }
+            catch( Block.Break ex ) {
             }
         };
     }
 
     public static Statement enhancedFor( String name, ExpressionOperation exp, Statement statement )
     {
-        return (scope, args) ->
-        {
-            try( Scope s = scope.begin() )
-            {
+        return ( scope, args ) -> {
+            try( Scope s = scope.begin() ) {
                 Object col = exp.invoke( s );
-                if( col instanceof Iterable )
-                {
-                    for( Object val : (Iterable) col )
-                    {
+                if( col instanceof Iterable ) {
+                    for( Object val: (Iterable) col ) {
                         s.setVar( name, val );
-                        statement.invokeStatement(s, null );
+                        try {
+                            statement.invokeStatement( s );
+                        }
+                        catch( Block.Continue ex ) {
+                            // Ignore
+                        }
                     }
                 }
-                else if( col instanceof Stream )
-                {
-                    ((Stream<Object>) col).forEach(val ->
-                    {
-                        try
-                        {
+                else if( col instanceof Stream ) {
+                    ((Stream<Object>) col).forEach( val -> {
+                        try {
                             s.setVar( name, val );
-                            statement.invokeStatement(s, null );
-                        } catch( Exception ex )
-                        {
+                            statement.invokeStatement( s );
+                        }
+                        catch( Block.Continue ex ) {
+                            // Ignore
+                        }
+                        catch( Exception ex ) {
                             throw new RuntimeException( ex );
                         }
                     } );
                 }
                 // TODO add range operator here
-                else
-                {
+                else {
                     throw new UnsupportedOperationException( "Don't know how to iterate " + col );
                 }
-            } catch( RuntimeException ex )
-            {
+            }
+            catch( Block.Break  ex ) {
+            }
+            catch( Block.Return ex ) {
+                throw ex;
+            }
+            catch( RuntimeException ex ) {
                 Throwable cause = ex.getCause();
                 throw cause == null ? ex : (Exception) cause;
             }

@@ -1,0 +1,11 @@
+// break out of a while loop
+job "break2";
+run as "test";
+{
+    i=0;
+    while( i<10) {
+        if(i>5) break;
+        log i;
+        i=i+1;
+    }
+}
