@@ -56,6 +56,13 @@ abstract class AbstractScope
         vars.put( name, val );
     }
 
+    @Override
+    public <T> void setLocalVar( String name, T val )
+    {
+        vars.put( name, val );
+    }
+    
+
     static class GlobalScope
             extends AbstractScope
             implements Scope.GlobalScope

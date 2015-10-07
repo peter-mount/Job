@@ -5,14 +5,16 @@
  */
 package uk.trainwatch.job.lang.expr;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
+import uk.trainwatch.job.lang.block.BlockCompiler;
 import uk.trainwatch.job.lang.block.TypeOp;
+import uk.trainwatch.job.util.NestedList;
+import uk.trainwatch.job.util.NestedString;
 
 /**
  *
@@ -22,37 +24,44 @@ public class ExpressionCompiler
         extends AbstractCompiler
 {
 
-    private ExpressionOperation expression;
-    private String name;
-    private List<ExpressionOperation> args;
+    private final BlockCompiler blockCompiler;
+    private final NestedList<ExpressionOperation> args = new NestedList.Array<>();
+    private final NestedList<String> parameters = new NestedList.Array<>();
+    private final NestedString name = new NestedString();
 
-    public ExpressionOperation getExpression()
+    // The current expression being built
+    private ExpressionOperation expression;
+
+    /**
+     *
+     * @param blockCompiler BlockCompiler in use - required for implementing lambda functions
+     */
+    public ExpressionCompiler( BlockCompiler blockCompiler )
     {
+        this.blockCompiler = blockCompiler;
+    }
+
+    public ExpressionOperation apply( Runnable r )
+    {
+        expression = null;
+        r.run();
         return expression;
     }
 
-    public String getName()
+    @Override
+    public void enterVariableInitializer( JobParser.VariableInitializerContext ctx )
     {
-        return name;
-    }
-
-    public ExpressionCompiler reset()
-    {
-        expression = null;
-        name = null;
-        return this;
+        enterRule( ctx.expression() );
     }
 
     @Override
     public void enterStringExpression( JobParser.StringExpressionContext ctx )
     {
         TerminalNode tn = ctx.StringLiteral();
-        if( tn != null )
-        {
+        if( tn != null ) {
             expression = Constants.constant( getString( tn ) );
         }
-        else
-        {
+        else {
             enterRule( ctx.expression() );
         }
     }
@@ -62,8 +71,7 @@ public class ExpressionCompiler
     public void enterConditionalExpression( JobParser.ConditionalExpressionContext ctx )
     {
         enterRule( ctx.conditionalOrExpression() );
-        if( ctx.expression() != null && ctx.conditionalExpression() != null )
-        {
+        if( ctx.expression() != null && ctx.conditionalExpression() != null ) {
             ExpressionOperation expr = expression;
 
             enterRule( ctx.expression() );
@@ -107,14 +115,11 @@ public class ExpressionCompiler
     @Override
     public void enterEqualityExpression( JobParser.EqualityExpressionContext ctx )
     {
-        if( ctx.equalityExpression() == null )
-        {
+        if( ctx.equalityExpression() == null ) {
             enterRule( ctx.relationalExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "==":
                     biop( ctx.equalityExpression(), ctx.relationalExpression(), Logic::equality );
                     break;
@@ -128,14 +133,11 @@ public class ExpressionCompiler
     @Override
     public void enterRelationalExpression( JobParser.RelationalExpressionContext ctx )
     {
-        if( ctx.relationalExpression() == null )
-        {
+        if( ctx.relationalExpression() == null ) {
             enterRule( ctx.shiftExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "<":
                     biop( ctx.relationalExpression(), ctx.shiftExpression(), Logic::lessThan );
                     break;
@@ -155,25 +157,20 @@ public class ExpressionCompiler
     @Override
     public void enterShiftExpression( JobParser.ShiftExpressionContext ctx )
     {
-        if( ctx.shiftExpression() == null )
-        {
+        if( ctx.shiftExpression() == null ) {
             enterRule( ctx.additiveExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "<":
                     biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftLeft );
                     break;
                 case ">":
-                    if( ctx.getChildCount() == 5 )
-                    {
+                    if( ctx.getChildCount() == 5 ) {
                         // >>>
                         biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftRightClear );
                     }
-                    else
-                    {
+                    else {
                         // >>
                         biop( ctx.shiftExpression(), ctx.additiveExpression(), Logic::shiftRight );
                     }
@@ -185,14 +182,11 @@ public class ExpressionCompiler
     @Override
     public void enterAdditiveExpression( JobParser.AdditiveExpressionContext ctx )
     {
-        if( ctx.additiveExpression() == null )
-        {
+        if( ctx.additiveExpression() == null ) {
             enterRule( ctx.multiplicativeExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "+":
                     biop( ctx.additiveExpression(), ctx.multiplicativeExpression(), Arithmetic::add );
                     break;
@@ -206,14 +200,11 @@ public class ExpressionCompiler
     @Override
     public void enterMultiplicativeExpression( JobParser.MultiplicativeExpressionContext ctx )
     {
-        if( ctx.multiplicativeExpression() == null )
-        {
+        if( ctx.multiplicativeExpression() == null ) {
             enterRule( ctx.unaryExpression() );
         }
-        else
-        {
-            switch( ctx.getChild( 1 ).getText() )
-            {
+        else {
+            switch( ctx.getChild( 1 ).getText() ) {
                 case "*":
                     biop( ctx.multiplicativeExpression(), ctx.unaryExpression(), Arithmetic::mult );
                     break;
@@ -235,11 +226,9 @@ public class ExpressionCompiler
 
         enterRule( ctx.unaryExpressionNotPlusMinus() );
 
-        if( ctx.unaryExpression() != null )
-        {
+        if( ctx.unaryExpression() != null ) {
             enterRule( ctx.unaryExpression() );
-            if( "-".equals( ctx.getChild( 0 ).getText() ) )
-            {
+            if( "-".equals( ctx.getChild( 0 ).getText() ) ) {
                 expression = Arithmetic.negate( expression );
             }
         }
@@ -260,11 +249,9 @@ public class ExpressionCompiler
     @Override
     public void enterUnaryExpressionNotPlusMinus( JobParser.UnaryExpressionNotPlusMinusContext ctx )
     {
-        if( ctx.unaryExpression() != null )
-        {
+        if( ctx.unaryExpression() != null ) {
             enterRule( ctx.unaryExpression() );
-            switch( ctx.getChild( 0 ).getText() )
-            {
+            switch( ctx.getChild( 0 ).getText() ) {
                 case "~":
                     expression = Arithmetic.tilde( expression );
                     break;
@@ -273,8 +260,7 @@ public class ExpressionCompiler
                     break;
             }
         }
-        else
-        {
+        else {
             enterRule( ctx.postfixExpression() );
         }
     }
@@ -282,13 +268,12 @@ public class ExpressionCompiler
     @Override
     public void enterPostfixExpression( JobParser.PostfixExpressionContext ctx )
     {
-        if( ctx.expressionName() != null )
-        {
-            enterRule( ctx.expressionName() );
-            expression = Assignment.getVariable( name );
+        if( ctx.expressionName() != null ) {
+            expression = Assignment.getVariable(
+                    name.apply( () -> enterRule( ctx.expressionName() ) )
+            );
         }
-        else
-        {
+        else {
             enterRule( ctx.primary() );
 
             // Postfix not supported
@@ -318,8 +303,7 @@ public class ExpressionCompiler
         op( ctx.StringLiteral(), n -> Constants.constant( getString( n ) ) );
         op( ctx.NullLiteral(), n -> ( s, a ) -> null );
 
-        if( ctx.CharacterLiteral() != null )
-        {
+        if( ctx.CharacterLiteral() != null ) {
             throw new UnsupportedOperationException( "Character literals currently not supported" );
         }
         //op( ctx.CharacterLiteral(), n -> null );
@@ -330,9 +314,9 @@ public class ExpressionCompiler
     {
         String type = ctx.Identifier().getText();
 
-        enterRule( ctx.argumentList() );
+        List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
-        expression = TypeOp.construct( type, TypeOp.toArray( args ) );
+        expression = TypeOp.construct( type, TypeOp.toArray( newArgs ) );
     }
 
     @Override
@@ -340,37 +324,37 @@ public class ExpressionCompiler
     {
         ExpressionOperation srcExp = expression;
 
-        enterRule( ctx.methodName() );
-        String methodName = name;
+        String methodName = name.apply( () -> enterRule( ctx.methodName() ) );
 
-        args=null;
-        enterRule( ctx.argumentList() );
+        List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
-        expression = TypeOp.invoke( srcExp, methodName, TypeOp.toArray( args ) );
+        if( srcExp == null ) {
+            // TODO extension function call lookup first
+            // A lambda invocation
+            System.out.println( "inv lamb " + methodName + " " + newArgs );
+            expression = Lambda.invoke( methodName, TypeOp.toArray( newArgs ) );
+        }
+        else {
+            // Invoke a method on an object
+            expression = TypeOp.invoke( srcExp, methodName, TypeOp.toArray( newArgs ) );
+        }
     }
 
     @Override
     public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
     {
-        enterRule( ctx.methodName() );
-        String methodName = name;
+        String methodName = name.apply( () -> enterRule( ctx.methodName() ) );
 
-        args=null;
-        enterRule( ctx.argumentList() );
+        List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
-        expression = TypeOp.invokeExtension( methodName, TypeOp.toArray( args ) );
+        expression = TypeOp.invokeExtension( methodName, TypeOp.toArray( newArgs ) );
     }
-    
-    
 
     @Override
     public void enterArgumentList( JobParser.ArgumentListContext ctx )
     {
-        args = new LinkedList<>();
-        if( ctx.expression() != null )
-        {
-            for( JobParser.ExpressionContext exp : ctx.expression() )
-            {
+        if( ctx.expression() != null ) {
+            for( JobParser.ExpressionContext exp: ctx.expression() ) {
                 enterRule( exp );
                 args.add( expression );
             }
@@ -382,21 +366,19 @@ public class ExpressionCompiler
     @Override
     public void enterAssignment( JobParser.AssignmentContext ctx )
     {
-        String varName;
         final String op = ctx.assignmentOperator().getText();
-        switch( op )
-        {
+        switch( op ) {
             case "=":
-                enterRule( ctx.leftHandSide() );
-                varName = name;
+                String varName = name.apply( () -> enterRule( ctx.leftHandSide() ) );
                 enterRule( ctx.expression() );
                 expression = Assignment.setVariable( varName, expression );
                 break;
 
-            // invoke method on object in variable
+            // Not an assignment but it exists here lexically - invoke a method on object in a variable
             case ".":
-                enterRule( ctx.leftHandSide() );
-                expression = Assignment.getVariable( name );
+                expression = Assignment.getVariable(
+                        name.apply( () -> enterRule( ctx.leftHandSide() ) )
+                );
                 enterRule( ctx.expression() );
                 break;
 
@@ -414,24 +396,81 @@ public class ExpressionCompiler
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
-        name = ctx.Identifier().getText();
+        name.set( ctx.Identifier() );
     }
 
     @Override
     public void enterMethodName( JobParser.MethodNameContext ctx )
     {
-        name = ctx.Identifier().getText();
+        name.set( ctx.Identifier() );
+    }
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Lambda Functions">
+    @Override
+    public void enterLambdaExpression( JobParser.LambdaExpressionContext ctx )
+    {
+        // Preserve current values so we can nest
+        parameters.apply( () -> {
+            enterRule( ctx.lambdaParameters() );
+            enterRule( ctx.lambdaBody() );
+        } );
+    }
+
+    @Override
+    public void enterLambdaBody( JobParser.LambdaBodyContext ctx )
+    {
+        if( ctx.expression() != null ) {
+            enterRule( ctx.expression() );
+            expression = Lambda.lambda( parameters, expression );
+        }
+        else {
+            expression = Lambda.lambda( parameters, blockCompiler.getBlock( ctx.block() ) );
+        }
+
+        // Now replace with a wrapper which returns the current expression, in this case the lambda
+        ExpressionOperation exp = expression;
+        expression = ( s, a ) -> exp;
+    }
+
+    @Override
+    public void enterLambdaParameters( JobParser.LambdaParametersContext ctx )
+    {
+        if( ctx.Identifier() != null ) {
+            parameters.add( ctx.Identifier().getText() );
+        }
+
+        enterRule( ctx.inferredFormalParameterList() );
+    }
+
+    @Override
+    public void enterInferredFormalParameterList( JobParser.InferredFormalParameterListContext ctx )
+    {
+        ctx.Identifier()
+                .stream()
+                .map( TerminalNode::getText )
+                .forEach( parameters::add );
+    }
+
+    @Override
+    public void enterPrimary( JobParser.PrimaryContext ctx )
+    {
+        if( ctx.expression() != null ) {
+            apply( () -> enterRule( ctx.expression() ) );
+        }
+
+        enterRule( ctx.literal() );
+        enterRule( ctx.newObject() );
+        enterRule( ctx.methodInvocation() );
     }
 
     //</editor-fold>
     private void biop( ParserRuleContext lc, ParserRuleContext rc, BiOp op )
     {
-        if( lc == null )
-        {
+        if( lc == null ) {
             enterRule( rc );
         }
-        else
-        {
+        else {
             enterRule( lc );
             ExpressionOperation lhs = expression;
 
@@ -442,9 +481,9 @@ public class ExpressionCompiler
 
     private <T> void op( T val, Function<T, ExpressionOperation> mapper )
     {
-        if( val != null )
-        {
+        if( val != null ) {
             expression = mapper.apply( val );
+
         }
     }
 

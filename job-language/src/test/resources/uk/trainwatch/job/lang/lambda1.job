@@ -1,0 +1,17 @@
+/*
+ * lambda1  Basic lambda functions
+ */
+job "lambda1";
+run as "test";
+{
+    // define a simple function
+    add = (a,b)->a+b;
+
+    sub = (a,b) -> a - b;
+
+    // Now some simple sums
+    log add(1,2);
+    log add(7,3);
+    log sub(10,4);
+    log sub(add(3,7),6);
+}

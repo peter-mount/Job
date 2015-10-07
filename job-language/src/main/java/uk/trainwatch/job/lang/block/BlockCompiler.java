@@ -11,11 +11,11 @@ import java.util.logging.Level;
 import org.antlr.v4.runtime.ParserRuleContext;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
-import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.Assignment;
 import uk.trainwatch.job.lang.expr.ExpressionCompiler;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
+import uk.trainwatch.job.util.NestedString;
 
 /**
  *
@@ -25,13 +25,13 @@ public class BlockCompiler
         extends AbstractCompiler
 {
 
-    private final ExpressionCompiler expressionCompiler = new ExpressionCompiler();
+    private final ExpressionCompiler expressionCompiler = new ExpressionCompiler( this );
 
     // The current block's statements
     private List<Statement> statements = null;
     // The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
     private Statement block;
-    private String name;
+    private final NestedString name = new NestedString();
 
     //<editor-fold defaultstate="collapsed" desc="Blocks">
     /**
@@ -61,14 +61,11 @@ public class BlockCompiler
 
     public Statement getBlock( ParserRuleContext ctx, boolean declare )
     {
-        try( BlockScope scope = begin( declare ) )
-        {
-            if( ctx instanceof JobParser.BlockContext )
-            {
+        try( BlockScope scope = begin( declare ) ) {
+            if( ctx instanceof JobParser.BlockContext ) {
                 enterRule( ((JobParser.BlockContext) ctx).blockStatements() );
             }
-            else
-            {
+            else {
                 enterRule( ctx );
             }
             return scope.getStatement();
@@ -113,16 +110,14 @@ public class BlockCompiler
             // Empty then do nothing. This is better than an empty block
             // as we'll not even create a sub Scope etc when invoked
             boolean nop = statements.isEmpty();
-            if( nop )
-            {
-                block = Operation.nop();
+            if( nop ) {
+                block = ( s, a ) -> {
+                };
             }
-            else if( declare )
-            {
+            else if( declare ) {
                 block = Block.declare( statements );
             }
-            else
-            {
+            else {
                 block = Block.block( statements );
             }
             return block;
@@ -132,8 +127,7 @@ public class BlockCompiler
     @Override
     public void enterBlock( JobParser.BlockContext ctx )
     {
-        try( BlockScope st = new BlockScope() )
-        {
+        try( BlockScope st = new BlockScope() ) {
             enterRule( ctx.blockStatements() );
             block = st.getStatement();
         }
@@ -147,8 +141,7 @@ public class BlockCompiler
     {
         // Assignment is actually handled by expressionCompiler
         // so create an Expression & wrap it into a Statement
-        expressionCompiler.reset().enterAssignment( ctx );
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterAssignment( ctx ) );
         statements.add( ( s, a ) -> expr.invoke( s, a ) );
     }
 
@@ -157,8 +150,7 @@ public class BlockCompiler
     @Override
     public void enterIfThenStatement( JobParser.IfThenStatementContext ctx )
     {
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation exp = expressionCompiler.getExpression();
+        ExpressionOperation exp = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         Statement trueBlock = getBlock( ctx.statement(), true );
 
@@ -168,8 +160,7 @@ public class BlockCompiler
     @Override
     public void enterIfThenElseStatement( JobParser.IfThenElseStatementContext ctx )
     {
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation exp = expressionCompiler.getExpression();
+        ExpressionOperation exp = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         Statement trueBlock = getBlock( ctx.statement( 0 ) );
         Statement falseBlock = getBlock( ctx.statement( 1 ) );
@@ -191,8 +182,7 @@ public class BlockCompiler
         // This scope will then be bound to the entire for() expression.
         Statement init = getBlock( ctx.forInit(), true );
 
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation exp = expressionCompiler.getExpression();
+        ExpressionOperation exp = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         Statement update = getBlock( ctx.forUpdate(), true );
 
@@ -204,12 +194,10 @@ public class BlockCompiler
     @Override
     public void enterForInit( JobParser.ForInitContext ctx )
     {
-        if( ctx.localVariableDeclaration() == null )
-        {
+        if( ctx.localVariableDeclaration() == null ) {
             enterRule( ctx.statementExpressionList() );
         }
-        else
-        {
+        else {
             enterRule( ctx.localVariableDeclaration() );
         }
     }
@@ -223,11 +211,9 @@ public class BlockCompiler
     @Override
     public void enterEnhancedForStatement( JobParser.EnhancedForStatementContext ctx )
     {
-        enterRule( ctx.variableDeclaratorId() );
-        String varName = name;
+        String varName = name.apply( () -> enterRule( ctx.variableDeclaratorId() ) );
 
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         Statement statement = getBlock( ctx.statement(), true );
         statements.add( Control.enhancedFor( varName, expr, statement ) );
@@ -236,8 +222,7 @@ public class BlockCompiler
     @Override
     public void enterWhileStatement( JobParser.WhileStatementContext ctx )
     {
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         Statement statement = getBlock( ctx.statement() );
 
@@ -249,8 +234,7 @@ public class BlockCompiler
     {
         Statement statement = getBlock( ctx.statement() );
 
-        enterRule( ctx.expression(), expressionCompiler.reset() );
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) );
 
         statements.add( Control.doWhile( statement, expr ) );
     }
@@ -260,24 +244,16 @@ public class BlockCompiler
     @Override
     public void enterVariableDeclarator( JobParser.VariableDeclaratorContext ctx )
     {
-        enterRule( ctx.variableDeclaratorId() );
-        String varName = name;
+        String varName = name.apply( () -> enterRule( ctx.variableDeclaratorId() ) );
 
-        enterRule( ctx.variableInitializer() );
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.variableInitializer() ) );
         statements.add( ( s, a ) -> Assignment.setVariable( varName, expr ).invoke( s, a ) );
     }
 
     @Override
     public void enterVariableDeclaratorId( JobParser.VariableDeclaratorIdContext ctx )
     {
-        name = ctx.Identifier().getText();
-    }
-
-    @Override
-    public void enterVariableInitializer( JobParser.VariableInitializerContext ctx )
-    {
-        enterRule( ctx.expression(), expressionCompiler.reset() );
+        name.set( ctx.Identifier() );
     }
 //</editor-fold>
 
@@ -285,8 +261,7 @@ public class BlockCompiler
     @Override
     public void enterDeclare( JobParser.DeclareContext ctx )
     {
-        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) )
-        {
+        try( BlockCompiler.BlockScope st = new BlockCompiler.BlockScope( true ) ) {
             enterRule( ctx.declareStatements() );
             block = st.getStatement();
         }
@@ -298,8 +273,7 @@ public class BlockCompiler
     {
         Level level;
         String l = ctx.getChild( 0 ).getText();
-        switch( l )
-        {
+        switch( l ) {
             case "log":
                 level = Level.INFO;
                 break;
@@ -320,9 +294,7 @@ public class BlockCompiler
                 throw new IllegalArgumentException( "Unsupported Log level " + l );
         }
 
-        enterRule( ctx.stringExpression(), expressionCompiler.reset() );
-
-        ExpressionOperation expr = expressionCompiler.getExpression();
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.stringExpression() ) );
 
         statements.add( Log.log( level, expr ) );
     }
@@ -330,7 +302,7 @@ public class BlockCompiler
     @Override
     public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
     {
-        enterRule( ctx, expressionCompiler.reset() );
+        expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx ) );
     }
 
 }

@@ -13,17 +13,17 @@ import uk.trainwatch.job.Scope;
  */
 @FunctionalInterface
 public interface Statement
-        extends Operation<Void,Object>
+        extends Operation<Object,Object>
 {
 
     void invokeStatement( Scope scope, Object... args)
             throws Exception;
 
     @Override
-    default Void invoke( Scope scope, Object... args )
+    default Object invoke( Scope scope, Object... args )
             throws Exception
     {
-        invokeStatement(scope, null );
+        invokeStatement(scope, args );
         return null;
     }
 }

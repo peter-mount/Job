@@ -43,11 +43,11 @@ public class CompilationUnitCompiler
         enterRule( ctx.jobDefinition() );
 
         // Optional declare { }
-        enterRule( ctx.declare(), blockCompiler );
+        blockCompiler.enterRule( ctx.declare() );
         declareBlock = blockCompiler.getBlock();
 
         // Optional output { }
-        enterRule( ctx.output(), blockCompiler );
+        blockCompiler.enterRule( ctx.output() );
         outputBlock = blockCompiler.getBlock();
 
         // The main body

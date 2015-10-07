@@ -198,8 +198,28 @@ assignmentOperator
     ;
 
 expression
-    :    assignmentExpression
+    :   lambdaExpression
+    |   assignmentExpression
     ;
+
+lambdaExpression
+        :       lambdaParameters '->' lambdaBody
+        ;
+
+lambdaParameters
+        :       Identifier
+        |       '(' inferredFormalParameterList ')'
+        ;
+
+inferredFormalParameterList
+        :       Identifier (',' Identifier)*
+        ;
+
+lambdaBody
+        :       expression
+        |       block
+        ;
+
 
 assignmentExpression
     :    conditionalExpression

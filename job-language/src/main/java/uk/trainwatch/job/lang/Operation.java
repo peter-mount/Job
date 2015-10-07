@@ -21,22 +21,4 @@ public interface Operation<R, T>
     R invoke( Scope scope, T... args )
             throws Exception;
 
-    /**
-     * A nop operation
-     * 
-     * @param <O>
-     * @param <R>
-     * @param <T>
-     * @return 
-     */
-    static <O extends Operation<R, T>, R, T> O nop()
-    {
-        Operation<R, T> o = ( s, a )
-                ->
-                {
-                    return null;
-                };
-        return (O) o;
-    }
-
 }

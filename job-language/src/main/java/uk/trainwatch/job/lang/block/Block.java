@@ -20,7 +20,8 @@ class Block
 
     private static Statement[] toArray( Collection<Statement> statements )
     {
-        if( statements == null || statements.isEmpty() ) {
+        if( statements == null || statements.isEmpty() )
+        {
             return new Statement[0];
         }
         return statements.toArray( new Statement[statements.size()] );
@@ -28,13 +29,18 @@ class Block
 
     public static Statement declare( Collection<Statement> statements )
     {
-        if( statements == null || statements.isEmpty() ) {
-            return Operation.nop();
+        if( statements == null || statements.isEmpty() )
+        {
+            return ( s, a ) ->
+            {
+            };
         }
 
         Statement body[] = toArray( statements );
-        return (scope, args) -> {
-            for( Statement s: body ) {
+        return ( scope, args ) ->
+        {
+            for( Statement s : body )
+            {
                 s.invoke( scope );
             }
         };
@@ -43,18 +49,24 @@ class Block
 
     public static Statement block( Collection<Statement> statements )
     {
-        if( statements == null || statements.isEmpty() ) {
-            return Operation.nop();
+        if( statements == null || statements.isEmpty() )
+        {
+            return ( s, a ) ->
+            {
+            };
         }
 
         Statement body[] = toArray( statements );
-        return (scope, args) -> {
-            try( Scope child = scope.begin() ) {
-                for( Statement s: body ) {
+        return ( scope, args ) ->
+        {
+            try( Scope child = scope.begin() )
+            {
+                for( Statement s : body )
+                {
                     s.invoke( child );
                 }
             }
         };
     }
-    
+
 }

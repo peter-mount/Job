@@ -8,7 +8,6 @@ package uk.trainwatch.job.lang;
 import java.util.Collection;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -27,24 +26,11 @@ public class JobListenerAdapter
         }
     }
 
-    protected void enterRule( Collection<? extends ParserRuleContext> l, ParseTreeListener ptl )
-    {
-        if( l != null && !l.isEmpty() )
-        {
-            l.forEach( r -> enterRule( r, ptl ) );
-        }
-    }
-
     public final void enterRule( ParserRuleContext ctx )
-    {
-        enterRule( ctx, this );
-    }
-
-    protected final void enterRule( ParserRuleContext ctx, ParseTreeListener l )
     {
         if( ctx != null )
         {
-            ctx.enterRule( l );
+            ctx.enterRule( this );
         }
     }
 
@@ -506,6 +492,7 @@ public class JobListenerAdapter
     @Override
     public void enterExpression( JobParser.ExpressionContext ctx )
     {
+        enterRule( ctx.lambdaExpression() );
         enterRule( ctx.assignmentExpression() );
     }
 
@@ -799,10 +786,6 @@ public class JobListenerAdapter
     @Override
     public void enterPrimary( JobParser.PrimaryContext ctx )
     {
-        enterRule( ctx.expression() );
-        enterRule( ctx.literal() );
-        enterRule( ctx.newObject() );
-        enterRule( ctx.methodInvocation() );
     }
 
     @Override
@@ -905,5 +888,49 @@ public class JobListenerAdapter
     {
     }
 
-    
+    @Override
+    public void enterLambdaExpression( JobParser.LambdaExpressionContext ctx )
+    {
+        enterRule( ctx.lambdaParameters() );
+        enterRule( ctx.lambdaBody() );
+    }
+
+    @Override
+    public void exitLambdaExpression( JobParser.LambdaExpressionContext ctx )
+    {
+    }
+
+    @Override
+    public void enterLambdaParameters( JobParser.LambdaParametersContext ctx )
+    {
+        enterRule( ctx.inferredFormalParameterList() );
+    }
+
+    @Override
+    public void exitLambdaParameters( JobParser.LambdaParametersContext ctx )
+    {
+    }
+
+    @Override
+    public void enterInferredFormalParameterList( JobParser.InferredFormalParameterListContext ctx )
+    {
+    }
+
+    @Override
+    public void exitInferredFormalParameterList( JobParser.InferredFormalParameterListContext ctx )
+    {
+    }
+
+    @Override
+    public void enterLambdaBody( JobParser.LambdaBodyContext ctx )
+    {
+        enterRule( ctx.block() );
+        enterRule( ctx.expression() );
+    }
+
+    @Override
+    public void exitLambdaBody( JobParser.LambdaBodyContext ctx )
+    {
+    }
+
 }

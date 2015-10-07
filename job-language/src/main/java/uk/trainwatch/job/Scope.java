@@ -63,6 +63,14 @@ public interface Scope
     <T> void setVar( String name, T val );
 
     /**
+     * Sets the value in this scope only
+     * @param <T>
+     * @param name
+     * @param val 
+     */
+    <T> void setLocalVar( String name, T val );
+
+    /**
      * begin a new variable scope
      * <p>
      * @return new scope
