@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job;
 
+import java.util.Collection;
 import java.util.logging.Logger;
 import javax.script.Bindings;
 
@@ -82,9 +83,11 @@ public interface Scope
 
     void addImport( String type );
 
+    Collection<String> getImports();
+    
     String resolveType( String type );
     
-    String resolveClass( Class<?> clazz );
+    String resolveClass( String clazz );
     
     Scope.GlobalScope getGlobalScope();
 

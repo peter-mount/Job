@@ -6,8 +6,8 @@ run as "test";
         log "body start";
         resource.run();
         log "body end";
-        throw new Exception();
-    } catch( Exception ex ) {
+        throw new NullPointerException();
+    } catch( NullPointerException ex ) {
         log "Exception caught";
     }
 }

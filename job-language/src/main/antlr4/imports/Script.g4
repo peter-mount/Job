@@ -419,6 +419,10 @@ newObject
 
 methodInvocation
     :   methodName '(' argumentList? ')'
+    // Reserved words that are also valid method names
+    |   'run' '(' argumentList? ')'
+    |   'as' '(' argumentList? ')'
+    |   'job' '(' argumentList? ')'
     ;
 
 argumentList

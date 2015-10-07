@@ -281,10 +281,10 @@ public class JobListenerAdapter
     @Override
     public void enterStatement( JobParser.StatementContext ctx )
     {
-        enterRule( ctx.statementWithoutTrailingSubstatement() );
-        enterRule( ctx.ifThenStatement() );
-        enterRule( ctx.ifThenElseStatement() );
         enterRule( ctx.forStatement() );
+        enterRule( ctx.ifThenElseStatement() );
+        enterRule( ctx.ifThenStatement() );
+        enterRule( ctx.statementWithoutTrailingSubstatement() );
         enterRule( ctx.whileStatement() );
     }
 

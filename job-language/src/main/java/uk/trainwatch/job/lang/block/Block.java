@@ -112,55 +112,78 @@ public class Block
     {
         Throwable t = t1 instanceof Block.Throw ? ((Block.Throw) t1).getCause() : t1;
 
-        System.out.println( "Resolve " + t.getClass() );
-        String type = s.resolveClass( t.getClass() );
-        System.out.println( type );
+        String cn = t.getClass().getName();
+
+        String type = s.getImports()
+                .stream()
+                .filter( c -> c.equals( cn ) )
+                .map( s::resolveClass )
+                .findAny()
+                .orElse( null );
 
         Statement stat = type == null ? null : catches.get( type );
-        System.out.println( stat );
-        if( stat == null ) {
-            if( t instanceof Exception ) {
-                throw (Exception) t;
-            }
-            else {
-                throw new InvocationTargetException( t );
-            }
+
+        if( stat != null ) {
+            return stat;
         }
 
-        return stat;
+        if( t instanceof Exception ) {
+            throw (Exception) t;
+        }
+        else {
+            throw new InvocationTargetException( t );
+        }
     }
 
     public static Statement tryOp( Statement resourceBlock, Statement block, Map<String, Statement> catches, Statement finallyBlock )
     {
         Objects.requireNonNull( block, "No method body in try" );
-        if( resourceBlock == null ) {
+
+        return resourceBlock == null ? tryOpStandard( block, catches, finallyBlock ) : tryResource( resourceBlock, block, catches, finallyBlock );
+    }
+
+    private static Statement tryOpStandard( Statement block, Map<String, Statement> catches, Statement finallyBlock )
+    {
+        if( catches == null || catches.isEmpty() ) {
             Objects.requireNonNull( finallyBlock, "No finally block in try" );
 
-            if( catches == null || catches.isEmpty() ) {
-                return ( s, a ) -> {
-                    try {
-                        block.invoke( s );
-                    }
-                    finally {
-                        finallyBlock.invoke( s );
-                    }
-                };
-            }
-            else {
-                return ( s, a ) -> {
-                    try {
-                        block.invoke( s );
-                    }
-                    catch( Throwable t ) {
-                        resolveCatch( catches, s, t ).invoke( s );
-                    }
-                    finally {
-                        finallyBlock.invoke( s );
-                    }
-                };
-            }
+            return ( s, a ) -> {
+                try {
+                    block.invoke( s );
+                }
+                finally {
+                    finallyBlock.invoke( s );
+                }
+            };
         }
 
+        if( finallyBlock == null ) {
+            return ( s, a ) -> {
+                try {
+                    block.invoke( s );
+                }
+                catch( Throwable t ) {
+                    resolveCatch( catches, s, t ).invoke( s );
+                }
+            };
+        }
+        else {
+            return ( s, a ) -> {
+                try {
+                    block.invoke( s );
+                }
+                catch( Throwable t ) {
+                    resolveCatch( catches, s, t ).invoke( s );
+                }
+                finally {
+                    finallyBlock.invoke( s );
+                }
+            };
+        }
+    }
+
+    private static Statement tryResource( Statement resourceBlock, Statement block, Map<String, Statement> catches, Statement finallyBlock )
+    {
         if( finallyBlock == null ) {
             if( catches == null || catches.isEmpty() ) {
                 return ( s, a ) -> {
@@ -182,32 +205,31 @@ public class Block
                 };
             }
         }
+
+        if( catches == null || catches.isEmpty() ) {
+            return ( s, a ) -> {
+                try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                    resourceBlock.invoke( scope, a );
+                    block.invoke( scope );
+                }
+                finally {
+                    finallyBlock.invoke( s );
+                }
+            };
+        }
         else {
-            if( catches == null || catches.isEmpty() ) {
-                return ( s, a ) -> {
-                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
-                        resourceBlock.invoke( scope, a );
-                        block.invoke( scope );
-                    }
-                    finally {
-                        finallyBlock.invoke( s );
-                    }
-                };
-            }
-            else {
-                return ( s, a ) -> {
-                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
-                        resourceBlock.invoke( scope, a );
-                        block.invoke( scope );
-                    }
-                    catch( Throwable t ) {
-                        resolveCatch( catches, s, t ).invoke( s );
-                    }
-                    finally {
-                        finallyBlock.invoke( s );
-                    }
-                };
-            }
+            return ( s, a ) -> {
+                try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                    resourceBlock.invoke( scope, a );
+                    block.invoke( scope );
+                }
+                catch( Throwable t ) {
+                    resolveCatch( catches, s, t ).invoke( s );
+                }
+                finally {
+                    finallyBlock.invoke( s );
+                }
+            };
         }
 
     }

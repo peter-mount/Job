@@ -7,6 +7,7 @@ package uk.trainwatch.job;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,19 +33,16 @@ public abstract class AbstractScope
                 "Deque", "java.util.LinkedList",
                 "Map", "java.util.HashMap",
                 // Exceptions
-                "Exception", "java.lang.Exception",
                 "NullPointerException", "java.lang.NullPointerException",
-                "RuntimeException", "java.lang.RuntimeException"
+                "RuntimeException", "java.lang.RuntimeException",
+                "Exception", "java.lang.Exception"
             };
-    private static final Map<String, String> IMPORTS = new ConcurrentHashMap<>();
     private static final Map<String, Class<?>> IMPORT_CLASS = new ConcurrentHashMap<>();
 
     static {
         try {
             for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
                 IMPORT_CLASS.put( STANDARD_IMPORTS[i], Class.forName( STANDARD_IMPORTS[i + 1] ) );
-                IMPORTS.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
-
             }
         }
         catch( ClassNotFoundException ex ) {
@@ -86,8 +84,7 @@ public abstract class AbstractScope
             implements Scope.GlobalScope
     {
 
-        private final Map<String, String> imports = new HashMap<>();
-        private final Map<String, Class<?>> importClass = new HashMap<>();
+        private final Map<String, String> imports = new LinkedHashMap<>();
 
         protected Logger logger;
 
@@ -102,8 +99,9 @@ public abstract class AbstractScope
             currentScope.set( this );
             this.logger = logger;
 
-            imports.putAll( IMPORTS );
-            importClass.putAll( IMPORT_CLASS );
+            for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
+                imports.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
+            }
         }
 
         @Override
@@ -113,15 +111,20 @@ public abstract class AbstractScope
         }
 
         @Override
-        public String resolveClass( Class<?> clazz )
+        public String resolveClass( String clazz )
         {
-            return importClass.entrySet()
+            return imports.entrySet()
                     .stream()
-                    .peek( System.out::println )
-                    .filter( c -> c.getValue().isAssignableFrom( clazz ) )
+                    .filter( c -> c.getValue().equals( clazz ) )
                     .map( Map.Entry::getKey )
                     .findAny()
                     .orElse( null );
+        }
+
+        @Override
+        public Collection<String> getImports()
+        {
+            return imports.values();
         }
 
         @Override
@@ -129,13 +132,7 @@ public abstract class AbstractScope
         {
             int i = type.lastIndexOf( '.' );
             String n = i > -1 ? type.substring( i + 1 ) : type;
-            try {
-                importClass.putIfAbsent( n, Class.forName( type ) );
-                imports.putIfAbsent( n, type );
-            }
-            catch( ClassNotFoundException ex ) {
-                throw new Block.Throw( ex );
-            }
+            imports.putIfAbsent( n, type );
         }
 
         @Override
@@ -276,9 +273,15 @@ public abstract class AbstractScope
         }
 
         @Override
-        public String resolveClass( Class<?> clazz )
+        public String resolveClass( String clazz )
         {
             return globalScope.resolveClass( clazz );
+        }
+
+        @Override
+        public Collection<String> getImports()
+        {
+            return globalScope.getImports();
         }
 
         @Override

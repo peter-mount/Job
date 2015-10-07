@@ -3,6 +3,6 @@ try5  INFO   Open
 try5  INFO   body start
 try5  INFO   Run
 try5  INFO   body end
-try5  INFO   Exception caught
 try5  INFO   Close
+try5  INFO   Exception caught
 try5  FINE   Completed try5

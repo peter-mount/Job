@@ -324,7 +324,14 @@ public class ExpressionCompiler
     {
         ExpressionOperation srcExp = expression;
 
-        String methodName = name.apply( () -> enterRule( ctx.methodName() ) );
+        // Resovle the method name, either the user supplied one or one of the reserved workds
+        String methodName;
+        if( ctx.methodName() != null ) {
+            methodName = name.apply( () -> enterRule( ctx.methodName() ) );
+        }
+        else {
+            methodName = ctx.getChild( 0 ).getText();
+        }
 
         List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
