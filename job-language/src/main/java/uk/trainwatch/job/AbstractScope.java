@@ -16,24 +16,24 @@ import java.util.logging.Logger;
  *
  * @author peter
  */
-abstract class AbstractScope
+public abstract class AbstractScope
         implements Scope
 {
 
-    private static final String STANDARD_IMPORTS[] =
-    {
-        "List", "java.util.ArrayList",
-        "Set", "java.util.HashSet",
-        "Queue", "java.util.LinkedList",
-        "Deque", "java.util.LinkedList",
-        "Map", "java.util.HashMap"
-    };
+    private static final ThreadLocal<Scope> currentScope = new ThreadLocal<>();
+
+    private static final String STANDARD_IMPORTS[]
+                                  = {
+                "List", "java.util.ArrayList",
+                "Set", "java.util.HashSet",
+                "Queue", "java.util.LinkedList",
+                "Deque", "java.util.LinkedList",
+                "Map", "java.util.HashMap"
+            };
     private static final Map<String, String> IMPORTS = new ConcurrentHashMap<>();
 
-    static
-    {
-        for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 )
-        {
+    static {
+        for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
             IMPORTS.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
         }
     }
@@ -42,6 +42,11 @@ abstract class AbstractScope
 
     protected AbstractScope()
     {
+    }
+
+    public static Scope getCurrentScope()
+    {
+        return currentScope.get();
     }
 
     @Override
@@ -61,7 +66,6 @@ abstract class AbstractScope
     {
         vars.put( name, val );
     }
-    
 
     static class GlobalScope
             extends AbstractScope
@@ -70,6 +74,18 @@ abstract class AbstractScope
 
         private final Map<String, String> imports = new HashMap<>();
         protected Logger logger;
+
+        public GlobalScope()
+        {
+            this( null );
+        }
+
+        @SuppressWarnings("LeakingThisInConstructor")
+        public GlobalScope( Logger logger )
+        {
+            currentScope.set( this );
+            this.logger = logger;
+        }
 
         @Override
         public String resolveType( String type )
@@ -81,12 +97,10 @@ abstract class AbstractScope
         public void addImport( String type )
         {
             int i = type.lastIndexOf( '.' );
-            if( i > -1 )
-            {
+            if( i > -1 ) {
                 imports.putIfAbsent( type.substring( i + 1 ), type );
             }
-            else
-            {
+            else {
                 imports.putIfAbsent( type, type );
             }
         }
@@ -119,7 +133,9 @@ abstract class AbstractScope
         @Override
         public Scope begin()
         {
-            return new DefaultScope( this );
+            Scope scope = new DefaultScope( this );
+            currentScope.set( scope );
+            return scope;
         }
 
 //<editor-fold defaultstate="collapsed" desc="Bindings">
@@ -231,18 +247,15 @@ abstract class AbstractScope
         @Override
         public <T> void setVar( String name, T val )
         {
-            if( vars.containsKey( name ) )
-            {
+            if( vars.containsKey( name ) ) {
                 // If we have it then stop here
                 vars.put( name, val );
             }
-            else if( globalScope.exists( name ) )
-            {
+            else if( globalScope.exists( name ) ) {
                 // If global then straight to that scope
                 globalScope.setVar( name, val );
             }
-            else if( !put( name, val ) )
-            {
+            else if( !put( name, val ) ) {
                 // Recurse down the scopes but if none claim it then put it into ours
                 vars.put( name, val );
             }
@@ -250,7 +263,6 @@ abstract class AbstractScope
 
         @Override
         public void close()
-                throws Exception
         {
             vars.clear();
         }
@@ -258,7 +270,9 @@ abstract class AbstractScope
         @Override
         public Scope begin()
         {
-            return new SubScope( globalScope, this );
+            Scope scope = new SubScope( globalScope, this );
+            currentScope.set( scope );
+            return scope;
         }
 
     }
@@ -277,8 +291,7 @@ abstract class AbstractScope
         {
             T v = (T) vars.get( name );
 
-            if( v == null )
-            {
+            if( v == null ) {
                 v = globalScope.getVar( name );
             }
 
@@ -288,12 +301,18 @@ abstract class AbstractScope
         @Override
         protected boolean put( String name, Object val )
         {
-            if( vars.containsKey( name ) )
-            {
+            if( vars.containsKey( name ) ) {
                 vars.put( name, val );
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public void close()
+        {
+            currentScope.set( globalScope );
+            super.close();
         }
 
     }
@@ -315,12 +334,10 @@ abstract class AbstractScope
         {
             T v = (T) vars.get( name );
 
-            if( v == null )
-            {
+            if( v == null ) {
                 v = globalScope.getVar( name );
 
-                if( v == null )
-                {
+                if( v == null ) {
                     v = parentScope.getVar( name );
                 }
             }
@@ -331,12 +348,18 @@ abstract class AbstractScope
         @Override
         protected boolean put( String name, Object val )
         {
-            if( vars.containsKey( name ) )
-            {
+            if( vars.containsKey( name ) ) {
                 vars.put( name, val );
                 return true;
             }
             return parentScope.put( name, val );
+        }
+
+        @Override
+        public void close()
+        {
+            currentScope.set( parentScope );
+            super.close();
         }
 
     }

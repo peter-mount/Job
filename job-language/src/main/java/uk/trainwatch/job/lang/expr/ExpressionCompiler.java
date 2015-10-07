@@ -331,7 +331,6 @@ public class ExpressionCompiler
         if( srcExp == null ) {
             // TODO extension function call lookup first
             // A lambda invocation
-            System.out.println( "inv lamb " + methodName + " " + newArgs );
             expression = Lambda.invoke( methodName, TypeOp.toArray( newArgs ) );
         }
         else {

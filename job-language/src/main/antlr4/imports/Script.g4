@@ -353,9 +353,9 @@ postDecrementExpression_lf_postfixExpression
 
 primary
     :   literal
-        |    '(' expression ')'
-        |   newObject
-      | methodInvocation
+    |   '(' expression ')'
+    |   newObject
+    |   methodInvocation
     ;
 
 newObject

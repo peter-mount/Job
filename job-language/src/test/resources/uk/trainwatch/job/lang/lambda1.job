@@ -14,4 +14,9 @@ run as "test";
     log add(7,3);
     log sub(10,4);
     log sub(add(3,7),6);
+
+    // Simple lambda with one arg so no (), simply wrap a string with ":"
+    logger = s -> ":" + s + ":";
+    log logger("hello");
+    
 }

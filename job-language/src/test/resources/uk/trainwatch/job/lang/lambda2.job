@@ -1,0 +1,17 @@
+/*
+ * lambda2  lambda functions on collections
+ */
+job "lambda2";
+run as "test";
+{
+    l = new List();
+    l.add(7);
+    l.add(3);
+    l.add(5);
+
+    l.forEach( e -> {log e; } );
+
+    s=0;
+    l.forEach( e -> s=s+e );
+    log s;
+}

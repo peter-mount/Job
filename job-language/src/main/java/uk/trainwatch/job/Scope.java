@@ -64,9 +64,10 @@ public interface Scope
 
     /**
      * Sets the value in this scope only
+     * <p>
      * @param <T>
      * @param name
-     * @param val 
+     * @param val
      */
     <T> void setLocalVar( String name, T val );
 
@@ -84,7 +85,8 @@ public interface Scope
     String resolveType( String type );
 
     static interface GlobalScope
-            extends Scope, Bindings
+            extends Scope,
+                    Bindings
     {
 
         void setLogger( Logger logger );
