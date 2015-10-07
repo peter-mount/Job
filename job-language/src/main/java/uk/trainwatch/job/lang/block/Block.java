@@ -5,7 +5,11 @@
  */
 package uk.trainwatch.job.lang.block;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import uk.trainwatch.job.AbstractScope;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
@@ -103,6 +107,111 @@ public class Block
         };
     }
 
+    private static Statement resolveCatch( Map<String, Statement> catches, Scope s, Throwable t1 )
+            throws Exception
+    {
+        Throwable t = t1 instanceof Block.Throw ? ((Block.Throw) t1).getCause() : t1;
+
+        System.out.println( "Resolve " + t.getClass() );
+        String type = s.resolveClass( t.getClass() );
+        System.out.println( type );
+
+        Statement stat = type == null ? null : catches.get( type );
+        System.out.println( stat );
+        if( stat == null ) {
+            if( t instanceof Exception ) {
+                throw (Exception) t;
+            }
+            else {
+                throw new InvocationTargetException( t );
+            }
+        }
+
+        return stat;
+    }
+
+    public static Statement tryOp( Statement resourceBlock, Statement block, Map<String, Statement> catches, Statement finallyBlock )
+    {
+        Objects.requireNonNull( block, "No method body in try" );
+        if( resourceBlock == null ) {
+            Objects.requireNonNull( finallyBlock, "No finally block in try" );
+
+            if( catches == null || catches.isEmpty() ) {
+                return ( s, a ) -> {
+                    try {
+                        block.invoke( s );
+                    }
+                    finally {
+                        finallyBlock.invoke( s );
+                    }
+                };
+            }
+            else {
+                return ( s, a ) -> {
+                    try {
+                        block.invoke( s );
+                    }
+                    catch( Throwable t ) {
+                        resolveCatch( catches, s, t ).invoke( s );
+                    }
+                    finally {
+                        finallyBlock.invoke( s );
+                    }
+                };
+            }
+        }
+
+        if( finallyBlock == null ) {
+            if( catches == null || catches.isEmpty() ) {
+                return ( s, a ) -> {
+                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                        resourceBlock.invoke( scope, a );
+                        block.invoke( scope );
+                    }
+                };
+            }
+            else {
+                return ( s, a ) -> {
+                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                        resourceBlock.invoke( scope, a );
+                        block.invoke( scope );
+                    }
+                    catch( Throwable t ) {
+                        resolveCatch( catches, s, t ).invoke( s );
+                    }
+                };
+            }
+        }
+        else {
+            if( catches == null || catches.isEmpty() ) {
+                return ( s, a ) -> {
+                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                        resourceBlock.invoke( scope, a );
+                        block.invoke( scope );
+                    }
+                    finally {
+                        finallyBlock.invoke( s );
+                    }
+                };
+            }
+            else {
+                return ( s, a ) -> {
+                    try( Scope scope = AbstractScope.resourceScope( s ) ) {
+                        resourceBlock.invoke( scope, a );
+                        block.invoke( scope );
+                    }
+                    catch( Throwable t ) {
+                        resolveCatch( catches, s, t ).invoke( s );
+                    }
+                    finally {
+                        finallyBlock.invoke( s );
+                    }
+                };
+            }
+        }
+
+    }
+
     public static class ControlException
             extends RuntimeException
     {
@@ -142,11 +251,20 @@ public class Block
             extends ControlException
     {
 
-        private Throw( Throwable cause )
+        public Throw( Throwable cause )
         {
             super( cause );
         }
 
+        public void rethrow()
+                throws Exception
+        {
+            Throwable cause = getCause();
+            if( cause instanceof Exception ) {
+                throw (Exception) cause;
+            }
+            throw new InvocationTargetException( cause );
+        }
     }
 
     public static class Return

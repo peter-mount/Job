@@ -1,0 +1,13 @@
+// test of a resource and it gets closed when an exception is thrown
+job "try5";
+run as "test";
+{
+    try( resource = new TempResource() ) {
+        log "body start";
+        resource.run();
+        log "body end";
+        throw new Exception();
+    } catch( Exception ex ) {
+        log "Exception caught";
+    }
+}

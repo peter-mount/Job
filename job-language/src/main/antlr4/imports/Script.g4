@@ -103,7 +103,7 @@ statementWithoutTrailingSubstatement
     |    continueStatement
     |    returnStatement
     |    throwStatement
-//  |    tryStatement
+    |    tryStatement
     ;
 
 emptyStatement
@@ -174,6 +174,45 @@ returnStatement
 throwStatement
         :       'throw' expression ';'
         ;
+
+tryStatement
+        :       'try' block catches
+        |       'try' block catches? finally_
+        |       'try' resourceSpecification block catches? finally_?
+        ;
+
+catches
+        :       catchClause catchClause*
+        ;
+
+catchClause
+        :       'catch' '(' catchFormalParameter ')' block
+        ;
+
+catchFormalParameter
+        :       catchType variableDeclaratorId
+        ;
+
+catchType
+        :       Identifier ('|' Identifier)*
+        ;
+
+finally_
+        :       'finally' block
+        ;
+
+resourceSpecification
+        :       '(' resourceList ';'? ')'
+        ;
+
+resourceList
+        :       resource (';' resource)*
+        ;
+
+resource
+        :       variableDeclaratorId '=' expression
+        ;
+
 
 statementExpressionList
     :    statementExpression (',' statementExpression)*

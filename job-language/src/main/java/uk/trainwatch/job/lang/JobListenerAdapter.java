@@ -32,6 +32,7 @@ public class JobListenerAdapter
         }
     }
 
+    //<editor-fold defaultstate="collapsed" desc="Compilation Unit">
     @Override
     public void enterCompilationUnit( JobParser.CompilationUnitContext ctx )
     {
@@ -151,6 +152,7 @@ public class JobListenerAdapter
     {
 
     }
+//</editor-fold>
 
     @Override
     public void enterLiteral( JobParser.LiteralContext ctx )
@@ -164,6 +166,7 @@ public class JobListenerAdapter
 
     }
 
+    //<editor-fold defaultstate="collapsed" desc="Variables">
     @Override
     public void enterVariableDeclaratorList( JobParser.VariableDeclaratorListContext ctx )
     {
@@ -213,6 +216,32 @@ public class JobListenerAdapter
     }
 
     @Override
+    public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
+    {
+        enterRule( ctx.localVariableDeclaration() );
+    }
+
+    @Override
+    public void exitLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
+    {
+        enterRule( ctx.variableDeclaratorList() );
+    }
+
+    @Override
+    public void exitLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
+    {
+
+    }
+//</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="Blocks">
+    @Override
     public void enterBlock( JobParser.BlockContext ctx )
     {
 
@@ -250,30 +279,6 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
-    {
-        enterRule( ctx.localVariableDeclaration() );
-    }
-
-    @Override
-    public void exitLocalVariableDeclarationStatement( JobParser.LocalVariableDeclarationStatementContext ctx )
-    {
-
-    }
-
-    @Override
-    public void enterLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
-    {
-        enterRule( ctx.variableDeclaratorList() );
-    }
-
-    @Override
-    public void exitLocalVariableDeclaration( JobParser.LocalVariableDeclarationContext ctx )
-    {
-
-    }
-
-    @Override
     public void enterStatement( JobParser.StatementContext ctx )
     {
         enterRule( ctx.statementWithoutTrailingSubstatement() );
@@ -300,6 +305,7 @@ public class JobListenerAdapter
         enterRule( ctx.expressionStatement() );
         enterRule( ctx.returnStatement() );
         enterRule( ctx.throwStatement() );
+        enterRule( ctx.tryStatement() );
     }
 
     @Override
@@ -345,7 +351,9 @@ public class JobListenerAdapter
     {
 
     }
+//</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Control statements">
     @Override
     public void enterIfThenStatement( JobParser.IfThenStatementContext ctx )
     {
@@ -465,7 +473,9 @@ public class JobListenerAdapter
     {
 
     }
+//</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Expressions">
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
@@ -828,6 +838,7 @@ public class JobListenerAdapter
     public void exitStringExpression( JobParser.StringExpressionContext ctx )
     {
     }
+//</editor-fold>
 
     @Override
     public void enterLogStatement( JobParser.LogStatementContext ctx )
@@ -839,6 +850,7 @@ public class JobListenerAdapter
     {
     }
 
+    //<editor-fold defaultstate="collapsed" desc="Method invocation">
     @Override
     public void enterNewObject( JobParser.NewObjectContext ctx )
     {
@@ -888,7 +900,9 @@ public class JobListenerAdapter
     public void exitExtensionStatement( JobParser.ExtensionStatementContext ctx )
     {
     }
+//</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Lambda expressions">
     @Override
     public void enterLambdaExpression( JobParser.LambdaExpressionContext ctx )
     {
@@ -933,7 +947,9 @@ public class JobListenerAdapter
     public void exitLambdaBody( JobParser.LambdaBodyContext ctx )
     {
     }
+//</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Block break/throw statements">
     @Override
     public void enterThrowStatement( JobParser.ThrowStatementContext ctx )
     {
@@ -973,5 +989,115 @@ public class JobListenerAdapter
     public void exitReturnStatement( JobParser.ReturnStatementContext ctx )
     {
     }
+//</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="try">
+    @Override
+    public void enterCatchClause( JobParser.CatchClauseContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitCatchClause( JobParser.CatchClauseContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterCatchFormalParameter( JobParser.CatchFormalParameterContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitCatchFormalParameter( JobParser.CatchFormalParameterContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterCatchType( JobParser.CatchTypeContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitCatchType( JobParser.CatchTypeContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterCatches( JobParser.CatchesContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitCatches( JobParser.CatchesContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterFinally_( JobParser.Finally_Context ctx )
+    {
+
+    }
+
+    @Override
+    public void exitFinally_( JobParser.Finally_Context ctx )
+    {
+
+    }
+
+    @Override
+    public void enterResource( JobParser.ResourceContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitResource( JobParser.ResourceContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterResourceList( JobParser.ResourceListContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitResourceList( JobParser.ResourceListContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterResourceSpecification( JobParser.ResourceSpecificationContext ctx )
+    {
+
+    }
+
+    @Override
+    public void exitResourceSpecification( JobParser.ResourceSpecificationContext ctx )
+    {
+
+    }
+
+    @Override
+    public void enterTryStatement( JobParser.TryStatementContext ctx )
+    {
+    }
+
+    @Override
+    public void exitTryStatement( JobParser.TryStatementContext ctx )
+    {
+
+    }
+//</editor-fold>
 
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import uk.trainwatch.job.lang.block.Block;
 
 /**
  *
@@ -24,17 +25,30 @@ public abstract class AbstractScope
 
     private static final String STANDARD_IMPORTS[]
                                   = {
+                // Collections
                 "List", "java.util.ArrayList",
                 "Set", "java.util.HashSet",
                 "Queue", "java.util.LinkedList",
                 "Deque", "java.util.LinkedList",
-                "Map", "java.util.HashMap"
+                "Map", "java.util.HashMap",
+                // Exceptions
+                "Exception", "java.lang.Exception",
+                "NullPointerException", "java.lang.NullPointerException",
+                "RuntimeException", "java.lang.RuntimeException"
             };
     private static final Map<String, String> IMPORTS = new ConcurrentHashMap<>();
+    private static final Map<String, Class<?>> IMPORT_CLASS = new ConcurrentHashMap<>();
 
     static {
-        for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
-            IMPORTS.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
+        try {
+            for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
+                IMPORT_CLASS.put( STANDARD_IMPORTS[i], Class.forName( STANDARD_IMPORTS[i + 1] ) );
+                IMPORTS.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
+
+            }
+        }
+        catch( ClassNotFoundException ex ) {
+            throw new InstantiationError( ex.getMessage() );
         }
     }
 
@@ -73,6 +87,8 @@ public abstract class AbstractScope
     {
 
         private final Map<String, String> imports = new HashMap<>();
+        private final Map<String, Class<?>> importClass = new HashMap<>();
+
         protected Logger logger;
 
         public GlobalScope()
@@ -85,23 +101,40 @@ public abstract class AbstractScope
         {
             currentScope.set( this );
             this.logger = logger;
+
+            imports.putAll( IMPORTS );
+            importClass.putAll( IMPORT_CLASS );
         }
 
         @Override
         public String resolveType( String type )
         {
-            return IMPORTS.containsKey( type ) ? IMPORTS.get( type ) : imports.getOrDefault( type, type );
+            return imports.get( type );
+        }
+
+        @Override
+        public String resolveClass( Class<?> clazz )
+        {
+            return importClass.entrySet()
+                    .stream()
+                    .peek( System.out::println )
+                    .filter( c -> c.getValue().isAssignableFrom( clazz ) )
+                    .map( Map.Entry::getKey )
+                    .findAny()
+                    .orElse( null );
         }
 
         @Override
         public void addImport( String type )
         {
             int i = type.lastIndexOf( '.' );
-            if( i > -1 ) {
-                imports.putIfAbsent( type.substring( i + 1 ), type );
+            String n = i > -1 ? type.substring( i + 1 ) : type;
+            try {
+                importClass.putIfAbsent( n, Class.forName( type ) );
+                imports.putIfAbsent( n, type );
             }
-            else {
-                imports.putIfAbsent( type, type );
+            catch( ClassNotFoundException ex ) {
+                throw new Block.Throw( ex );
             }
         }
 
@@ -136,6 +169,12 @@ public abstract class AbstractScope
             Scope scope = new DefaultScope( this );
             currentScope.set( scope );
             return scope;
+        }
+
+        @Override
+        public Scope.GlobalScope getGlobalScope()
+        {
+            return this;
         }
 
 //<editor-fold defaultstate="collapsed" desc="Bindings">
@@ -225,9 +264,21 @@ public abstract class AbstractScope
         }
 
         @Override
+        public Scope.GlobalScope getGlobalScope()
+        {
+            return globalScope;
+        }
+
+        @Override
         public String resolveType( String type )
         {
             return globalScope.resolveType( type );
+        }
+
+        @Override
+        public String resolveClass( Class<?> clazz )
+        {
+            return globalScope.resolveClass( clazz );
         }
 
         @Override
@@ -322,11 +373,17 @@ public abstract class AbstractScope
     {
 
         private final AbstractChildScope parentScope;
+        private boolean readOnly;
 
         protected SubScope( GlobalScope globalScope, AbstractChildScope parentScope )
         {
             super( globalScope );
             this.parentScope = parentScope;
+        }
+
+        void setReadOnly( boolean readOnly )
+        {
+            this.readOnly = readOnly;
         }
 
         @Override
@@ -348,7 +405,7 @@ public abstract class AbstractScope
         @Override
         protected boolean put( String name, Object val )
         {
-            if( vars.containsKey( name ) ) {
+            if( !readOnly && vars.containsKey( name ) ) {
                 vars.put( name, val );
                 return true;
             }
@@ -360,6 +417,49 @@ public abstract class AbstractScope
         {
             currentScope.set( parentScope );
             super.close();
+        }
+
+    }
+
+    public static Scope resourceScope( Scope scope )
+    {
+        return new ResourceScope( (GlobalScope) scope.getGlobalScope(), (AbstractChildScope) scope );
+    }
+
+    private static class ResourceScope
+            extends SubScope
+    {
+
+        public ResourceScope( GlobalScope globalScope, AbstractChildScope parentScope )
+        {
+            super( globalScope, parentScope );
+        }
+
+        @Override
+        public Scope begin()
+        {
+            setReadOnly( true );
+            return super.begin();
+        }
+
+        @Override
+        public void close()
+        {
+            try {
+                vars.values().
+                        forEach( v -> {
+                            if( v instanceof AutoCloseable ) {
+                                try {
+                                    ((AutoCloseable) v).close();
+                                }
+                                catch( Exception ex ) {
+                                }
+                            }
+                        } );
+            }
+            finally {
+                super.close();
+            }
         }
 
     }

@@ -83,6 +83,10 @@ public interface Scope
     void addImport( String type );
 
     String resolveType( String type );
+    
+    String resolveClass( Class<?> clazz );
+    
+    Scope.GlobalScope getGlobalScope();
 
     static interface GlobalScope
             extends Scope,

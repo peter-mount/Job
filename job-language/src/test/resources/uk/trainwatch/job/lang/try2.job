@@ -1,0 +1,13 @@
+// test that try actually captures an exception
+// this also tests throw
+job "try2";
+run as "test";
+{
+    try {
+        log "body";
+        throw new Exception();
+        log "throw failed";
+    } catch( Exception ex ) {
+        log "Exception caught";
+    }
+}

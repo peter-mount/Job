@@ -1,0 +1,11 @@
+// test that try runs both block and finally clause
+job "try1";
+run as "test";
+{
+    try {
+        log "body";
+    } finally {
+        log "finally";
+    }
+
+}

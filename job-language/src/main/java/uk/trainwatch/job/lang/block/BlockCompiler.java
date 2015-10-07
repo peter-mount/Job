@@ -15,6 +15,7 @@ import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.Assignment;
 import uk.trainwatch.job.lang.expr.ExpressionCompiler;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
+import uk.trainwatch.job.util.NestedMap;
 import uk.trainwatch.job.util.NestedString;
 
 /**
@@ -32,6 +33,7 @@ public class BlockCompiler
     // The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }
     private Statement block;
     private final NestedString name = new NestedString();
+    private final NestedMap<String, Statement> catches = new NestedMap.Linked<>();
 
     //<editor-fold defaultstate="collapsed" desc="Blocks">
     /**
@@ -61,6 +63,10 @@ public class BlockCompiler
 
     public Statement getBlock( ParserRuleContext ctx, boolean declare )
     {
+        if( ctx == null ) {
+            return null;
+        }
+
         try( BlockScope scope = begin( declare ) ) {
             if( ctx instanceof JobParser.BlockContext ) {
                 enterRule( ((JobParser.BlockContext) ctx).blockStatements() );
@@ -133,8 +139,8 @@ public class BlockCompiler
         }
         statements.add( block );
     }
-    //</editor-fold>
 
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="General Statement processing">
     @Override
     public void enterAssignment( JobParser.AssignmentContext ctx )
@@ -256,6 +262,7 @@ public class BlockCompiler
         name.set( ctx.Identifier() );
     }
 //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Break/throw">
 
     @Override
     public void enterThrowStatement( JobParser.ThrowStatementContext ctx )
@@ -287,8 +294,66 @@ public class BlockCompiler
             ) );
         }
     }
+//</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Try">
 
+    @Override
+    public void enterTryStatement( JobParser.TryStatementContext ctx )
+    {
+        statements.add( Block.tryOp(
+                getBlock( ctx.resourceSpecification(), true ),
+                getBlock( ctx.block(), false ),
+                catches.apply( () -> enterRule( ctx.catches() ) ),
+                getBlock( ctx.finally_(), false )
+        ) );
+    }
+
+    @Override
+    public void enterResourceSpecification( JobParser.ResourceSpecificationContext ctx )
+    {
+        enterRule( ctx.resourceList() );
+    }
+
+    @Override
+    public void enterResourceList( JobParser.ResourceListContext ctx )
+    {
+        enterRule( ctx.resource() );
+    }
+
+    @Override
+    public void enterResource( JobParser.ResourceContext ctx )
+    {
+        statements.add( ( s, a ) -> Assignment.setVariable(
+                name.apply( () -> enterRule( ctx.variableDeclaratorId() ) ),
+                expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx.expression() ) )
+        ).invoke( s ) );
+    }
+
+    @Override
+    public void enterCatches( JobParser.CatchesContext ctx )
+    {
+        enterRule( ctx.catchClause() );
+    }
+
+    @Override
+    public void enterCatchClause( JobParser.CatchClauseContext ctx )
+    {
+        Statement block = getBlock( ctx.block(), true );
+
+        ctx.catchFormalParameter()
+                .catchType()
+                .Identifier()
+                .forEach( id -> catches.put( id.getText(), block ) );
+    }
+
+    @Override
+    public void enterFinally_( JobParser.Finally_Context ctx )
+    {
+        enterRule( ctx.block() );
+    }
+//</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Global declaration section">
+
     @Override
     public void enterDeclare( JobParser.DeclareContext ctx )
     {

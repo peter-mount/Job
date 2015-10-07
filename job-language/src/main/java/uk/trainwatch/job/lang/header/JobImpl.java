@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
+import uk.trainwatch.job.lang.block.Block;
 
 /**
  *
@@ -63,6 +64,9 @@ class JobImpl
             }
 
             block.invokeStatement( scope );
+        }
+        catch( Block.Throw ex ) {
+            ex.rethrow();
         }
         finally {
             scope.getLogger().log( Level.FINE, () -> "Completed " + id );
