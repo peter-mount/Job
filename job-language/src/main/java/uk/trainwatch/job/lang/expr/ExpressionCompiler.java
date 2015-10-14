@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.block.BlockCompiler;
@@ -335,14 +336,22 @@ public class ExpressionCompiler
 
         List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
+        @SuppressWarnings("LocalVariableHidesMemberVariable")
+        ExpressionOperation[] args = TypeOp.toArray( newArgs );
+        
         if( srcExp == null ) {
-            // TODO extension function call lookup first
-            // A lambda invocation
-            expression = Lambda.invoke( methodName, TypeOp.toArray( newArgs ) );
+            expression = ExtensionManager.INSTANCE.getExpression( methodName, args );
+            if( expression == null ) {
+                // A lambda invocation
+                expression = Lambda.invoke( methodName, args );
+            }
         }
         else {
-            // Invoke a method on an object
-            expression = TypeOp.invoke( srcExp, methodName, TypeOp.toArray( newArgs ) );
+            expression = ExtensionManager.INSTANCE.getExpression( srcExp, methodName, args );
+            if( expression == null ) {
+                // Invoke a method on an object
+                expression = TypeOp.invoke( srcExp, methodName, args );
+            }
         }
     }
 

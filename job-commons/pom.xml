@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>uk.trainwatch.job</groupId>
+        <artifactId>job-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>job-commons</artifactId>
+    <packaging>jar</packaging>
+    
+    <name>Job Commons</name>
+    
+    <description>
+        Provides common extensions to the job language, from Configuration to FTP and CURL.
+    </description>
+    
+    <dependencies>
+        
+        <!-- Reference to job language, provided as this can be shared amongst projects -->
+        <dependency>
+            <groupId>uk.trainwatch.job</groupId>
+            <artifactId>job-language</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>uk.trainwatch</groupId>
+            <artifactId>opendata-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <!-- CDI -->
+        <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <version>1.5</version>
+        </dependency>
+        
+    </dependencies>
+    
+</project>

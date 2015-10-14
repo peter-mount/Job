@@ -1,3 +1,6 @@
 /job-language/src/main/example/
 /job-language/target/
 /job-output/target/
+/job-config/target/
+/job-commons/target/
+/job-shell/target/

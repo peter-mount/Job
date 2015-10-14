@@ -11,7 +11,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.ext.ExtensionManager;

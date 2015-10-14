@@ -6,6 +6,7 @@
 package uk.trainwatch.job.ext;
 
 import uk.trainwatch.job.lang.Statement;
+import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
  *
@@ -32,6 +33,7 @@ public interface Extension
      * Retrieve a statement given it's name
      *
      * @param name Name of statement
+     * <p>
      * @return Statement or null
      */
     default Statement getStatement( String name )
@@ -39,4 +41,28 @@ public interface Extension
         return null;
     }
 
+    /**
+     *
+     * @param name Function name
+     * @param args Arguments
+     * <p>
+     * @return ExpressionOperaton or null if not supported
+     */
+    default ExpressionOperation getExpression( String name, ExpressionOperation... args )
+    {
+        return null;
+    }
+
+    /**
+     *
+     * @param src  ExpressionOperation to return the object to invoke this expression against
+     * @param name Function name
+     * @param args Arguments
+     * <p>
+     * @return ExpressionOperaton or null if not supported
+     */
+    default ExpressionOperation getExpression( ExpressionOperation src, String name, ExpressionOperation... args )
+    {
+        return null;
+    }
 }

@@ -5,8 +5,12 @@
  */
 package uk.trainwatch.job.lang;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import uk.trainwatch.job.lang.header.CompilationUnitCompiler;
 import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -56,6 +60,16 @@ public class Compiler
     public static Job compile( CharStream input )
     {
         return compile( parse( input ) );
+    }
+
+    public static ANTLRInputStream fromFile( String n )
+    {
+        try {
+            return new ANTLRFileStream( n );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     private Compiler()

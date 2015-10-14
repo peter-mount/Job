@@ -8,7 +8,9 @@ package uk.trainwatch.job.output;
 import java.util.Arrays;
 import java.util.Objects;
 import org.kohsuke.MetaInfServices;
+import uk.trainwatch.job.AbstractScope;
 import uk.trainwatch.job.ext.Extension;
+import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
@@ -20,7 +22,7 @@ import uk.trainwatch.job.lang.expr.ExpressionOperation;
  *
  * @author peter
  */
-@MetaInfServices( Extension.class )
+@MetaInfServices(Extension.class)
 public class PrintExtension
         implements Extension
 {
@@ -37,35 +39,43 @@ public class PrintExtension
         return "1.0";
     }
 
+    private String toString( Object o )
+    {
+        if( o instanceof Operation ) {
+            try {
+                return Objects.toString( ((Operation) o).invoke( AbstractScope.getCurrentScope() ) );
+            }
+            catch( Exception ex ) {
+                throw new RuntimeException( ex );
+            }
+        }
+        else {
+            return Objects.toString( o );
+        }
+    }
+
     @Override
     public Statement getStatement( String name )
     {
-        switch( name )
-        {
+        switch( name ) {
             case "print":
-                return ( s, a ) ->
-                {
+                return ( s, a ) -> {
                     Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    for( Object arg : args )
-                    {
+                    for( Object arg: args ) {
                         System.out.print( arg );
                     }
                 };
             case "println":
-                return ( s, a ) ->
-                {
+                return ( s, a ) -> {
                     Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    for( Object arg : args )
-                    {
+                    for( Object arg: args ) {
                         System.out.println( arg );
                     }
                 };
             case "printf":
-                return ( s, a ) ->
-                {
+                return ( s, a ) -> {
                     Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    if( args.length > 1 )
-                    {
+                    if( args.length > 1 ) {
                         System.out.printf( Objects.toString( args[0] ), Arrays.copyOfRange( args, 1, args.length ) );
                     }
                 };
