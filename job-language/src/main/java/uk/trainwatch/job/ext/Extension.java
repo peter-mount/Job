@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.ext;
 
+import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
@@ -29,12 +30,18 @@ public interface Extension
      */
     String getVersion();
 
+    default void init()
+            throws Exception
+    {
+    }
+
     /**
      * Retrieve a statement given it's name
      *
      * @param name Name of statement
      * <p>
      * @param args
+     *             <p>
      * @return Statement or null
      */
     default Statement getStatement( String name, ExpressionOperation... args )

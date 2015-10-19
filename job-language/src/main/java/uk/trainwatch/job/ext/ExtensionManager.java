@@ -37,6 +37,21 @@ public enum ExtensionManager
         }
     }
 
+    public void init()
+    {
+        Iterator<Extension> it = extensions.iterator();
+        while( it.hasNext() ) {
+            Extension ext = it.next();
+            try {
+                ext.init();
+            }
+            catch( Exception ex ) {
+                LOG.log( Level.WARNING, () -> "Removing " + ext.getName() + " " + ex.getMessage() );
+                it.remove();
+            }
+        }
+    }
+
     public Statement getStatement( String name, ExpressionOperation... args )
     {
         return extensions.stream()

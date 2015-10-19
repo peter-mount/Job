@@ -21,8 +21,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.job.lang.Compiler;
-import uk.trainwatch.util.LoggingUtils;
 import uk.trainwatch.util.sql.DataSourceProducer;
 
 /**
@@ -38,6 +38,7 @@ public class Main
     private static final Semaphore semaphore = new Semaphore( 0 );
     private static CommandLine cmd;
 
+    private static boolean database;
     private static boolean cdi;
     private static boolean daemon;
     private static boolean cluster;
@@ -47,6 +48,8 @@ public class Main
             throws Exception
     {
         configure( args );
+        
+        ExtensionManager.INSTANCE.init();
 
         // Compile any scripts. This will allow for any syntax errors to be shown immediately rather than after startup
         List<Job> jobs = ((List<String>) cmd.getArgList())
@@ -101,10 +104,11 @@ public class Main
         clusterName = cmd.hasOption( "cluster" ) ? cmd.getOptionValue( "cluster" ) : null;
         cluster = clusterName != null && !clusterName.isEmpty();
 
+        database = cmd.hasOption( "database" );
         cdi = cluster || cmd.hasOption( "cdi" );
         daemon = cluster || cmd.hasOption( "daemon" );
 
-        if( cmd.hasOption( "database" ) ) {
+        if( database ) {
             DataSourceProducer.setFactory( read( cmd.getOptionValue( "database" ) ) );
             DataSourceProducer.setUseJndi( false );
         }

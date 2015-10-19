@@ -17,6 +17,7 @@
         <module>job-language</module>
         <module>job-output</module>
         <module>job-shell</module>
+        <module>job-sql</module>
     </modules>
     
     <properties>

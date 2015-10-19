@@ -11,5 +11,6 @@ DIR=$(dirname $0)
 CP=$(echo $(ls $DIR/*.jar)|sed "s/ /:/g");
 exec java \
     -Djava.util.logging.config.file=${DIR}/logging.properties \
-    -cp $CP uk.trainwatch.job/shell.Main \
+    -cp $CP \
+    uk.trainwatch.job.shell.Main \
     "$@"
