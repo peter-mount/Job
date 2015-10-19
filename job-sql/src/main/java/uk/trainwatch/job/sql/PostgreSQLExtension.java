@@ -13,11 +13,11 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
-import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 import uk.trainwatch.util.sql.DataSourceProducer;
 import uk.trainwatch.util.sql.SQL;
+import uk.trainwatch.util.sql.SQLResultSetHandler;
 
 /**
  * Implements print, println and printf functionality.
@@ -31,7 +31,7 @@ public class PostgreSQLExtension
         implements Extension
 {
 
-    private static final Logger LOG = Logger.getLogger(PostgreSQLExtension.class.getName() );
+    private static final Logger LOG = Logger.getLogger( PostgreSQLExtension.class.getName() );
 
     private PostgreSQLManager postgreSQLManager;
 
@@ -87,7 +87,6 @@ public class PostgreSQLExtension
 //
 //        return null;
 //    }
-
     @Override
     public ExpressionOperation getExpression( String name, ExpressionOperation... args )
     {
@@ -97,9 +96,12 @@ public class PostgreSQLExtension
         }
 
         PostgreSQLFunction f = postgreSQLManager.get( name );
+        if( f == null || args.length != f.getArgc() ) {
+            return null;
+        }
 
         // Returns a single value
-        if( f != null && f.isSinglevalue() && args.length == f.getArgc() ) {
+        if( f.isSinglevalue() && args.length == f.getArgc() ) {
             return ( s, a ) -> {
                 DataSource ds = DataSourceProducer.getInstance().getDataSource( f.getDataSource() );
                 try( Connection con = ds.getConnection() ) {
@@ -108,6 +110,19 @@ public class PostgreSQLExtension
                         try( ResultSet rs = ps.executeQuery() ) {
                             return rs.next() ? rs.getObject( 1 ) : null;
                         }
+                    }
+                }
+            };
+        }
+
+        // Returns a result set in one go
+        if( f.isResultset() ) {
+            return ( s, a ) -> {
+                DataSource ds = DataSourceProducer.getInstance().getDataSource( f.getDataSource() );
+                try( Connection con = ds.getConnection() ) {
+                    Object argv[] = TypeOp.invokeArguments( s, args );
+                    try( PreparedStatement ps = SQL.prepare( con, "SELECT * FROM " + f.getSqlCall(), argv ) ) {
+                        return SQL.executeQuery( ps, SQLResultSetHandler.toMap() );
                     }
                 }
             };

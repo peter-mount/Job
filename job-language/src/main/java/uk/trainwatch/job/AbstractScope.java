@@ -7,12 +7,12 @@ package uk.trainwatch.job;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import uk.trainwatch.job.lang.block.Block;
 
 /**
  *
@@ -318,6 +318,16 @@ public abstract class AbstractScope
         @Override
         public void close()
         {
+            vars.values().forEach( v -> {
+                try {
+                    if( v instanceof AutoCloseable ) {
+                        ((AutoCloseable) v).close();
+                    }
+                }
+                catch( Exception ex ) {
+                    // Ignore
+                }
+            } );
             vars.clear();
         }
 
@@ -449,16 +459,20 @@ public abstract class AbstractScope
         public void close()
         {
             try {
-                vars.values().
-                        forEach( v -> {
-                            if( v instanceof AutoCloseable ) {
-                                try {
-                                    ((AutoCloseable) v).close();
-                                }
-                                catch( Exception ex ) {
-                                }
-                            }
-                        } );
+                Iterator<Object> it = vars.values().iterator();
+                while( it.hasNext() ) {
+                    Object v = it.next();
+                    if( v instanceof AutoCloseable ) {
+                        try {
+                            ((AutoCloseable) v).close();
+                        }
+                        catch( Exception ex ) {
+                        }
+                        finally {
+                            it.remove();
+                        }
+                    }
+                }
             }
             finally {
                 super.close();
