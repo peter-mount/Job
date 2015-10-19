@@ -5,6 +5,8 @@
  */
 package uk.trainwatch.job.table;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -14,6 +16,8 @@ import java.util.Objects;
 public class Header
         extends Molecule<Cell>
 {
+
+    private final Map<String, Integer> index = new HashMap<>();
 
     /**
      * Append a value into the next cell
@@ -45,7 +49,10 @@ public class Header
      */
     public Cell newCell( Object v )
     {
-        return add( new Cells.StringCell().setValue( Objects.toString( v ) ) );
+        String s = Objects.toString( v );
+        Cell cell = add( new Cells.StringCell().setValue( s ) );
+        index.computeIfAbsent( s, k -> size()-1 );
+        return cell;
     }
 
     @Override
@@ -54,4 +61,13 @@ public class Header
         t.visit( this );
     }
 
+    public int indexOf( String s )
+    {
+        return index.getOrDefault( s, -1 );
+    }
+
+    public boolean contains( String s )
+    {
+        return index.containsKey( s );
+    }
 }

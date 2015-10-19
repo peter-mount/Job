@@ -5,9 +5,11 @@
  */
 package uk.trainwatch.job.table;
 
+import java.util.Map;
 import java.util.Objects;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
+import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -39,6 +41,9 @@ public class TableExtension
             case "table":
                 if( args == null || args.length == 0 ) {
                     return ( s, a ) -> new Table();
+                }
+                else if( args.length == 1 ) {
+                    return ( s, a ) -> new Table( (Iterable<Map<String, Object>>) args[0].invoke( s ) );
                 }
                 else {
                     throw new UnsupportedOperationException( "Syntax: table()" );

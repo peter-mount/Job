@@ -32,6 +32,29 @@ public class Row
         return c;
     }
 
+    public Cell set( int index, Object v )
+    {
+        while( size() <= index ) {
+            newCell( "" );
+        }
+        Cell cell = createCell( v );
+        getElements().set( index, cell );
+        return cell;
+    }
+
+    private Cell createCell( Object v )
+    {
+        if( v instanceof String ) {
+            return new Cells.StringCell().setValue( (String) v );
+        }
+
+        if( v instanceof Number ) {
+            return new Cells.NumberCell().setValue( (Number) v );
+        }
+
+        return new Cells.ObjectCell().setValue( v );
+    }
+
     /**
      * Append a value into the next cell.
      * <p>
@@ -43,15 +66,7 @@ public class Row
      */
     public Cell newCell( Object v )
     {
-        if( v instanceof String ) {
-            return add( new Cells.StringCell().setValue( (String) v ) );
-        }
-
-        if( v instanceof Number ) {
-            return add( new Cells.NumberCell().setValue( (Number) v ) );
-        }
-
-        return add( new Cells.ObjectCell().setValue( v ) );
+        return add( createCell( v ) );
     }
 
     @Override

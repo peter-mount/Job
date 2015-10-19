@@ -7,7 +7,10 @@ package uk.trainwatch.job.table;
 
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -19,6 +22,7 @@ public class Table
         extends Molecule<Row>
 {
 
+    private final Map<String, Integer> headerIndex = new HashMap<>();
     private final Molecule<Header> headers = new Molecule<Header>()
     {
 
@@ -26,9 +30,31 @@ public class Table
         public void accept( TableVisitor t )
         {
         }
+
     };
 
     private List<TableStringFormat> formats;
+
+    public Table()
+    {
+    }
+
+    public Table( Iterable<Map<String, Object>> iterable )
+    {
+        Header h = newHeader();
+
+        Iterator<Map<String, Object>> it = iterable.iterator();
+        while( it.hasNext() ) {
+            Map<String, Object> m = it.next();
+            Row r = newRow();
+            m.forEach( ( k, v ) -> {
+                if( !h.contains( k ) ) {
+                    h.newCell( k );
+                }
+                r.set( h.indexOf( k ), v );
+            } );
+        }
+    }
 
     public List<TableStringFormat> getFormats()
     {
