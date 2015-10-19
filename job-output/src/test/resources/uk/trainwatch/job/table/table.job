@@ -1,0 +1,30 @@
+// Test of the table generation functionality
+job "table";
+{
+    log "Test of tables";
+
+    t = table();
+    f1 = stringFormat("right",10);
+    t.setFormat(0,f1);
+
+    f2 = numberFormat("####0.###",10,"right");
+    t.setFormat(1,f2);
+
+    row = t.newHeader();
+    row.newCell("Name");
+    row.newCell("Value");
+
+    row = t.newRow();
+    row.newCell("Life, the Universe & Everything");
+    row.newCell(42);
+
+    row = t.newRow();
+    row.append("DAY");
+    row.append(24*60*60);
+
+    //t.newRow("PI",3.1415926);
+
+    log "Table:";
+    println(t);
+    log "Table:";
+}

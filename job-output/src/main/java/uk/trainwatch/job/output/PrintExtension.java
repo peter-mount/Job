@@ -55,28 +55,26 @@ public class PrintExtension
     }
 
     @Override
-    public Statement getStatement( String name )
+    public Statement getStatement( String name, ExpressionOperation... args )
     {
         switch( name ) {
             case "print":
                 return ( s, a ) -> {
-                    Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    for( Object arg: args ) {
+                    for( Object arg: TypeOp.invokeArguments( s, args ) ) {
                         System.out.print( arg );
                     }
                 };
             case "println":
                 return ( s, a ) -> {
-                    Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    for( Object arg: args ) {
+                    for( Object arg: TypeOp.invokeArguments( s, args ) ) {
                         System.out.println( arg );
                     }
                 };
             case "printf":
                 return ( s, a ) -> {
-                    Object args[] = TypeOp.invokeArguments( s, (ExpressionOperation[]) a );
-                    if( args.length > 1 ) {
-                        System.out.printf( Objects.toString( args[0] ), Arrays.copyOfRange( args, 1, args.length ) );
+                    Object arg[] = TypeOp.invokeArguments( s, args );
+                    if( arg.length > 1 ) {
+                        System.out.printf( Objects.toString( arg[0] ), Arrays.copyOfRange( arg, 1, arg.length ) );
                     }
                 };
             default:
