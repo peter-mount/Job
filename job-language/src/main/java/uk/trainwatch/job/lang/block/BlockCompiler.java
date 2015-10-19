@@ -398,7 +398,11 @@ public class BlockCompiler
     @Override
     public void enterExtensionStatement( JobParser.ExtensionStatementContext ctx )
     {
-        expressionCompiler.apply( () -> expressionCompiler.enterRule( ctx ) );
+        String methodName = expressionCompiler.getName().apply( () -> expressionCompiler.enterRule( ctx.methodName() ) );
+
+        List<ExpressionOperation> newArgs = expressionCompiler.getArgs().apply( () -> expressionCompiler.enterRule( ctx.argumentList() ) );
+        Statement stat = TypeOp.invokeExtensionStatement( methodName, TypeOp.toArray( newArgs ) );
+        statements.add( stat );
     }
 
 }

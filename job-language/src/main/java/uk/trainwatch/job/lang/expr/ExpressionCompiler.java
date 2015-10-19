@@ -42,6 +42,16 @@ public class ExpressionCompiler
         this.blockCompiler = blockCompiler;
     }
 
+    public NestedString getName()
+    {
+        return name;
+    }
+
+    public NestedList<ExpressionOperation> getArgs()
+    {
+        return args;
+    }
+
     public ExpressionOperation apply( Runnable r )
     {
         expression = null;
@@ -338,7 +348,7 @@ public class ExpressionCompiler
 
         @SuppressWarnings("LocalVariableHidesMemberVariable")
         ExpressionOperation[] args = TypeOp.toArray( newArgs );
-        
+
         if( srcExp == null ) {
             expression = ExtensionManager.INSTANCE.getExpression( methodName, args );
             if( expression == null ) {

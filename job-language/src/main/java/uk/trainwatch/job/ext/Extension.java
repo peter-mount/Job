@@ -34,9 +34,10 @@ public interface Extension
      *
      * @param name Name of statement
      * <p>
+     * @param args
      * @return Statement or null
      */
-    default Statement getStatement( String name )
+    default Statement getStatement( String name, ExpressionOperation... args )
     {
         return null;
     }

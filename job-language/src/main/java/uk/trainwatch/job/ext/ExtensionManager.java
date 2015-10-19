@@ -37,10 +37,10 @@ public enum ExtensionManager
         }
     }
 
-    public Statement getStatement( String name )
+    public Statement getStatement( String name, ExpressionOperation... args )
     {
         return extensions.stream()
-                .map( e -> e.getStatement( name ) )
+                .map( e -> e.getStatement( name, args ) )
                 .filter( Objects::nonNull )
                 .findAny()
                 .orElse( null );
