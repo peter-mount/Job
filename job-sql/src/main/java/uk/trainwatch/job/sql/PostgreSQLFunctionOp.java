@@ -9,6 +9,8 @@ import uk.trainwatch.util.sql.ConnectionWrapper;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import uk.trainwatch.job.AbstractScope;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.util.sql.SQL;
@@ -23,23 +25,26 @@ public abstract class PostgreSQLFunctionOp
         implements PostgreSQLInvoker
 {
 
+    private static final Logger LOG = Logger.getLogger( PostgreSQLStatementOp.class.getName() );
     private final String sqlCall;
 
     public static synchronized PostgreSQLInvoker compile( PostgreSQLFunction f )
     {
-        if( f.isSinglevalue() ) {
-            return new Single( f );
-        }
-        else if( f.isResultset() ) {
-            return new Result( f );
-        }
+        switch( f.getType() ) {
+            case SINGLE:
+                return new Single( f );
 
-        return null;
+            case TABLE:
+                return new Result( f );
+
+            default:
+                return null;
+        }
     }
 
-    protected PostgreSQLFunctionOp( PostgreSQLFunction f )
+    protected PostgreSQLFunctionOp( PostgreSQLFunction f, String sqlCall )
     {
-        this.sqlCall = f.getSqlCall();
+        this.sqlCall = sqlCall;
     }
 
     protected final String getSqlCall()
@@ -56,14 +61,15 @@ public abstract class PostgreSQLFunctionOp
 
         public Single( PostgreSQLFunction f )
         {
-            super( f );
+            super( f, "SELECT " + f.getSqlCall() );
         }
 
         @Override
         public Object invoke( Scope s, Connection con, Object... args )
                 throws Exception
         {
-            try( PreparedStatement ps = SQL.prepare( con, "SELECT " + getSqlCall(), args ) ) {
+            LOG.log( Level.FINE, () -> "Invoking " + getSqlCall() );
+            try( PreparedStatement ps = SQL.prepare( con, getSqlCall(), args ) ) {
                 try( ResultSet rs = ps.executeQuery() ) {
                     return rs.next() ? rs.getObject( 1 ) : null;
                 }
@@ -81,7 +87,7 @@ public abstract class PostgreSQLFunctionOp
 
         public Result( PostgreSQLFunction f )
         {
-            super( f );
+            super( f, "SELECT * FROM " + f.getSqlCall() );
         }
 
         /**
@@ -99,13 +105,14 @@ public abstract class PostgreSQLFunctionOp
         public Object invoke( Scope s, Connection con, Object... args )
                 throws Exception
         {
+            LOG.log( Level.FINE, () -> "Invoking " + getSqlCall() );
             if( s instanceof AbstractScope.ResourceScope ) {
                 ConnectionWrapper c = (ConnectionWrapper) con;
-                PreparedStatement ps = c.setPreparedStatement( SQL.prepare( con, "SELECT * FROM " + getSqlCall(), args ) );
+                PreparedStatement ps = c.setPreparedStatement( SQL.prepare( con, getSqlCall(), args ) );
                 return c.setResultSet( ps.executeQuery() );
             }
             else {
-                try( PreparedStatement ps = SQL.prepare( con, "SELECT * FROM " + getSqlCall(), args ) ) {
+                try( PreparedStatement ps = SQL.prepare( con, getSqlCall(), args ) ) {
                     return SQL.executeQuery( ps, SQLResultSetHandler.toMap() );
                 }
             }
