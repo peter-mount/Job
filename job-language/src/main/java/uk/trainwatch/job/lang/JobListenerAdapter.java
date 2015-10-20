@@ -344,6 +344,7 @@ public class JobListenerAdapter
         enterRule( ctx.assignment() );
         enterRule( ctx.extensionStatement() );
         enterRule( ctx.logStatement() );
+        enterRule( ctx.methodInvocation() );
     }
 
     @Override

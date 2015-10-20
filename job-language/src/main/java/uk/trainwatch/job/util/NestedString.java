@@ -30,4 +30,20 @@ public class NestedString
     {
         set( node == null ? null : node.getText() );
     }
+
+    public void append( String instance )
+    {
+        if( this.instance == null ) {
+            set( instance );
+        }
+        else {
+            set( this.instance + "." + instance );
+        }
+    }
+
+    public void append( TerminalNode node )
+    {
+        append( node == null ? null : node.getText() );
+    }
+
 }

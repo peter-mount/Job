@@ -10,6 +10,9 @@ run as "test";
     s = new Set();
     log s;
 
+    s = new Map();
+    log s;
+
     q = new Queue();
     log q;
 

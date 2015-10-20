@@ -72,6 +72,7 @@ public class TypeOp
     @SuppressWarnings("ThrowableInstanceNotThrown")
     public static ExpressionOperation invoke( ExpressionOperation srcExp, String methodName, ExpressionOperation... argExp )
     {
+        Objects.requireNonNull( methodName, "methodName is null" );
         return ( s, a ) -> {
             try {
                 Object obj = Objects.requireNonNull( srcExp.invoke( s ), "Cannot dereference null" );

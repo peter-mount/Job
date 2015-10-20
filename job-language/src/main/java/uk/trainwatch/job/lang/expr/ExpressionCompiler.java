@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.JobParser;
+import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.BlockCompiler;
 import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.util.NestedList;
@@ -333,16 +334,20 @@ public class ExpressionCompiler
     @Override
     public void enterMethodInvocation( JobParser.MethodInvocationContext ctx )
     {
+        if( ctx.expressionName() != null ) {
+            expression = ctx.expressionName()
+                    .Identifier()
+                    .stream()
+                    .map( TerminalNode::getText )
+                    .reduce( null,
+                             ( s, n ) -> s == null ? Assignment.getVariable( n ) : Assignment.getField( s, n ),
+                             ( a, b ) -> a
+                    );
+        }
         ExpressionOperation srcExp = expression;
 
         // Resovle the method name, either the user supplied one or one of the reserved workds
-        String methodName;
-        if( ctx.methodName() != null ) {
-            methodName = name.apply( () -> enterRule( ctx.methodName() ) );
-        }
-        else {
-            methodName = ctx.getChild( 0 ).getText();
-        }
+        String methodName = ctx.methodName().getText();
 
         List<ExpressionOperation> newArgs = args.apply( () -> enterRule( ctx.argumentList() ) );
 
@@ -350,10 +355,19 @@ public class ExpressionCompiler
         ExpressionOperation[] args = TypeOp.toArray( newArgs );
 
         if( srcExp == null ) {
+            // First look for an expression that takes no source
             expression = ExtensionManager.INSTANCE.getExpression( methodName, args );
             if( expression == null ) {
-                // A lambda invocation
-                expression = Lambda.invoke( methodName, args );
+                // Next look for a statement
+                Statement stat = ExtensionManager.INSTANCE.getStatement( methodName, args );
+                if( stat == null ) {
+                    // A lambda invocation on a variable
+                    expression = Lambda.invoke( methodName, args );
+                }
+                else {
+                    // Wrap the statement
+                    expression = ( s, a ) -> stat.invoke( s );
+                }
             }
         }
         else {
@@ -393,18 +407,42 @@ public class ExpressionCompiler
     {
         final String op = ctx.assignmentOperator().getText();
         switch( op ) {
-            case "=":
-                String varName = name.apply( () -> enterRule( ctx.leftHandSide() ) );
+            case "=": {
                 enterRule( ctx.expression() );
-                expression = Assignment.setVariable( varName, expression );
-                break;
+
+                List<TerminalNode> l = ctx.leftHandSide().expressionName().Identifier();
+                int ls = l.size();
+                if( ls == 1 ) {
+                    // Plain set variable
+                    expression = Assignment.setVariable( l.get( 0 ).getText(), expression );
+                }
+                else {
+                    // Set field so get all but last one then set against it
+                    expression = Assignment.setField(
+                            l.subList( 0, ls - 1 )
+                            .stream()
+                            .map( TerminalNode::getText )
+                            .reduce( null,
+                                     ( s, n ) -> s == null ? Assignment.getVariable( n ) : Assignment.getField( s, n ),
+                                     ( a, b ) -> a
+                            ),
+                            l.get( ls - 1 ).getText(),
+                            expression );
+                }
+            }
+            break;
 
             // Not an assignment but it exists here lexically - invoke a method on object in a variable
             case ".":
-                expression = Assignment.getVariable(
-                        name.apply( () -> enterRule( ctx.leftHandSide() ) )
-                );
-                enterRule( ctx.expression() );
+                expression = ctx.leftHandSide()
+                        .expressionName()
+                        .Identifier()
+                        .stream()
+                        .map( TerminalNode::getText )
+                        .reduce( null,
+                                 ( s, n ) -> s == null ? Assignment.getVariable( n ) : Assignment.getField( s, n ),
+                                 ( a, b ) -> a
+                        );
                 break;
 
             default:
@@ -421,7 +459,10 @@ public class ExpressionCompiler
     @Override
     public void enterExpressionName( JobParser.ExpressionNameContext ctx )
     {
-        name.set( ctx.Identifier() );
+        if( ctx.Identifier().size() != 1 ) {
+            throw new UnsupportedOperationException( "Unable to handle multiple Identifiers in this context" );
+        }
+        name.set( ctx.Identifier( 0 ) );
     }
 
     @Override

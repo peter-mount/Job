@@ -19,6 +19,9 @@ sourceDir.eachDirRecurse {
     }
 }
 
+// Uncomment to limit to a single test set
+//tests = ['collection'];
+
 // Now create each test class
 tests.each {
     test ->
@@ -53,7 +56,7 @@ tests.each {
             jobs.each {
                 name ->
                 out.println "";
-                out.println "\t@Test( timeout = 10000L )";
+                out.println "\t@Test( timeout = 3000L )";
                 out.println "\tpublic void " + name + "()";
                 out.println "\t\tthrows Throwable";
                 out.println "\t{";

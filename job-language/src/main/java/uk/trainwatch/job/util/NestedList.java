@@ -8,12 +8,10 @@ package uk.trainwatch.job.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Objects;
 import java.util.Spliterator;
 import java.util.function.UnaryOperator;
 

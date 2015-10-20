@@ -116,6 +116,7 @@ expressionStatement
 
 statementExpression
     :    assignment
+    |   methodInvocation
 //  |    preIncrementExpression
 //  |    preDecrementExpression
 //  |    postIncrementExpression
@@ -223,18 +224,17 @@ enhancedForStatement
     ;
 
 expressionName
-    :    Identifier
+    :    (Identifier '.')* Identifier
 //    |    ambiguousName '.' Identifier
     ;
 
 methodName
     :    Identifier
+    // Reserved words that are also valid method names
+    |   'run'
+    |   'as'
+    |   'job'
     ;
-
-//ambiguousName
-//    :    Identifier
-//    |    ambiguousName '.' Identifier
-//    ;
 
 assignmentOperator
     :    '='
@@ -249,7 +249,7 @@ assignmentOperator
     |    '&='
     |    '^='
     |    '|='
-    |   '.'
+//    |   '.'
     ;
 
 expression
@@ -419,10 +419,7 @@ newObject
 
 methodInvocation
     :   methodName '(' argumentList? ')'
-    // Reserved words that are also valid method names
-    |   'run' '(' argumentList? ')'
-    |   'as' '(' argumentList? ')'
-    |   'job' '(' argumentList? ')'
+    |   expressionName '.' methodName '(' argumentList? ')'
     ;
 
 argumentList

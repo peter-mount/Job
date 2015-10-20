@@ -1,0 +1,13 @@
+/*
+ * collection3  Test new collections
+ */
+job "collection3";
+run as "test";
+{
+    m = new Map();
+    m.name = "Name";
+    m.age = 45;
+
+    log m;
+
+}

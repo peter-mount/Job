@@ -23,6 +23,7 @@ import java.util.Objects;
  * limited only by memory and the number of nested try blocks supported by Java.
  * <p>
  * @author peter
+ * @param <C>
  * @param <T> Type of each element in the list
  */
 public abstract class Nestable<C>
@@ -30,7 +31,12 @@ public abstract class Nestable<C>
 {
 
     private final Deque<C> stack = new LinkedList<>();
-    protected C instance = null;
+    protected C instance = init();
+
+    protected C init()
+    {
+        return null;
+    }
 
     public final Nestable<C> begin()
     {
@@ -42,7 +48,7 @@ public abstract class Nestable<C>
     }
 
     @Override
-    public final void close()
+    public void close()
     {
         instance = stack.poll();
     }
@@ -63,6 +69,11 @@ public abstract class Nestable<C>
             r.run();
             return l.getInstance();
         }
+    }
+
+    public boolean isEmpty()
+    {
+        return instance == null;
     }
 
     protected abstract C newInstance();

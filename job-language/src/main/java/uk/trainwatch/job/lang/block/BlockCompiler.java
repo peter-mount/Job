@@ -151,6 +151,13 @@ public class BlockCompiler
         statements.add( ( s, a ) -> expr.invoke( s, a ) );
     }
 
+    @Override
+    public void enterMethodInvocation( JobParser.MethodInvocationContext ctx )
+    {
+        ExpressionOperation expr = expressionCompiler.apply( () -> expressionCompiler.enterMethodInvocation( ctx ) );
+        statements.add( ( s, a ) -> expr.invoke( s, a ) );
+    }
+
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Control Statements">
     @Override
@@ -336,6 +343,7 @@ public class BlockCompiler
     }
 
     @Override
+    @SuppressWarnings("LocalVariableHidesMemberVariable")
     public void enterCatchClause( JobParser.CatchClauseContext ctx )
     {
         Statement block = getBlock( ctx.block(), true );
