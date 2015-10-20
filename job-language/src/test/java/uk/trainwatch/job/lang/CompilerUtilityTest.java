@@ -26,7 +26,7 @@ public class CompilerUtilityTest
     /**
      * Test of getString method, of class AbstractCompiler.
      */
-    @Test
+    @Test(timeout = 5000L)
     public void testGetString_WithDefault()
     {
         ParserRuleContext ctx = new ParserRuleContext();
@@ -59,7 +59,7 @@ public class CompilerUtilityTest
     /**
      * Test of getString method, of class AbstractCompiler.
      */
-    @Test
+    @Test(timeout = 5000L)
     public void testGetString()
     {
         ParserRuleContext ctx = new ParserRuleContext();

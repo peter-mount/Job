@@ -33,6 +33,7 @@ public abstract class AbstractCompilerTest
     protected final void runTest( String n )
             throws Throwable
     {
+        System.out.println( "Starting " + n );
         try {
             Job job = compile( n );
             execute( job );

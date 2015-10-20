@@ -30,22 +30,20 @@ public class JobScriptEngineTest
         scriptEngineManager = new ScriptEngineManager();
     }
 
-    @Test
+    @Test(timeout = 5000L)
     public void execute()
             throws Exception
     {
         ScriptEngine engine = scriptEngineManager.getEngineByExtension( "job" );
         assertNotNull( engine );
 
-        Bindings bindings = (Bindings)Scope.newInstance();
-        bindings.put( "finalA", 0);
+        Bindings bindings = (Bindings) Scope.newInstance();
+        bindings.put( "finalA", 0 );
 
-        try( InputStream is = getClass().getResourceAsStream( "test.job" ) )
-        {
+        try( InputStream is = getClass().getResourceAsStream( "test.job" ) ) {
             assertNotNull( is );
 
-            try( InputStreamReader r = new InputStreamReader( is ) )
-            {
+            try( InputStreamReader r = new InputStreamReader( is ) ) {
                 assertNull( engine.eval( r, bindings ) );
             }
         }

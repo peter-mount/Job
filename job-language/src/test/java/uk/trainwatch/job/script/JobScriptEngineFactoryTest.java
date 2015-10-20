@@ -26,7 +26,7 @@ public class JobScriptEngineFactoryTest
         scriptEngineManager = new ScriptEngineManager();
     }
 
-    @Test
+    @Test(timeout = 5000L)
     public void getEngineByName()
             throws Exception
     {
@@ -36,7 +36,7 @@ public class JobScriptEngineFactoryTest
         Assert.assertEquals( "job", engine.getFactory().getEngineName() );
     }
 
-    @Test
+    @Test(timeout = 5000L)
     public void getEngineByExtension()
             throws Exception
     {
@@ -46,7 +46,7 @@ public class JobScriptEngineFactoryTest
         Assert.assertEquals( "job", engine.getFactory().getEngineName() );
     }
 
-    @Test
+    @Test(timeout = 5000L)
     public void getEngineByMimeType()
             throws Exception
     {
