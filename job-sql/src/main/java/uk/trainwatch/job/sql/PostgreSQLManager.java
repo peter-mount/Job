@@ -16,12 +16,14 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
- *
+ * Manages the available functions stored in the database
+ * <p>
  * @author peter
  */
 public class PostgreSQLManager
 {
-    private static final Logger LOG = Logger.getLogger( PostgreSQLManager.class.getName());
+
+    private static final Logger LOG = Logger.getLogger( PostgreSQLManager.class.getName() );
 
     private static final Map<String, PostgreSQLFunction> functions = new ConcurrentHashMap<>();
 
@@ -34,7 +36,7 @@ public class PostgreSQLManager
                 while( rs.next() ) {
                     PostgreSQLFunction f = new PostgreSQLFunction( rs );
                     functions.put( f.getName(), f );
-                    LOG.log( Level.INFO,()->f.getName()+" "+f.isResultset()+" "+f.isSinglevalue()+" "+f.getDescription());
+                    LOG.log( Level.FINE, () -> f.getName() + " " + f.isResultset() + " " + f.isSinglevalue() + " " + f.getDescription() );
                 }
             }
         }

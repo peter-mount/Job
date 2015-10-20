@@ -79,7 +79,7 @@ public abstract class AbstractScope
         vars.put( name, val );
     }
 
-    static class GlobalScope
+    public static class GlobalScope
             extends AbstractScope
             implements Scope.GlobalScope
     {
@@ -249,13 +249,13 @@ public abstract class AbstractScope
 //</editor-fold>
     }
 
-    private static abstract class AbstractChildScope
+    public static abstract class ChildScope
             extends AbstractScope
     {
 
         protected final GlobalScope globalScope;
 
-        protected AbstractChildScope( GlobalScope globalScope )
+        protected ChildScope( GlobalScope globalScope )
         {
             this.globalScope = globalScope;
         }
@@ -342,7 +342,7 @@ public abstract class AbstractScope
     }
 
     private static class DefaultScope
-            extends AbstractChildScope
+            extends ChildScope
     {
 
         protected DefaultScope( GlobalScope globalScope )
@@ -382,13 +382,13 @@ public abstract class AbstractScope
     }
 
     private static class SubScope
-            extends AbstractChildScope
+            extends ChildScope
     {
 
-        private final AbstractChildScope parentScope;
+        private final ChildScope parentScope;
         private boolean readOnly;
 
-        protected SubScope( GlobalScope globalScope, AbstractChildScope parentScope )
+        protected SubScope( GlobalScope globalScope, ChildScope parentScope )
         {
             super( globalScope );
             this.parentScope = parentScope;
@@ -436,14 +436,14 @@ public abstract class AbstractScope
 
     public static Scope resourceScope( Scope scope )
     {
-        return new ResourceScope( (GlobalScope) scope.getGlobalScope(), (AbstractChildScope) scope );
+        return new ResourceScope( (GlobalScope) scope.getGlobalScope(), (ChildScope) scope );
     }
 
-    private static class ResourceScope
+    public static class ResourceScope
             extends SubScope
     {
 
-        public ResourceScope( GlobalScope globalScope, AbstractChildScope parentScope )
+        protected ResourceScope( GlobalScope globalScope, ChildScope parentScope )
         {
             super( globalScope, parentScope );
         }

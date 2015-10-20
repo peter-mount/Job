@@ -7,7 +7,6 @@ package uk.trainwatch.job.table;
 
 import java.text.Format;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ public class Table
         extends Molecule<Row>
 {
 
-    private final Map<String, Integer> headerIndex = new HashMap<>();
     private final Molecule<Header> headers = new Molecule<Header>()
     {
 
@@ -32,6 +30,8 @@ public class Table
         }
 
     };
+    private Header lastHeader;
+    private Row lastRow;
 
     private List<TableStringFormat> formats;
 
@@ -39,21 +39,69 @@ public class Table
     {
     }
 
-    public Table( Iterable<Map<String, Object>> iterable )
+    public Table( Object obj )
     {
-        Header h = newHeader();
+        append( obj );
+    }
 
-        Iterator<Map<String, Object>> it = iterable.iterator();
-        while( it.hasNext() ) {
-            Map<String, Object> m = it.next();
-            Row r = newRow();
-            m.forEach( ( k, v ) -> {
-                if( !h.contains( k ) ) {
-                    h.newCell( k );
-                }
-                r.set( h.indexOf( k ), v );
-            } );
+    public Table append( Object obj )
+    {
+        if( obj instanceof Map ) {
+            return appendMap( (Map<String, Object>) obj );
         }
+        if( obj instanceof Iterable ) {
+            return appendIterable( (Iterable) obj );
+        }
+        if( obj instanceof Iterator ) {
+            return appendIterable( (Iterable) obj );
+        }
+
+        Class c = obj.getClass();
+        if( c.isArray() ) {
+            if( c.getComponentType().isPrimitive() ) {
+                throw new UnsupportedOperationException( "Appending primitive arrays are unsupported" );
+            }
+            return appendArray( (Object[]) obj );
+        }
+
+        throw new IllegalArgumentException( "Unsupported object " + obj );
+    }
+
+    private <T> Table appendArray( T[] a )
+    {
+        for( T e: a ) {
+            append( e );
+        }
+        return this;
+    }
+
+    private Table appendIterable( Iterable iterable )
+    {
+        return appendIterator( iterable.iterator() );
+    }
+
+    private Table appendIterator( Iterator it )
+    {
+        while( it.hasNext() ) {
+            append( it.next() );
+        }
+        return this;
+    }
+
+    private Table appendMap( Map<String, Object> m )
+    {
+        if( lastHeader == null ) {
+            newHeader();
+        }
+        Row r = newRow();
+        m.forEach( ( k, v ) -> {
+            if( !lastHeader.contains( k ) ) {
+                lastHeader.newCell( k );
+            }
+            r.set( lastHeader.indexOf( k ), v );
+        } );
+
+        return this;
     }
 
     public List<TableStringFormat> getFormats()
@@ -90,9 +138,9 @@ public class Table
 
     public Header newHeader()
     {
-        Header h = new Header();
-        headers.getElements().add( h );
-        return h;
+        lastHeader = new Header();
+        headers.getElements().add( lastHeader );
+        return lastHeader;
     }
 
     public void forEachHeader( Consumer<Header> c )
@@ -109,13 +157,13 @@ public class Table
 
     public Row newRow( Object... args )
     {
-        Row row = newRow();
+        lastRow = newRow();
         if( args != null && args.length > 0 ) {
             for( Object arg: args ) {
-                row.append( arg );
+                lastRow.append( arg );
             }
         }
-        return row;
+        return lastRow;
     }
 
     @Override
