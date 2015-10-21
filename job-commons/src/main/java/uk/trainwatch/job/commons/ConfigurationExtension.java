@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package uk.trainwatch.commons;
+package uk.trainwatch.job.commons;
 
 import java.util.Objects;
 import org.kohsuke.MetaInfServices;

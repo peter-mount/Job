@@ -3,9 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package uk.trainwatch.commons.math;
+package uk.trainwatch.job.commons.math;
 
-import uk.trainwatch.commons.*;
 import java.util.concurrent.TimeUnit;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
