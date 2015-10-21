@@ -5,13 +5,26 @@
  */
 package uk.trainwatch.job.transform.json;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonStructure;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 
 /**
@@ -204,5 +217,45 @@ public class JsonUtil
         JsonArrayBuilder b = Json.createArrayBuilder();
         it.forEach( v -> add( b, v ) );
         return b;
+    }
+
+    public static JsonStructure fromJson( Object o )
+            throws IOException
+    {
+        if( o == null ) {
+            return null;
+        }
+
+        if( o instanceof Reader ) {
+            return parse( (Reader) o );
+        }
+
+        if( o instanceof InputStream ) {
+            try( Reader r = new InputStreamReader( (InputStream) o ) ) {
+                return parse( r );
+            }
+        }
+
+        if( o instanceof File ) {
+            try( Reader r = new FileReader( (File) o ) ) {
+                return parse( r );
+            }
+        }
+
+        if( o instanceof Path ) {
+            try( Stream<String> s = Files.lines( (Path) o ) ) {
+                return parse( new StringReader( s.collect( Collectors.joining( "\n" ) ) ) );
+            }
+        }
+
+        String s = Objects.toString( o, "" );
+        return s.isEmpty() ? null : parse( new StringReader( s ) );
+    }
+
+    private static JsonStructure parse( Reader r )
+    {
+        try( JsonReader jr = Json.createReader( r ) ) {
+            return jr.read();
+        }
     }
 }
