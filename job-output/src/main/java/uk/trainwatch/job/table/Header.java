@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.table;
 
+import uk.trainwatch.job.table.visitors.TableVisitor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

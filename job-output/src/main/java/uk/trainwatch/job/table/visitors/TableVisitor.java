@@ -3,7 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package uk.trainwatch.job.table;
+package uk.trainwatch.job.table.visitors;
+
+import uk.trainwatch.job.table.Cells;
+import uk.trainwatch.job.table.Header;
+import uk.trainwatch.job.table.Row;
+import uk.trainwatch.job.table.Table;
 
 /**
  *

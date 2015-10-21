@@ -5,6 +5,8 @@
  */
 package uk.trainwatch.job.table;
 
+import uk.trainwatch.job.table.visitors.TableVisitor;
+
 /**
  *
  * @author peter
