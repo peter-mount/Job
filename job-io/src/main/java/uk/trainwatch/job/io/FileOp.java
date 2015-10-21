@@ -10,11 +10,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -89,22 +94,36 @@ public class FileOp
 
     public static ExpressionOperation newWriter( ExpressionOperation exp )
     {
-        return ( s, a ) -> {
-            Object o = Objects.requireNonNull( decode( exp.invoke( s, a ) ) );
-            if( o instanceof File ) {
-                return new ReaderWrapper( new FileReader( (File) o ) );
-            }
-            if( o instanceof Path ) {
-                return new ReaderWrapper( new FileReader( ((Path) o).toFile() ) );
-            }
-            if( o instanceof Reader ) {
-                return new ReaderWrapper( (Reader) o );
-            }
-            if( o instanceof InputStream ) {
-                return new ReaderWrapper( new InputStreamReader( (InputStream) o ) );
-            }
-            return new ReaderWrapper( new StringReader( o.toString() ) );
-        };
+        return ( s, a ) -> new WriterWrapper( createWriter( exp.invoke( s, a ) ) );
+    }
+
+    public static Writer createWriter( Object v )
+            throws IOException
+    {
+        Objects.requireNonNull( v );
+        Object o = decode( v );
+
+        if( o instanceof WriterWrapper ) {
+            return (Writer) o;
+        }
+
+        if( o instanceof File ) {
+            return new FileWriter( (File) o );
+        }
+
+        if( o instanceof Path ) {
+            return new FileWriter( ((Path) o).toFile() );
+        }
+
+        if( o instanceof Writer ) {
+            return (Writer) o;
+        }
+
+        if( o instanceof OutputStream ) {
+            return new OutputStreamWriter( (OutputStream) o );
+        }
+
+        return new StringWriter();
     }
 
     private static InputStream newInputStream( Object v )
