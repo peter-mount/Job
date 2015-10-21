@@ -1,0 +1,23 @@
+// Test we can insert collections into json
+job "json3";
+run as "test";
+{
+    b = new JsonArrayBuilder();
+    b.add( 42 );
+    b.add( "json" );
+
+    a = new List();
+    a.add( "name" );
+    a.add( "value" );
+    b.add(a);
+
+    m = new Map();
+    m.put( "key", "name" );
+    m.value = "val";
+    b.add(m);
+
+    object = b.build();
+
+    log object;
+
+}

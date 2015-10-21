@@ -18,6 +18,7 @@
         <module>job-output</module>
         <module>job-shell</module>
         <module>job-sql</module>
+        <module>job-transform</module>
     </modules>
     
     <properties>

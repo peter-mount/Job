@@ -58,6 +58,16 @@ public class Arithmetic
         return o;
     }
 
+    public static Object[] decode( Object[] a )
+    {
+        if( a != null ) {
+            for( int i = 0; i < a.length; i++ ) {
+                a[i] = decode( a );
+            }
+        }
+        return a;
+    }
+
     /**
      * Convert Number b to the same type as Number a
      * <p>

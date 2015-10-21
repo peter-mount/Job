@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 import uk.trainwatch.job.lang.expr.Logic;
 
@@ -119,7 +120,7 @@ public class Control
                 Object col = exp.invoke( s );
                 if( col instanceof Iterable ) {
                     for( Object val: (Iterable) col ) {
-                        s.setVar( name, val );
+                        s.setVar( name, decode( val ) );
                         try {
                             statement.invokeStatement( s );
                         }
@@ -131,7 +132,7 @@ public class Control
                 else if( col instanceof Stream ) {
                     ((Stream<Object>) col).forEach( val -> {
                         try {
-                            s.setVar( name, val );
+                            s.setVar( name, decode( val ) );
                             statement.invokeStatement( s );
                         }
                         catch( Block.Continue ex ) {
@@ -147,7 +148,7 @@ public class Control
                     throw new UnsupportedOperationException( "Don't know how to iterate " + col );
                 }
             }
-            catch( Block.Break  ex ) {
+            catch( Block.Break ex ) {
             }
             catch( Block.Return ex ) {
                 throw ex;

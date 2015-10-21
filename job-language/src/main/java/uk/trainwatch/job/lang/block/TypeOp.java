@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.job.lang.Statement;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 import uk.trainwatch.job.lang.expr.Lambda;
 
@@ -42,7 +43,7 @@ public class TypeOp
 
         Object args[] = new Object[exp.length];
         for( int i = 0; i < exp.length; i++ ) {
-            args[i] = exp[i].invoke( s );
+            args[i] = decode( exp[i].invoke( s ) );
         }
         return args;
     }

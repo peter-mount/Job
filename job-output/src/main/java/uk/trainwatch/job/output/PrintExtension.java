@@ -13,6 +13,7 @@ import uk.trainwatch.job.ext.Extension;
 import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.TypeOp;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -61,13 +62,13 @@ public class PrintExtension
             case "print":
                 return ( s, a ) -> {
                     for( Object arg: TypeOp.invokeArguments( s, args ) ) {
-                        System.out.print( arg );
+                        System.out.print( decode(arg) );
                     }
                 };
             case "println":
                 return ( s, a ) -> {
                     for( Object arg: TypeOp.invokeArguments( s, args ) ) {
-                        System.out.println( arg );
+                        System.out.println( decode(arg) );
                     }
                 };
             case "printf":

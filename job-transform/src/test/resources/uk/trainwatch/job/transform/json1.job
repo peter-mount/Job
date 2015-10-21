@@ -1,0 +1,15 @@
+// Test creation of Json Objects
+job "json1";
+run as "test";
+{
+    b = new JsonObjectBuilder();
+    b.add( "a", 42 );
+    b.add( "b", "json" );
+
+    object = b.build();
+
+    log object;
+    log object.a;
+    log object.b;
+
+}
