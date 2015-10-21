@@ -5,9 +5,13 @@
  */
 package uk.trainwatch.job.lang.expr;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.Objects;
 import uk.trainwatch.job.Scope;
+import static uk.trainwatch.job.lang.expr.Arithmetic.convert;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 
 /**
  *
@@ -20,22 +24,31 @@ public class Logic
 
     public static boolean isTrue( Object v )
     {
-        return v == Boolean.TRUE || v == (Integer) 1 || v == (Double) 1.0 || v == (Long) 1L;
+        return v != null && !isFalse( v );
     }
 
-    public static boolean isFalse( Object v )
+    public static boolean isFalse( Object o )
     {
-        return v == null || !isTrue( v );
+        if( o == null ) {
+            return false;
+        }
+        Object v = decode( o );
+        return v == Boolean.FALSE
+               || v == (Integer) 0
+               || v == (Double) 0.0
+               || v == (Long) 0L
+               || BigInteger.ZERO.equals( v )
+               || BigDecimal.ZERO.equals( v );
     }
 
     public static ExpressionOperation trueOp()
     {
-        return (s,a) -> Boolean.TRUE;
+        return ( s, a ) -> Boolean.TRUE;
     }
 
     public static ExpressionOperation falseOp()
     {
-        return (s,a) -> Boolean.FALSE;
+        return ( s, a ) -> Boolean.FALSE;
     }
 
     /**
@@ -49,7 +62,7 @@ public class Logic
     public static ExpressionOperation conditional( ExpressionOperation expr, ExpressionOperation trueExpr,
                                                    ExpressionOperation falseExpr )
     {
-        return (s,a) -> isTrue( expr.invoke( s ) ) ? trueExpr.invoke( s ) : falseExpr.invoke( s );
+        return ( s, a ) -> isTrue( expr.invoke( s ) ) ? trueExpr.invoke( s ) : falseExpr.invoke( s );
     }
 
     /**
@@ -61,7 +74,7 @@ public class Logic
      */
     public static ExpressionOperation conditionalOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> isTrue( lhs.invoke( s ) ) || isTrue( rhs.invoke( s ) );
+        return ( s, a ) -> isTrue( lhs.invoke( s ) ) || isTrue( rhs.invoke( s ) );
     }
 
     /**
@@ -73,7 +86,7 @@ public class Logic
      */
     public static ExpressionOperation conditionalAnd( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> isTrue( lhs.invoke( s ) ) && isTrue( rhs.invoke( s ) );
+        return ( s, a ) -> isTrue( lhs.invoke( s ) ) && isTrue( rhs.invoke( s ) );
     }
 
     /**
@@ -85,7 +98,17 @@ public class Logic
      */
     public static ExpressionOperation inclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() | Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+            if( l instanceof BigInteger ) {
+                return ((BigInteger) l).or( (BigInteger) r );
+            }
+            if( l instanceof BigDecimal ) {
+                throw new UnsupportedOperationException( "inclusive or not supported for BigDecimal" );
+            }
+            return l.longValue() | r.longValue();
+        };
     }
 
     /**
@@ -97,22 +120,42 @@ public class Logic
      */
     public static ExpressionOperation exclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() ^ Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+            if( l instanceof BigInteger ) {
+                return ((BigInteger) l).xor( (BigInteger) r );
+            }
+            if( l instanceof BigDecimal ) {
+                throw new UnsupportedOperationException( "xor not supported for BigDecimal" );
+            }
+            return l.longValue() ^ r.longValue();
+        };
     }
 
     public static ExpressionOperation and( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() & Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> {
+            Number l = Constants.toNumber( lhs.invoke( s ) );
+            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+            if( l instanceof BigInteger ) {
+                return ((BigInteger) l).and( (BigInteger) r );
+            }
+            if( l instanceof BigDecimal ) {
+                throw new UnsupportedOperationException( "and not supported for BigDecimal" );
+            }
+            return l.longValue() & r.longValue();
+        };
     }
 
     public static ExpressionOperation equality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> lhs.invoke( s ) == rhs.invoke( s );
+        return ( s, a ) -> lhs.invoke( s ) == rhs.invoke( s );
     }
 
     public static ExpressionOperation inequality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> lhs.invoke( s ) != rhs.invoke( s );
+        return ( s, a ) -> lhs.invoke( s ) != rhs.invoke( s );
     }
 
     private static int compare( Scope scope, ExpressionOperation lhs, ExpressionOperation rhs )
@@ -125,37 +168,37 @@ public class Logic
 
     public static ExpressionOperation lessThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> compare( s, lhs, rhs ) < 0;
+        return ( s, a ) -> compare( s, lhs, rhs ) < 0;
     }
 
     public static ExpressionOperation lessThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> compare( s, lhs, rhs ) <= 0;
+        return ( s, a ) -> compare( s, lhs, rhs ) <= 0;
     }
 
     public static ExpressionOperation greaterThanEqual( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> compare( s, lhs, rhs ) >= 0;
+        return ( s, a ) -> compare( s, lhs, rhs ) >= 0;
     }
 
     public static ExpressionOperation greaterThan( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> compare( s, lhs, rhs ) > 0;
+        return ( s, a ) -> compare( s, lhs, rhs ) > 0;
     }
 
     public static ExpressionOperation shiftLeft( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() << Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> Constants.toNumber( lhs.invoke( s ) ).longValue() << Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation shiftRight( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
     public static ExpressionOperation shiftRightClear( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return (s,a) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
+        return ( s, a ) -> Constants.toNumber( lhs.invoke( s ) ).longValue() >> Constants.toNumber( rhs.invoke( s ) ).longValue();
     }
 
 }

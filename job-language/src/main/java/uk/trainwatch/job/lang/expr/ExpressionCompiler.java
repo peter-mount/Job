@@ -281,9 +281,8 @@ public class ExpressionCompiler
     public void enterPostfixExpression( JobParser.PostfixExpressionContext ctx )
     {
         if( ctx.expressionName() != null ) {
-            expression = Assignment.getVariable(
-                    name.apply( () -> enterRule( ctx.expressionName() ) )
-            );
+            // Common to assign '.' rule, get variable or field in a variable
+            handleGetVariable( ctx.expressionName() );
         }
         else {
             enterRule( ctx.primary() );
@@ -434,20 +433,23 @@ public class ExpressionCompiler
 
             // Not an assignment but it exists here lexically - invoke a method on object in a variable
             case ".":
-                expression = ctx.leftHandSide()
-                        .expressionName()
-                        .Identifier()
-                        .stream()
-                        .map( TerminalNode::getText )
-                        .reduce( null,
-                                 ( s, n ) -> s == null ? Assignment.getVariable( n ) : Assignment.getField( s, n ),
-                                 ( a, b ) -> a
-                        );
+                handleGetVariable( ctx.leftHandSide().expressionName() );
                 break;
 
             default:
                 throw new IllegalArgumentException( "Unsupported assignment " + op );
         }
+    }
+
+    private void handleGetVariable( JobParser.ExpressionNameContext ctx )
+    {
+        expression = ctx.Identifier()
+                .stream()
+                .map( TerminalNode::getText )
+                .reduce( null,
+                         ( s, n ) -> s == null ? Assignment.getVariable( n ) : Assignment.getField( s, n ),
+                         ( a, b ) -> a
+                );
     }
 
     @Override

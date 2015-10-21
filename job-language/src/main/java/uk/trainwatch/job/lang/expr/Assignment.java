@@ -7,6 +7,7 @@ package uk.trainwatch.job.lang.expr;
 
 import java.util.Map;
 import java.util.Objects;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 
 /**
  *
@@ -24,7 +25,7 @@ public class Assignment
      */
     public static ExpressionOperation getVariable( String name )
     {
-     //   System.out.println( "getVariable " + name );
+        //   System.out.println( "getVariable " + name );
 //        if( "lamb".equals(name))throw new RuntimeException();
         return ( s, a ) -> s.getVar( name );
     }
@@ -43,7 +44,7 @@ public class Assignment
         Objects.requireNonNull( assignment, "No assignment provided to set variable" );
         return ( s, a ) -> {
             Object val = assignment.invoke( s );
-      //      System.out.println( "setVariable " + name + " = " + val );
+            //      System.out.println( "setVariable " + name + " = " + val );
             s.setVar( name, val );
             return val;
         };
@@ -63,7 +64,7 @@ public class Assignment
             Object o = Objects.requireNonNull( src.invoke( s ), "Cannot dereference null for " + name );
 
             if( o instanceof Map ) {
-                return ((Map) o).get( name );
+                return decode( ((Map) o).get( name ) );
             }
 
             throw new UnsupportedOperationException( "Unable to locate " + name + " in " + o );

@@ -6,7 +6,6 @@
 package uk.trainwatch.job.commons.math;
 
 import uk.trainwatch.util.TriConsumer;
-import uk.trainwatch.job.commons.math.MathUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.function.BiConsumer;
@@ -14,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import uk.trainwatch.job.lang.expr.Arithmetic;
 
 /**
  *
@@ -21,74 +21,6 @@ import static org.junit.Assert.*;
  */
 public class MathUtilTest
 {
-
-    /**
-     * Test of convert method, of class MathUtil.
-     */
-    @Test
-    public void convert_Class_Number()
-    {
-        testConvert( ( e, v ) -> MathUtil.convert( e.getClass(), v ) );
-    }
-
-    /**
-     * Test of convert method, of class MathUtil.
-     */
-    @Test
-    public void convert_Number_Number()
-    {
-        testConvert( MathUtil::convert );
-    }
-
-    private static final Number CONVERT_DATA[] = {1, 1L, 1F, 1D, BigInteger.ONE, BigDecimal.ONE};
-
-    private void testConvert( BiFunction<Number, Number, Number> test )
-    {
-        for( Number e: CONVERT_DATA ) {
-            for( Number v: CONVERT_DATA ) {
-                Number a = test.apply( e, v );
-                assertNotNull( a );
-                assertEquals( e, a );
-            }
-        }
-    }
-
-    /**
-     * Test of compareTo method, of class MathUtil.
-     */
-    @Test
-    public void compareTo()
-    {
-        testCompareTo( ( lessThan, a, b ) -> {
-            if( a.equals( b ) ) {
-                // a == b
-                assertEquals( 0, MathUtil.compareTo( a, b ) );
-            }
-            else if( lessThan ) {
-                // a < b
-                assertEquals( -1, MathUtil.compareTo( a, b ) );
-            }
-            else {
-                // a > b
-                assertEquals( 1, MathUtil.compareTo( a, b ) );
-            }
-        } );
-    }
-
-    /**
-     *
-     * @param test test function, boolean true if expected to be less than if not equal. a,b is a.compareTo(b)
-     */
-    private void testCompareTo( TriConsumer<Boolean, Number, Number> test )
-    {
-        for( Number a: MIN_MAX_DATA[0] ) {
-            for( Number b: MIN_MAX_DATA[1] ) {
-                test.accept( true, a, b );
-                test.accept( false, b, a );
-            }
-        }
-    }
-
     /**
      * Test of min method, of class MathUtil.
      */
@@ -161,7 +93,7 @@ public class MathUtilTest
             assertTrue( a.getClass() == v.getClass() );
 
             // Test we have the correct value
-            assertEquals( MathUtil.convert( a, e ), v );
+            assertEquals( Arithmetic.convert( a, e ), v );
         };
 
         for( int i = 0; i < MIN_MAX_DATA[0].length; i++ ) {
@@ -192,7 +124,7 @@ public class MathUtilTest
             for( Number expected: FLOOR_CEIL_DATA[0] ) {
                 Number v = test.apply( srcVal );
                 assertNotNull( v );
-                assertEquals( MathUtil.convert( v.getClass(), expected ), test.apply( srcVal ) );
+                assertEquals( Arithmetic.convert( v.getClass(), expected ), test.apply( srcVal ) );
             }
         }
     }

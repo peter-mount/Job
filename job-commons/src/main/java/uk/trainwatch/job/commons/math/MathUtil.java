@@ -7,9 +7,9 @@ package uk.trainwatch.job.commons.math;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.function.Predicate;
+import static uk.trainwatch.job.lang.expr.Arithmetic.compareTo;
+import static uk.trainwatch.job.lang.expr.Arithmetic.convert;
 
 /**
  *
@@ -17,144 +17,6 @@ import java.util.function.Predicate;
  */
 public class MathUtil
 {
-
-    /**
-     * Convert Number b to the same type as Number a
-     * <p>
-     * @param a
-     * @param b
-     *          <p>
-     * @return
-     */
-    public static Number convert( Class<? extends Number> a, Number b )
-    {
-        if( a == null || b == null ) {
-            return null;
-        }
-
-        // We treat shorts as ints
-        if( a.isAssignableFrom( Integer.class ) || a.isAssignableFrom( Short.class ) ) {
-            return b.intValue();
-        }
-
-        if( a.isAssignableFrom( Long.class ) ) {
-            return b.longValue();
-        }
-
-        if( a.isAssignableFrom( Double.class ) ) {
-            return b.doubleValue();
-        }
-
-        if( a.isAssignableFrom( Float.class ) ) {
-            return b.floatValue();
-        }
-
-        if( a.isAssignableFrom( Byte.class ) ) {
-            return b.byteValue();
-        }
-
-        if( a.isAssignableFrom( BigInteger.class ) ) {
-            return b instanceof BigInteger ? (BigInteger) b : BigInteger.valueOf( b.longValue() );
-        }
-
-        if( a.isAssignableFrom( BigDecimal.class ) ) {
-            if( b instanceof BigDecimal ) {
-                return (BigDecimal) b;
-            }
-            else if( b instanceof BigInteger ) {
-                return new BigDecimal( (BigInteger) b );
-            }
-            else if( b instanceof Integer || b instanceof Short ) {
-                return new BigDecimal( b.intValue() );
-            }
-            else if( b instanceof Long ) {
-                return new BigDecimal( b.longValue() );
-            }
-            else if( b instanceof Double || b instanceof Float ) {
-                return new BigDecimal( b.doubleValue() );
-            }
-            else {
-                return new BigDecimal( b.toString() );
-            }
-        }
-
-        throw new NumberFormatException( "Unable to convert " + b.getClass() + " into " + a.getClass() );
-    }
-
-    /**
-     * Convert Number b to the same type as Number a
-     * <p>
-     * @param a
-     * @param b
-     *          <p>
-     * @return
-     */
-    public static Number convert( Number a, Number b )
-    {
-        if( a == null ) {
-            return null;
-        }
-
-        // We treat shorts as ints
-        if( a instanceof Integer || a instanceof Short ) {
-            return b.intValue();
-        }
-
-        if( a instanceof Long ) {
-            return b.longValue();
-        }
-
-        if( a instanceof Double ) {
-            return b.doubleValue();
-        }
-
-        if( a instanceof Float ) {
-            return b.floatValue();
-        }
-
-        if( a instanceof Byte ) {
-            return b.byteValue();
-        }
-
-        if( a instanceof BigInteger ) {
-            return b instanceof BigInteger ? (BigInteger) b : BigInteger.valueOf( b.longValue() );
-        }
-
-        if( a instanceof BigDecimal ) {
-            if( b instanceof BigDecimal ) {
-                return (BigDecimal) b;
-            }
-            else if( b instanceof BigInteger ) {
-                return new BigDecimal( (BigInteger) b );
-            }
-            else if( b instanceof Integer || b instanceof Short || b instanceof Byte ) {
-                return new BigDecimal( b.intValue() );
-            }
-            else if( b instanceof Long ) {
-                return new BigDecimal( b.longValue() );
-            }
-            else if( b instanceof Double || b instanceof Float ) {
-                return new BigDecimal( b.doubleValue() );
-            }
-            else {
-                return new BigDecimal( b.toString() );
-            }
-        }
-
-        throw new NumberFormatException( "Unable to convert " + b.getClass() + " into " + a.getClass() );
-    }
-
-    public static int compareTo( Number a, Number b )
-    {
-        if( a == b ) {
-            return 0;
-        }
-        if( a instanceof Comparable ) {
-            return ((Comparable) a).compareTo( convert( a, b ) );
-        }
-
-        throw new IllegalArgumentException( "Unable to compare " + a + " with " + b );
-    }
 
     public static Number min( Number a, Number b )
     {
