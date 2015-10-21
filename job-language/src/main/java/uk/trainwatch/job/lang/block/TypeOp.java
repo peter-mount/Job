@@ -47,14 +47,19 @@ public class TypeOp
         return args;
     }
 
-    public static ExpressionOperation construct( String type, ExpressionOperation... exp )
+    public static ExpressionOperation construct( String type, ExpressionOperation... expArgs )
     {
+        ExpressionOperation exp = ExtensionManager.INSTANCE.construct( type, expArgs );
+        if( exp != null ) {
+            return exp;
+        }
+
         return ( s, a ) -> {
             try {
                 String realType = s.resolveType( type );
                 Class clazz = Class.forName( realType );
 
-                Object args[] = invokeArguments( s, exp );
+                Object args[] = invokeArguments( s, expArgs );
 
                 return MethodHandles.lookup()
                         .findConstructor( clazz, MethodType.methodType( void.class ) )

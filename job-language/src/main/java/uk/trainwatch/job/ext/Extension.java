@@ -35,6 +35,19 @@ public interface Extension
     }
 
     /**
+     * Construct an object
+     * <p>
+     * @param type Type/name of the object
+     * @param exp  Arguments for this construction
+     * <p>
+     * @return ExpressionOperation or null if not supported
+     */
+    default ExpressionOperation construct( String type, ExpressionOperation... exp )
+    {
+        return null;
+    }
+
+    /**
      * Retrieve a statement given it's name
      *
      * @param name Name of statement

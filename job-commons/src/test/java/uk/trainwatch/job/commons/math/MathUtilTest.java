@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.commons.math;
 
+import uk.trainwatch.util.TriConsumer;
 import uk.trainwatch.job.commons.math.MathUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
