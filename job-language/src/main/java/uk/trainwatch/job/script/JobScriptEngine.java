@@ -45,19 +45,17 @@ public class JobScriptEngine
     public Object eval( Reader reader, ScriptContext context )
             throws ScriptException
     {
-        try
-        {
-            Job job = Compiler.compile( new ANTLRInputStream( reader ) );
+        Job job = null;
+        try {
+            job = Compiler.compile( new ANTLRInputStream( reader ) );
 
             Scope scope;
 
             Bindings b = context.getBindings( ScriptContext.ENGINE_SCOPE );
-            if( b instanceof Scope )
-            {
+            if( b instanceof Scope ) {
                 scope = (Scope) b;
             }
-            else
-            {
+            else {
                 scope = Scope.newInstance();
                 ctx.setBindings( (Bindings) scope, ScriptContext.ENGINE_SCOPE );
             }
@@ -65,9 +63,14 @@ public class JobScriptEngine
             job.invoke( scope );
 
             return null;
-        } catch( Exception ex )
-        {
+        }
+        catch( Exception ex ) {
             throw new ScriptException( ex );
+        }
+        finally {
+            if( job != null ) {
+                job.getJobOutput().cleanup();
+            }
         }
     }
 

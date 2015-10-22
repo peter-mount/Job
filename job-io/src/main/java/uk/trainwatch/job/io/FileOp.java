@@ -39,10 +39,7 @@ public class FileOp
     {
         return ( s, a ) -> {
             Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
-            if( arg0 instanceof URI ) {
-                return new File( (URI) arg0 );
-            }
-            return new File( Objects.toString( arg0 ) );
+            return s.getJob().getJobOutput().createFile( Objects.toString( arg0 ) );
         };
     }
 
@@ -51,10 +48,37 @@ public class FileOp
         return ( s, a ) -> {
             Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
             Object arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) );
+
+            File f;
             if( arg0 instanceof File ) {
-                return new File( (File) arg0, Objects.toString( arg1 ) );
+                f = new File( (File) arg0, Objects.toString( arg1 ) );
             }
-            return new File( Objects.toString( arg0 ), Objects.toString( arg1 ) );
+            else {
+                f = new File( Objects.toString( arg0 ), Objects.toString( arg1 ) );
+            }
+            s.getJob().getJobOutput().addFile( f );
+            return f;
+        };
+    }
+
+    public static ExpressionOperation newTempFile( ExpressionOperation exp0 )
+    {
+        return ( s, a ) -> {
+            String name = Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString();
+            int i = name.lastIndexOf( "." );
+
+            return s.getJob().getJobOutput().createTempFile( i > -1 ? name.substring( 0, i ) : name,
+                                                             i > -1 ? name.substring( i ) : "" );
+        };
+    }
+
+    public static ExpressionOperation newTempFile( ExpressionOperation exp0, ExpressionOperation exp1 )
+    {
+        return ( s, a ) -> {
+            Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
+            Object arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) );
+
+            return s.getJob().getJobOutput().createTempFile( Objects.toString( arg0 ), Objects.toString( arg1 ) );
         };
     }
 

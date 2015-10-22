@@ -7,6 +7,8 @@ package uk.trainwatch.job.lang.block;
 
 import java.util.Objects;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.Statement;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
@@ -23,20 +25,23 @@ public class Log
         Objects.requireNonNull( level, "No level" );
         Objects.requireNonNull( expr, "No expression" );
         return ( s, a ) -> {
-            try {
-                s.getLogger().
-                        log( level, () -> {
-                            try {
-                                return Objects.toString( decode( expr.invoke( s ) ) );
-                            }
-                            catch( Exception ex ) {
-                                throw new RuntimeException( ex );
-                            }
-                        } );
-            }
-            catch( RuntimeException ex ) {
-                Throwable t = ex.getCause();
-                throw t instanceof Exception ? (Exception) t : ex;
+            Job job = s.getJob();
+            Logger log = s.getLogger();
+
+            boolean jobLog = job.isLoggable( level );
+            boolean logLog = log != null && log.isLoggable( level );
+            if( jobLog || logLog ) {
+                String m = Objects.toString( decode( expr.invoke( s ) ) );
+
+                // Log to the job log
+                if( jobLog ) {
+                    job.log( level, m );
+                }
+
+                // Log to the system log
+                if( logLog ) {
+                    log.log( level, m );
+                }
             }
         };
     }

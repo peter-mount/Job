@@ -17,6 +17,8 @@ public interface Scope
         extends AutoCloseable
 {
 
+    Job getJob();
+
     /**
      * Create a new scope
      * <p>
@@ -84,17 +86,19 @@ public interface Scope
     void addImport( String type );
 
     Collection<String> getImports();
-    
+
     String resolveType( String type );
-    
+
     String resolveClass( String clazz );
-    
+
     Scope.GlobalScope getGlobalScope();
 
     static interface GlobalScope
             extends Scope,
                     Bindings
     {
+
+        void setJob( Job job );
 
         void setLogger( Logger logger );
     }

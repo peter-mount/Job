@@ -278,14 +278,13 @@ public class Block
             super( cause );
         }
 
-        public void rethrow()
-                throws Exception
+        public Exception getException()
         {
             Throwable cause = getCause();
             if( cause instanceof Exception ) {
-                throw (Exception) cause;
+                return (Exception) cause;
             }
-            throw new InvocationTargetException( cause );
+            return new InvocationTargetException( cause );
         }
     }
 

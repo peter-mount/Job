@@ -85,23 +85,44 @@ public abstract class AbstractScope
     {
 
         private final Map<String, String> imports = new LinkedHashMap<>();
+        private Job job;
 
         protected Logger logger;
 
         public GlobalScope()
         {
-            this( null );
+            this( null, null );
         }
 
         @SuppressWarnings("LeakingThisInConstructor")
         public GlobalScope( Logger logger )
         {
+            this( null, logger );
+        }
+
+        @SuppressWarnings("LeakingThisInConstructor")
+        public GlobalScope( Job job, Logger logger )
+        {
+            this.job = job;
+
             currentScope.set( this );
             this.logger = logger;
 
             for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
                 imports.put( STANDARD_IMPORTS[i], STANDARD_IMPORTS[i + 1] );
             }
+        }
+
+        @Override
+        public Job getJob()
+        {
+            return job;
+        }
+
+        @Override
+        public void setJob( Job job )
+        {
+            this.job = job;
         }
 
         @Override
@@ -258,6 +279,12 @@ public abstract class AbstractScope
         protected ChildScope( GlobalScope globalScope )
         {
             this.globalScope = globalScope;
+        }
+
+        @Override
+        public Job getJob()
+        {
+            return globalScope.getJob();
         }
 
         @Override

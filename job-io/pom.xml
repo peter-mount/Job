@@ -24,6 +24,12 @@
         </dependency>
         
         <dependency>
+            <groupId>uk.trainwatch.job</groupId>
+            <artifactId>job-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
             <groupId>uk.trainwatch</groupId>
             <artifactId>opendata-core</artifactId>
             <version>1.0-SNAPSHOT</version>
