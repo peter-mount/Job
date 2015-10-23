@@ -126,6 +126,11 @@ public class TypeOp
         return Objects.requireNonNull( ExtensionManager.INSTANCE.getStatement( methodName, argExp ), "Cannot locate " + methodName );
     }
 
+    public static Statement invokeOutputStatement( String methodName, ExpressionOperation... argExp )
+    {
+        return Objects.requireNonNull( ExtensionManager.INSTANCE.getOutputStatement( methodName, argExp ), "Cannot locate output " + methodName );
+    }
+
     public static ExpressionOperation invokeExtension( String methodName, ExpressionOperation... argExp )
     {
         Statement extension = invokeExtensionStatement( methodName, argExp );

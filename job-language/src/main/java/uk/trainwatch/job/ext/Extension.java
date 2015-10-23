@@ -85,4 +85,15 @@ public interface Extension
     {
         return null;
     }
+
+    /**
+     * Returns a Statement if this extension supports Job Output
+     * @param name
+     * @param args
+     * @return 
+     */
+    default Statement getOutputStatement( String name, ExpressionOperation... args )
+    {
+        return null;
+    }
 }

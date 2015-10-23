@@ -45,7 +45,8 @@ public final class JobOutputImpl
     {
         this.job = job;
 
-        logFile = createTempFile( job.getId(), ".log" );
+        logFile = File.createTempFile( job.getId(), ".log" );
+        logFile.deleteOnExit();
         log = new PrintWriter( logFile );
     }
 
@@ -82,6 +83,9 @@ public final class JobOutputImpl
         files.addAll( permFiles.entrySet() );
 
         for( JobOutputArchiver a: archivers ) {
+
+            a.archiveLog( job, logFile );
+
             for( Map.Entry<String, File> e: files ) {
                 a.archive( e.getKey(), e.getValue() );
             }
@@ -92,7 +96,6 @@ public final class JobOutputImpl
      * Cleanup the output. Client code must call this if the VM is long lived otherwise the temp files will remain on disk
      */
     @Override
-
     public void cleanup()
     {
         logFile.delete();

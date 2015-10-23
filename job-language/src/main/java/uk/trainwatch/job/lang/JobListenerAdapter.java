@@ -94,30 +94,6 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterMailOutput( JobParser.MailOutputContext ctx )
-    {
-
-    }
-
-    @Override
-    public void exitMailOutput( JobParser.MailOutputContext ctx )
-    {
-
-    }
-
-    @Override
-    public void enterLogOutput( JobParser.LogOutputContext ctx )
-    {
-
-    }
-
-    @Override
-    public void exitLogOutput( JobParser.LogOutputContext ctx )
-    {
-
-    }
-
-    @Override
     public void enterDeclare( JobParser.DeclareContext ctx )
     {
 

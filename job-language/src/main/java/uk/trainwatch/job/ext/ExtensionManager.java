@@ -73,6 +73,11 @@ public enum ExtensionManager
         return locate( e -> e.getStatement( name, args ) );
     }
 
+    public Statement getOutputStatement( String name, ExpressionOperation... args )
+    {
+        return locate( e -> e.getOutputStatement( name, args ) );
+    }
+
     public ExpressionOperation getExpression( String name, ExpressionOperation... args )
     {
         return locate( e -> e.getExpression( name, args ) );

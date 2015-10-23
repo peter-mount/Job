@@ -56,16 +56,7 @@ outputStatements
     ;
 
 outputStatement
-    :   mailOutput
-    |   logOutput
-    ;
-
-mailOutput
-    :   'mail' 'to' expression
-    ;
-
-logOutput
-    :   'log' expression
+    :   extensionStatement
     ;
 
 declare

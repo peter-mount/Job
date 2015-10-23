@@ -18,6 +18,12 @@ public interface JobOutputArchiver
         extends Closeable
 {
 
+    default void archiveLog( Job job, File logFile )
+            throws IOException
+    {
+        archive( job.getId() + ".log", logFile );
+    }
+
     /**
      * Add a file to the archive
      * <p>

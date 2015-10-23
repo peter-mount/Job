@@ -35,6 +35,11 @@ public class BlockCompiler
     private final NestedString name = new NestedString();
     private final NestedMap<String, Statement> catches = new NestedMap.Linked<>();
 
+    public ExpressionCompiler getExpressionCompiler()
+    {
+        return expressionCompiler;
+    }
+
     //<editor-fold defaultstate="collapsed" desc="Blocks">
     /**
      * The last block visited by {@link #enterBlock(uk.trainwatch.job.lang.JobParser.BlockContext) }

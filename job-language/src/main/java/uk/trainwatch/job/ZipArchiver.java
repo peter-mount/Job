@@ -13,11 +13,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -122,7 +120,6 @@ public class ZipArchiver
     public void archive( String name, File file )
             throws IOException
     {
-        System.out.println( "Add "+name+" "+file.getAbsolutePath());
         try( InputStream fis = new FileInputStream( file ) ) {
             ZipEntry ze = new ZipEntry( normalise( name ) );
             zos.putNextEntry( ze );
@@ -134,7 +131,6 @@ public class ZipArchiver
         }
         catch( FileNotFoundException ex ) {
             // Ignore, we'll just not add it to the archive
-            ex.printStackTrace();
         }
     }
 
