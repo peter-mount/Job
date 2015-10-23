@@ -15,9 +15,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutput;
+import uk.trainwatch.job.JobOutputArchiver;
 
 /**
  *
@@ -28,18 +30,22 @@ public final class JobOutputImpl
                    Closeable
 {
 
+    private final Job job;
+
     private volatile int levelValue = Level.INFO.intValue();
     private final File logFile;
     private final PrintWriter log;
 
     private final Map<String, File> permFiles = new HashMap<>();
     private final Map<String, File> tempFiles = new HashMap<>();
+    private Collection<JobOutputArchiver> archivers;
 
     public JobOutputImpl( Job job )
             throws IOException
     {
-        logFile = createTempFile( job.getId(), ".log" );
+        this.job = job;
 
+        logFile = createTempFile( job.getId(), ".log" );
         log = new PrintWriter( logFile );
     }
 
@@ -47,13 +53,46 @@ public final class JobOutputImpl
     public void close()
             throws IOException
     {
-        log.close();
+        try {
+            log.close();
+        }
+        finally {
+            if( archivers != null ) {
+                try {
+                    archive();
+                }
+                finally {
+                    for( JobOutputArchiver a: archivers ) {
+                        try {
+                            a.close();
+                        }
+                        catch( IOException ex ) {
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void archive()
+            throws IOException
+    {
+        Collection<Map.Entry<String, File>> files = new ArrayList<>( tempFiles.entrySet() );
+        files.addAll( permFiles.entrySet() );
+
+        for( JobOutputArchiver a: archivers ) {
+            for( Map.Entry<String, File> e: files ) {
+                a.archive( e.getKey(), e.getValue() );
+            }
+        }
     }
 
     /**
      * Cleanup the output. Client code must call this if the VM is long lived otherwise the temp files will remain on disk
      */
     @Override
+
     public void cleanup()
     {
         logFile.delete();
@@ -83,9 +122,17 @@ public final class JobOutputImpl
     @Override
     public File createTempFile( String prefix, String suffix )
     {
-        return tempFiles.computeIfAbsent( prefix + "." + suffix, n -> {
+        Objects.requireNonNull( prefix, "Prefix is mandatory" );
+
+        return tempFiles.computeIfAbsent( prefix + suffix, n -> {
             try {
-                File f = File.createTempFile( prefix, suffix );
+                // File.createTempFile will throw an IllegalArgumentException if prefix is under 3 characters so pad out with _
+                String p = prefix;
+                if( p.length() < 3 ) {
+                    p = (p + "___").substring( 0, 3 );
+                }
+
+                File f = File.createTempFile( p, suffix );
                 f.deleteOnExit();
                 return f;
             }
@@ -132,6 +179,26 @@ public final class JobOutputImpl
     public void setLogLevel( Level level )
     {
         levelValue = (level == null ? Level.INFO : level).intValue();
+    }
+
+    @Override
+    public void addJobOutputArchiver( JobOutputArchiver a )
+    {
+        if( archivers == null ) {
+            archivers = new ArrayList<>();
+        }
+        archivers.add( a );
+    }
+
+    @Override
+    public void removeJobOutputArchiver( JobOutputArchiver a )
+    {
+        if( archivers != null ) {
+            archivers.remove( a );
+            if( archivers.isEmpty() ) {
+                archivers = null;
+            }
+        }
     }
 
 }

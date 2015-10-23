@@ -5,7 +5,11 @@
  */
 package uk.trainwatch.job.lang.header;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.AbstractCompiler;
@@ -57,7 +61,12 @@ public class CompilationUnitCompiler
         final String id = getString( strings.get( 0 ) );
         final String runAs = strings.size() > 1 ? getString( strings.get( 1 ) ) : "Local";
 
-        job = new JobImpl( id, runAs, declareBlock, outputBlock, block );
+        try {
+            job = new JobImpl( id, runAs, declareBlock, outputBlock, block );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     @Override

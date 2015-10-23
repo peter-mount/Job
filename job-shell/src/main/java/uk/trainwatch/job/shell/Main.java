@@ -5,6 +5,7 @@
  */
 package uk.trainwatch.job.shell;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -21,6 +22,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.job.ZipArchiver;
 import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.job.lang.Compiler;
 import uk.trainwatch.util.sql.DataSourceProducer;
@@ -43,12 +45,13 @@ public class Main
     private static boolean daemon;
     private static boolean cluster;
     private static String clusterName;
+    private static File output;
 
     public static void main( String... args )
             throws Exception
     {
         configure( args );
-        
+
         ExtensionManager.INSTANCE.init();
 
         // Compile any scripts. This will allow for any syntax errors to be shown immediately rather than after startup
@@ -79,10 +82,17 @@ public class Main
 
     private static void run( Job job )
     {
-        LOG.log( Level.INFO, () -> "Job: " + job.getId() );
+        try {
+            LOG.log( Level.INFO, () -> "Job: " + job.getId() );
 
-        try( Scope scope = Scope.newInstance( Logger.getAnonymousLogger() ) ) {
-            job.invoke( scope );
+            if( output != null ) {
+                job.getJobOutput().addJobOutputArchiver( ZipArchiver.archive( output ) );
+            }
+
+            try( Scope scope = Scope.newInstance( Logger.getAnonymousLogger() ) ) {
+                job.invoke( scope );
+            }
+
         }
         catch( Exception ex ) {
             throw new RuntimeException( ex );
@@ -97,7 +107,8 @@ public class Main
                 .addOption( null, "cdi", false, "Enable CDI support" )
                 .addOption( null, "cluster", true, "Enable cluster support (forces cdi & daemon)" )
                 .addOption( null, "daemon", false, "Continue running once all scripts have run" )
-                .addOption( null, "database", true, "Database config" );
+                .addOption( null, "database", true, "Database config" )
+                .addOption( "o", "output", true, "Create zip file" );
 
         cmd = new GnuParser().parse( options, args );
 
@@ -111,6 +122,14 @@ public class Main
         if( database ) {
             DataSourceProducer.setFactory( read( cmd.getOptionValue( "database" ) ) );
             DataSourceProducer.setUseJndi( false );
+        }
+
+        if( cmd.hasOption( "output" ) ) {
+            if( daemon || cluster ) {
+                // Why store as a file when it will be overwritten for each job run?
+                throw new IllegalArgumentException( "Output is not supported in this mode" );
+            }
+            output = new File( cmd.getOptionValue( "output" ) );
         }
     }
 

@@ -20,7 +20,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
@@ -37,24 +36,23 @@ public class FileOp
 
     public static ExpressionOperation newFile( ExpressionOperation exp0 )
     {
-        return ( s, a ) -> {
-            Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
-            return s.getJob().getJobOutput().createFile( Objects.toString( arg0 ) );
-        };
+        return ( s, a ) -> s.getJob().getJobOutput().createFile(
+                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString()
+        );
     }
 
     public static ExpressionOperation newFile( ExpressionOperation exp0, ExpressionOperation exp1 )
     {
         return ( s, a ) -> {
             Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
-            Object arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) );
+            String arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) ).toString();
 
             File f;
             if( arg0 instanceof File ) {
-                f = new File( (File) arg0, Objects.toString( arg1 ) );
+                f = new File( (File) arg0, arg1 );
             }
             else {
-                f = new File( Objects.toString( arg0 ), Objects.toString( arg1 ) );
+                f = new File( arg0.toString(), arg1 );
             }
             s.getJob().getJobOutput().addFile( f );
             return f;
@@ -63,28 +61,43 @@ public class FileOp
 
     public static ExpressionOperation newTempFile( ExpressionOperation exp0 )
     {
-        return ( s, a ) -> {
-            String name = Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString();
-            int i = name.lastIndexOf( "." );
-
-            return s.getJob().getJobOutput().createTempFile( i > -1 ? name.substring( 0, i ) : name,
-                                                             i > -1 ? name.substring( i ) : "" );
-        };
+        return ( s, a ) -> s.getJob().getJobOutput().createTempFile(
+                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString()
+        );
     }
 
     public static ExpressionOperation newTempFile( ExpressionOperation exp0, ExpressionOperation exp1 )
     {
-        return ( s, a ) -> {
-            Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
-            Object arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) );
-
-            return s.getJob().getJobOutput().createTempFile( Objects.toString( arg0 ), Objects.toString( arg1 ) );
-        };
+        return ( s, a ) -> s.getJob().getJobOutput().createTempFile(
+                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString(),
+                Objects.requireNonNull( decode( exp1.invoke( s ) ) ).toString()
+        );
     }
 
     public static ExpressionOperation newReader( ExpressionOperation exp )
     {
-        return ( s, a ) -> new ReaderWrapper( createReader( exp.invoke( s, a ) ) );
+        return ( s, a ) -> {
+            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
+            if( o instanceof String ) {
+                return new ReaderWrapper( new FileReader(
+                        s.getJob().getJobOutput().createFile( o.toString() )
+                ) );
+            }
+            return new ReaderWrapper( createReader( o ) );
+        };
+    }
+
+    public static ExpressionOperation newTempReader( ExpressionOperation exp )
+    {
+        return ( s, a ) -> {
+            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
+            if( o instanceof String ) {
+                return new ReaderWrapper( new FileReader(
+                        s.getJob().getJobOutput().createTempFile( o.toString() )
+                ) );
+            }
+            return new ReaderWrapper( createReader( o ) );
+        };
     }
 
     public static Reader createReader( Object v )
@@ -113,12 +126,33 @@ public class FileOp
             return new InputStreamReader( (InputStream) o );
         }
 
-        return new StringReader( o.toString() );
+        throw new UnsupportedOperationException( "Unable to create Reader from " + o );
     }
 
     public static ExpressionOperation newWriter( ExpressionOperation exp )
     {
-        return ( s, a ) -> new WriterWrapper( createWriter( exp.invoke( s, a ) ) );
+        return ( s, a ) -> {
+            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
+            if( o instanceof String ) {
+                return new WriterWrapper( new FileWriter(
+                        s.getJob().getJobOutput().createFile( o.toString() )
+                ) );
+            }
+            return new WriterWrapper( createWriter( o ) );
+        };
+    }
+
+    public static ExpressionOperation newTempWriter( ExpressionOperation exp )
+    {
+        return ( s, a ) -> {
+            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
+            if( o instanceof String ) {
+                return new WriterWrapper( new FileWriter(
+                        s.getJob().getJobOutput().createTempFile( o.toString() )
+                ) );
+            }
+            return new WriterWrapper( createWriter( o ) );
+        };
     }
 
     public static Writer createWriter( Object v )
@@ -147,7 +181,7 @@ public class FileOp
             return new OutputStreamWriter( (OutputStream) o );
         }
 
-        return new StringWriter();
+        throw new UnsupportedOperationException( "Unable to create Writer from " + o );
     }
 
     private static InputStream newInputStream( Object v )

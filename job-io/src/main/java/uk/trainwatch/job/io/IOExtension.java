@@ -51,7 +51,7 @@ public class IOExtension
                         return FileOp.newFile( exp[0] );
 
                     case "FTP":
-                        return Ftp.create(exp[0]);
+                        return Ftp.create( exp[0] );
 
                     case "gunzip":
                         return FileOp.gunzip( exp[0] );
@@ -61,9 +61,15 @@ public class IOExtension
 
                     case "Reader":
                         return FileOp.newReader( exp[0] );
-                        
+
                     case "TempFile":
-                        return FileOp.newFile( exp[0] );
+                        return FileOp.newTempFile( exp[0] );
+
+                    case "TempReader":
+                        return FileOp.newTempReader( exp[0] );
+
+                    case "TempWriter":
+                        return FileOp.newTempWriter( exp[0] );
 
                     case "Writer":
                         return FileOp.newWriter( exp[0] );
@@ -78,7 +84,7 @@ public class IOExtension
                         return FileOp.newFile( exp[0], exp[1] );
 
                     case "TempFile":
-                        return FileOp.newFile( exp[0], exp[1] );
+                        return FileOp.newTempFile( exp[0], exp[1] );
 
                     default:
                         return null;

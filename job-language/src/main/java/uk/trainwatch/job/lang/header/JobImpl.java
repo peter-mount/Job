@@ -6,8 +6,6 @@
 package uk.trainwatch.job.lang.header;
 
 import java.io.IOException;
-import java.io.Serializable;
-import java.io.UncheckedIOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -24,8 +22,7 @@ import uk.trainwatch.job.lang.block.Block;
  * @author peter
  */
 class JobImpl
-        implements Job,
-                   Serializable
+        implements Job
 {
 
     private static final long serialVersionUID = 1L;
@@ -34,16 +31,18 @@ class JobImpl
     private final Statement declare;
     private final Statement output;
     private final Statement block;
-    private JobOutput jobOutput;
+    private JobOutputImpl jobOutput;
     private Set<JobListener> listeners;
 
     public JobImpl( String id, String runAs, Statement declare, Statement output, Statement block )
+            throws IOException
     {
         this.id = id;
         this.runAs = runAs;
         this.declare = declare;
         this.output = output;
         this.block = block;
+        jobOutput = new JobOutputImpl( this );
     }
 
     @Override
@@ -72,9 +71,9 @@ class JobImpl
             ((Scope.GlobalScope) scope).setJob( this );
         }
 
-        try( JobOutputImpl outputImpl = new JobOutputImpl( this ) ) {
-            jobOutput=outputImpl;
-            
+        try( JobOutputImpl outputImpl = jobOutput ) {
+            jobOutput = outputImpl;
+
             scope.getLogger().log( Level.FINE, () -> "Starting " + id );
             fire( l -> l.jobStarted( this, scope ) );
             try {
