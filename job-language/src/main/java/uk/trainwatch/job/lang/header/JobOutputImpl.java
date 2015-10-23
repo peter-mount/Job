@@ -111,6 +111,46 @@ public final class JobOutputImpl
     }
 
     @Override
+    public void delete( File file )
+    {
+        if( file != null ) {
+            permFiles.entrySet()
+                    .stream()
+                    .filter( e -> file.equals( e.getValue() ) )
+                    .findAny()
+                    .ifPresent( e -> {
+                        File f = e.getValue();
+                        permFiles.remove( e.getKey() );
+                        deleteImpl( f );
+                    } );
+
+            tempFiles.entrySet()
+                    .stream()
+                    .filter( e -> file.equals( e.getValue() ) )
+                    .findAny()
+                    .ifPresent( e -> {
+                        File f = e.getValue();
+                        tempFiles.remove( e.getKey() );
+                        deleteImpl( f );
+                    } );
+        }
+    }
+
+    @Override
+    public void delete( String name )
+    {
+        deleteImpl( permFiles.remove( name ) );
+        deleteImpl( tempFiles.remove( name ) );
+    }
+
+    private void deleteImpl( File f )
+    {
+        if( f != null ) {
+            f.delete();
+        }
+    }
+
+    @Override
     public File createFile( String name )
     {
         return permFiles.computeIfAbsent( name, File::new );

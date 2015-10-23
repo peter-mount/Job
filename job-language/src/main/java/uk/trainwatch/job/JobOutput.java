@@ -39,7 +39,7 @@ public interface JobOutput
      * This file will be deleted once the job completes.
      * <p>
      * @param name
-     * <p>
+     *             <p>
      * @return
      */
     default File createTempFile( String name )
@@ -89,6 +89,20 @@ public interface JobOutput
      * @param file
      */
     void addTempFile( File file );
+
+    /**
+     * Delete a file. Once deleted it's no longer part of the job output.
+     * <p>
+     * @param file File
+     */
+    void delete( File file );
+
+    /**
+     * Delete a file. Once deleted it's no longer part of the job output.
+     * <p>
+     * @param name file name
+     */
+    void delete( String name );
 
     /**
      * Return a collection of all files managed by this job.
