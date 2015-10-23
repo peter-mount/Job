@@ -5,7 +5,8 @@
  */
 package uk.trainwatch.job.table.visitors;
 
-import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import uk.trainwatch.job.table.Alignment;
 import uk.trainwatch.job.table.Cells;
@@ -22,7 +23,7 @@ public class XHTMLTableVisitor
         implements TableVisitor
 {
 
-    private final PrintWriter w;
+    private final Appendable w;
 
     private boolean firstHeader;
     private boolean inHeader;
@@ -33,7 +34,7 @@ public class XHTMLTableVisitor
     private int col;
     private String cellName;
 
-    public XHTMLTableVisitor( PrintWriter w, List<TableStringFormat> formatters )
+    public XHTMLTableVisitor( Appendable w, List<TableStringFormat> formatters )
     {
         this.w = w;
         this.formatters = formatters;
@@ -42,88 +43,108 @@ public class XHTMLTableVisitor
     @Override
     public void visit( Table t )
     {
-        w.print( "<table>" );
+        try {
+            w.append( "<table>" );
 
-        t.forEachHeader( h -> h.accept( this ) );
-        if( inHeader ) {
-            w.print( "</thead>" );
+            t.forEachHeader( h -> h.accept( this ) );
+            if( inHeader ) {
+                w.append( "</thead>" );
+            }
+
+            t.forEach( r -> r.accept( this ) );
+            if( inRow ) {
+                w.append( "</tbody>" );
+            }
+
+            w.append( "</table>" );
         }
-
-        t.forEach( r -> r.accept( this ) );
-        if( inRow ) {
-            w.print( "</tbody>" );
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
         }
-
-        w.print( "</table>" );
     }
 
     @Override
     public void visit( Header h )
     {
-        if( firstHeader ) {
-            w.print( "<thead>" );
-            firstHeader = false;
-            inHeader = true;
-        }
+        try {
+            if( firstHeader ) {
+                w.append( "<thead>" );
+                firstHeader = false;
+                inHeader = true;
+            }
 
-        w.print( "<tr>" );
-        col = 0;
-        cellName="th";
-        h.forEach( c -> c.accept( this ) );
-        w.print( "</tr>" );
+            w.append( "<tr>" );
+            col = 0;
+            cellName = "th";
+            h.forEach( c -> c.accept( this ) );
+            w.append( "</tr>" );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     @Override
     public void visit( Row r )
     {
-        if( firstRow ) {
-            w.print( "<tbody>" );
-            firstRow = false;
-            inRow = true;
-        }
+        try {
+            if( firstRow ) {
+                w.append( "<tbody>" );
+                firstRow = false;
+                inRow = true;
+            }
 
-        w.print( "<tr>" );
-        col = 0;
-        cellName="td";
-        r.forEach( c -> c.accept( this ) );
-        w.print( "</tr>" );
+            w.append( "<tr>" );
+            col = 0;
+            cellName = "td";
+            r.forEach( c -> c.accept( this ) );
+            w.append( "</tr>" );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     private void visitCell( Cells c )
     {
-        TableStringFormat f = c.getFormat();
-        if( f == null ) {
-            f = formatters.get( col );
+        try {
+            TableStringFormat f = c.getFormat();
+            if( f == null ) {
+                f = formatters.get( col );
+            }
+
+            w.append( '<' );
+            w.append( cellName );
+            if( c.getColspan() > 1 ) {
+                w.append( " colspan=\"" );
+                w.append( String.valueOf( c.getColspan() ) );
+                w.append( "\"" );
+            }
+
+            Alignment a = f.getAlignment();
+            if( a == Alignment.CENTER || a == Alignment.CENTER ) {
+                w.append( " align=\"" );
+                w.append( a.toString().toLowerCase() );
+                w.append( "\"" );
+            }
+
+            w.append( '>' );
+
+            w.append( f.format( c.getValue() ).trim() );
+
+            w.append( "</" );
+            w.append( cellName );
+            w.append( '>' );
+
+            if( c.getColspan() > 1 ) {
+                col += c.getColspan();
+            }
+            else {
+                col++;
+            }
         }
-
-        w.print( '<' );
-        w.print( cellName );
-        if( c.getColspan() > 1 ) {
-            w.print( " colspan=\"" );
-            w.print( c.getColspan() );
-            w.print( "\"" );
-        }
-
-        Alignment a = f.getAlignment();
-        if( a == Alignment.CENTER || a == Alignment.CENTER ) {
-            w.print( " align=\"" );
-            w.print( a.toString().toLowerCase() );
-            w.print( "\"" );
-        }
-
-        w.print( '>' );
-
-        w.print( f.format( c.getValue() ).trim() );
-
-        w.print( "</" );
-        w.print( cellName );
-        w.print( '>' );
-
-        if( c.getColspan() > 1 ) {
-            col += c.getColspan();
-        }
-        else {
-            col++;
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
         }
     }
 

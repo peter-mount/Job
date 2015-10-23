@@ -22,6 +22,11 @@ public interface Cell<T>
         return this;
     }
 
+    default int getColspan()
+    {
+        return 1;
+    }
+
     default <F extends Format> F getFormat()
     {
         return null;

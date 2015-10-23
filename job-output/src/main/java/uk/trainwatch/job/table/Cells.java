@@ -48,6 +48,7 @@ public abstract class Cells<T, F extends TableStringFormat>
         return this;
     }
 
+    @Override
     public int getColspan()
     {
         return colspan;

@@ -5,9 +5,10 @@
  */
 package uk.trainwatch.job.table;
 
+import uk.trainwatch.job.table.visitors.CSVTableVisitor;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import uk.trainwatch.job.table.visitors.FormatTableVisitor;
 import uk.trainwatch.job.table.visitors.StringTableVisitor;
 import uk.trainwatch.job.table.visitors.TableVisitor;
@@ -17,6 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.apache.commons.csv.CSVFormat;
 import uk.trainwatch.job.table.visitors.XHTMLTableVisitor;
 
 /**
@@ -179,26 +182,78 @@ public class Table
         t.visit( this );
     }
 
-    @Override
-    public String toString()
+    private String toString( Function<Appendable, TableVisitor> f )
     {
-        StringBuilder sb = new StringBuilder();
-
-        accept( new StringTableVisitor( sb, FormatTableVisitor.getFormatters( this ) ) );
-
-        return sb.toString();
-    }
-
-    public String toHTML()
-            throws IOException
-    {
-        try( StringWriter sw = new StringWriter();
-             PrintWriter pw = new PrintWriter( sw ) ) {
-
-            accept( new XHTMLTableVisitor( pw, FormatTableVisitor.getFormatters( this ) ) );
-
+        try( StringWriter sw = new StringWriter() ) {
+            accept( f.apply( sw ) );
             return sw.toString();
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
         }
     }
 
+    /**
+     * Return's this table in a string format
+     * <p>
+     * @return
+     */
+    @Override
+    public String toString()
+    {
+        return toString( a -> new StringTableVisitor( a, FormatTableVisitor.getFormatters( this ) ) );
+    }
+
+    /**
+     * Return this table in html
+     * <p>
+     * @return
+     * <p>
+     * @throws IOException
+     */
+    public String toHTML()
+            throws IOException
+    {
+        return toString( a -> new XHTMLTableVisitor( a, FormatTableVisitor.getFormatters( this ) ) );
+    }
+
+    /**
+     * Return this table as csv
+     * <p>
+     * @return
+     */
+    public String toCSV()
+    {
+        return toString( a -> new CSVTableVisitor( a ) );
+    }
+
+    /**
+     * Return this table as Excel compatible CSV
+     * <p>
+     * @return
+     */
+    public String toExcel()
+    {
+        return toString( a -> new CSVTableVisitor( a, CSVFormat.RFC4180 ) );
+    }
+
+    /**
+     * Return this table as RFC 4180 compatible CSV
+     * <p>
+     * @return
+     */
+    public String toRFC4180()
+    {
+        return toString( a -> new CSVTableVisitor( a, CSVFormat.RFC4180 ) );
+    }
+
+    /**
+     * Return this table in Tab Delimited Format
+     * <p>
+     * @return
+     */
+    public String toTDF()
+    {
+        return toString( a -> new CSVTableVisitor( a, CSVFormat.TDF ) );
+    }
 }

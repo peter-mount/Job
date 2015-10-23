@@ -5,6 +5,8 @@
  */
 package uk.trainwatch.job.table.visitors;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Objects;
 import uk.trainwatch.job.table.Cells;
@@ -22,19 +24,19 @@ public class StringTableVisitor
         implements TableVisitor
 {
 
-    private final StringBuilder sb;
+    private final Appendable a;
     private final List<TableStringFormat> formatters;
     private String cellSeparator, headerSeparator, headerCorner;
     private int col;
 
-    public StringTableVisitor( StringBuilder sb, List<TableStringFormat> formatters )
+    public StringTableVisitor( Appendable a, List<TableStringFormat> formatters )
     {
-        this( sb, formatters, "|", "=", "+" );
+        this( a, formatters, "|", "=", "+" );
     }
 
-    public StringTableVisitor( StringBuilder sb, List<TableStringFormat> formatters, String cellSeparator, String headerSeparator, String headerCorner )
+    public StringTableVisitor( Appendable a, List<TableStringFormat> formatters, String cellSeparator, String headerSeparator, String headerCorner )
     {
-        this.sb = sb;
+        this.a = a;
         this.formatters = formatters;
         this.cellSeparator = cellSeparator;
         this.headerSeparator = headerSeparator;
@@ -91,45 +93,60 @@ public class StringTableVisitor
     @Override
     public void visit( Row r )
     {
-        col = 0;
-        sb.append( cellSeparator );
-        r.forEach( c -> c.accept( this ) );
-        sb.append( '\n' );
+        try {
+            col = 0;
+            a.append( cellSeparator );
+            r.forEach( c -> c.accept( this ) );
+            a.append( '\n' );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     @Override
     public void visit( Header h )
     {
-        col = 0;
-        sb.append( sep ? headerCorner : cellSeparator );
-        h.forEach( c -> c.accept( this ) );
-        sb.append( '\n' );
+        try {
+            col = 0;
+            a.append( sep ? headerCorner : cellSeparator );
+            h.forEach( c -> c.accept( this ) );
+            a.append( '\n' );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     private void visitCell( Cells c )
     {
-        TableStringFormat f = c.getFormat();
-        if( f == null ) {
-            f = formatters.get( col );
-        }
+        try {
+            TableStringFormat f = c.getFormat();
+            if( f == null ) {
+                f = formatters.get( col );
+            }
 
-        if( sep ) {
-            int l = f.getMaxLength();
-            for( int i = 0; i < l; i++ ) {
-                sb.append( headerSeparator );
+            if( sep ) {
+                int l = f.getMaxLength();
+                for( int i = 0; i < l; i++ ) {
+                    a.append( headerSeparator );
+                }
+            }
+            else {
+                a.append( f.format( c.getValue() ) );
+            }
+
+            a.append( sep ? headerCorner : cellSeparator );
+
+            if( c.getColspan() > 1 ) {
+                col += c.getColspan();
+            }
+            else {
+                col++;
             }
         }
-        else {
-            sb.append( f.format( c.getValue() ) );
-        }
-
-        sb.append( sep ? headerCorner : cellSeparator );
-
-        if( c.getColspan() > 1 ) {
-            col += c.getColspan();
-        }
-        else {
-            col++;
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
         }
     }
 
