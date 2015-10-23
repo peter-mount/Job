@@ -17,13 +17,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import uk.trainwatch.job.lang.Statement;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
@@ -236,4 +235,20 @@ public class FileOp
         return ( s, a ) -> new GZIPOutputStream( newOutputStream( exp.invoke( s, a ) ) );
     }
 
+    public static Statement delete( ExpressionOperation... args )
+    {
+        return ( s, a ) -> {
+            for( ExpressionOperation arg: args ) {
+                Object o = decode( arg.invoke( s, a ) );
+                if( o != null ) {
+                    if( o instanceof File ) {
+                        s.getJob().getJobOutput().delete( (File) o );
+                    }
+                    else {
+                        s.getJob().getJobOutput().delete( o.toString() );
+                    }
+                }
+            }
+        };
+    }
 }

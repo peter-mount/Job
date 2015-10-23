@@ -8,6 +8,7 @@ package uk.trainwatch.job.io;
 import java.io.StringWriter;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
+import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -93,6 +94,15 @@ public class IOExtension
             default:
                 return null;
         }
+    }
+
+    @Override
+    public Statement getStatement( String name, ExpressionOperation... args )
+    {
+        if( "delete".equals( name ) ) {
+            return FileOp.delete( args );
+        }
+        return null;
     }
 
 }
