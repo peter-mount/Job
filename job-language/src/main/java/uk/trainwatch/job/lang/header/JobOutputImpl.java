@@ -225,6 +225,18 @@ public final class JobOutputImpl
     }
 
     @Override
+    public void print( String s )
+    {
+        log.println( s );
+    }
+
+    @Override
+    public void printf( String s, Object... args )
+    {
+        log.printf( s.endsWith( "\n" ) ? s : (s + "\n"), args );
+    }
+
+    @Override
     public void addJobOutputArchiver( JobOutputArchiver a )
     {
         if( archivers == null ) {

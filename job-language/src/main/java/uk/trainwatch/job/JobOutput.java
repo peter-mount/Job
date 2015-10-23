@@ -143,6 +143,10 @@ public interface JobOutput
      */
     void log( Level l, String s, Exception e );
 
+    void print( String s );
+
+    void printf( String s, Object... args );
+
     void addJobOutputArchiver( JobOutputArchiver a );
 
     void removeJobOutputArchiver( JobOutputArchiver a );

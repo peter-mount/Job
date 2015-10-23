@@ -60,24 +60,36 @@ public class PrintExtension
     {
         switch( name ) {
             case "print":
-                return ( s, a ) -> {
-                    for( Object arg: TypeOp.invokeArguments( s, args ) ) {
-                        System.out.print( decode(arg) );
-                    }
-                };
             case "println":
-                return ( s, a ) -> {
-                    for( Object arg: TypeOp.invokeArguments( s, args ) ) {
-                        System.out.println( decode(arg) );
-                    }
-                };
+                switch( args.length ) {
+                    case 0:
+                        return null;
+                    case 1:
+                        ExpressionOperation p1 = args[0];
+                        return ( s, a ) -> s.getJob().getJobOutput().print( Objects.toString( decode( p1.invoke( s, a ) ) ) );
+
+                    default:
+                        return ( s, a ) -> {
+                            for( Object arg: TypeOp.invokeArguments( s, args ) ) {
+                                s.getJob().getJobOutput().print( Objects.toString( decode( arg ) ) );
+                            }
+                        };
+                }
+
             case "printf":
-                return ( s, a ) -> {
-                    Object arg[] = TypeOp.invokeArguments( s, args );
-                    if( arg.length > 1 ) {
-                        System.out.printf( Objects.toString( arg[0] ), Arrays.copyOfRange( arg, 1, arg.length ) );
-                    }
-                };
+                switch( args.length ) {
+                    case 0:
+                        return null;
+
+                    default:
+                        return ( s, a ) -> {
+                            Object arg[] = TypeOp.invokeArguments( s, args );
+                            if( arg.length > 1 ) {
+                                s.getJob().getJobOutput().printf( Objects.toString( arg[0] ), Arrays.copyOfRange( arg, 1, arg.length ) );
+                            }
+                        };
+                }
+
             default:
                 return null;
         }
