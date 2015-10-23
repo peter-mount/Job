@@ -9,19 +9,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.activation.MimetypesFileTypeMap;
+import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
@@ -30,8 +31,10 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.mail.util.ByteArrayDataSource;
+import org.apache.commons.configuration.Configuration;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutputArchiver;
+import uk.trainwatch.util.config.ConfigurationService;
 
 /**
  *
@@ -66,6 +69,7 @@ public class MailArchiver
 
         multipart = new MimeMultipart();
         msg.setContent( multipart );
+
     }
 
     @Override
@@ -73,22 +77,41 @@ public class MailArchiver
             throws IOException
     {
         try {
-            StringBuilder b = new StringBuilder()
-                    .append( "Please find the output of Job " ).append( job.getId() ).append( " run on " ).append( new Date() )
+            StringBuilder txt = new StringBuilder()
+                    .append( "Please find the output of Job " ).append( job.getId() )
                     .append( ".\n\n" );
 
-            try( BufferedReader r = new BufferedReader( new FileReader( file ) ) ) {
-                r.lines().forEach( l -> b.append( l ).append( '\n' ) );
+            StringBuilder html = new StringBuilder()
+                    .append( "<p>Please find the output of Job " ).append( job.getId() )
+                    .append( ".</p>" );
+
+            String log = null;
+            try( Stream<String> s = new BufferedReader( new FileReader( file ) ).lines() ) {
+                log = s.collect( Collectors.joining( "\n" ) );
             }
 
+            if( log != null ) {
+                txt.append( log );
+                html.append( "<pre>" ).append( log ).append( "</pre>" );
+            }
+
+            // Create the cover containing text and html versions of the body
+            MimeMultipart bodypart = new MimeMultipart( "alternative" );
+
             MimeBodyPart part = new MimeBodyPart();
-            part.setDataHandler( new DataHandler( new ByteArrayDataSource( b.toString(), "text/plain" ) ) );
-            part.setFileName( job.getId() + ".log" );
-            part.setDisposition( Part.INLINE );
-            multipart.addBodyPart( part );
+            part.setText( txt.toString(), "utf-8" );
+            bodypart.addBodyPart( part );
 
             part = new MimeBodyPart();
+            part.setContent( html.toString(), "text/html; charset=utf-8" );
+            bodypart.addBodyPart( part );
 
+            MimeBodyPart cover = new MimeBodyPart();
+            cover.setContent( bodypart );
+            multipart.addBodyPart( cover );
+
+            // Now attach the log as an attachment
+            part = new MimeBodyPart();
             part.setDataHandler( new DataHandler( new FileDataSource( file )
             {
 
@@ -132,7 +155,15 @@ public class MailArchiver
     {
         try {
             LOG.log( Level.INFO, () -> "Sending mail to " + recipients );
-            Transport.send( msg );
+
+            Configuration config = ConfigurationService.getInstance().getPrivateConfiguration( "mailer" );
+            String user = config.getString( "mail.user" );
+            if( user != null && !user.isEmpty() ) {
+                Transport.send( msg, user, config.getString( "mail.pass" ) );
+            }
+            else {
+                Transport.send( msg );
+            }
         }
         catch( MessagingException ex ) {
             LOG.log( Level.SEVERE, ex, () -> "Failed to send mail to " + recipients );

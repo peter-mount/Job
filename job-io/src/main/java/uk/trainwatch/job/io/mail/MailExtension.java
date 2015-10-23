@@ -46,6 +46,7 @@ public class MailExtension
         Configuration config = ConfigurationService.getInstance().getPrivateConfiguration( "mailer" );
         Properties mailProps = new Properties();
 
+        mailProps.put( "mail.transport.protocol", "smtp" );
         mailProps.put( "mail.from", config.getString( "mail.from" ) );
         mailProps.put( "mail.smtp.from", config.getString( "mail.from" ) );
         mailProps.put( "mail.smtp.host", config.getString( "mail.host" ) );
@@ -55,34 +56,12 @@ public class MailExtension
             mailProps.put( "mail.smtp.port", port );
         }
 
+        // Use SSL/TLS?
         if( config.getBoolean( "mail.ssl", false ) ) {
-            if( port > -1 ) {
-                mailProps.put( "mail.smtp.socketFactory.port", port );
-            }
-            mailProps.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
-            mailProps.put( "mail.smtp.socketFactory.fallback", "false" );
-            mailProps.put( "mail.smtp.starttls.enable", "true" );
+            mailProps.setProperty( "mail.smtp.ssl.enable", "true" );
         }
 
-        String user = config.getString( "mail.user" );
-        if( user != null && !user.isEmpty() ) {
-            mailProps.put( "mail.transport.protocol", "smtp" );
-            mailProps.put( "mail.smtp.auth", true );
-            return Session.getDefaultInstance( mailProps, new Authenticator()
-            {
-
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication()
-                {
-                    return new PasswordAuthentication( user, config.getString( "mail.pass" ) );
-                }
-
-            } );
-        }
-        else {
-            mailProps.put( "mail.transport.protocol", "smtp" );
-            return Session.getDefaultInstance( mailProps );
-        }
+        return Session.getDefaultInstance( mailProps );
     }
 
     @Override
