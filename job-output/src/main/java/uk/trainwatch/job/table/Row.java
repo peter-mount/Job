@@ -34,6 +34,13 @@ public class Row
         return c;
     }
 
+    void removeColumn( int col )
+    {
+        if( col < size() ) {
+            getElements().remove( col );
+        }
+    }
+
     public Cell set( int index, Object v )
     {
         while( size() <= index ) {

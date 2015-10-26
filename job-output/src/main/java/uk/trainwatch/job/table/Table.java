@@ -31,15 +31,7 @@ public class Table
         extends Molecule<Row>
 {
 
-    private final Molecule<Header> headers = new Molecule<Header>()
-    {
-
-        @Override
-        public void accept( TableVisitor t )
-        {
-        }
-
-    };
+    private final Headers headers = new Headers();
     private Header lastHeader;
     private Row lastRow;
 
@@ -149,13 +141,24 @@ public class Table
     public Header newHeader()
     {
         lastHeader = new Header();
-        headers.getElements().add( lastHeader );
+        headers.add( lastHeader );
         return lastHeader;
     }
 
     public void forEachHeader( Consumer<Header> c )
     {
         headers.forEach( c );
+    }
+
+    public void removeColumn( String name )
+    {
+        if( lastHeader != null ) {
+            int col = lastHeader.indexOf( name );
+            if( col > -1 ) {
+                headers.forEach( h -> h.removeColumn( col ) );
+                forEach( r -> r.removeColumn( col ) );
+            }
+        }
     }
 
     public Row newRow()
@@ -208,7 +211,7 @@ public class Table
      * Return this table in html
      * <p>
      * @return
-     * <p>
+     *         <p>
      * @throws IOException
      */
     public String toHTML()

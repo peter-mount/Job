@@ -39,6 +39,27 @@ public class Header
         return c;
     }
 
+    void removeColumn( int col )
+    {
+        if( col < size() ) {
+            getElements().remove( col );
+
+            // Remove the column from the index
+            index.entrySet()
+                    .stream()
+                    .filter( e -> e.getValue() == col )
+                    .map( Map.Entry::getKey )
+                    .findAny()
+                    .ifPresent( index::remove );
+
+            // Shuffle the index down to account for the missing column
+            index.entrySet()
+                    .stream()
+                    .filter( e -> e.getValue() > col )
+                    .forEach( e -> e.setValue( e.getValue() - 1 ) );
+        }
+    }
+
     /**
      * Append a value into the next cell.
      * <p>
@@ -52,7 +73,7 @@ public class Header
     {
         String s = Objects.toString( v );
         Cell cell = add( new Cells.StringCell().setValue( s ) );
-        index.computeIfAbsent( s, k -> size()-1 );
+        index.computeIfAbsent( s, k -> size() - 1 );
         return cell;
     }
 
