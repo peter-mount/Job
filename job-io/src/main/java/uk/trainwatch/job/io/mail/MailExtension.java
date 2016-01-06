@@ -8,8 +8,6 @@ package uk.trainwatch.job.io.mail;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
-import javax.mail.Authenticator;
-import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import org.apache.commons.configuration.Configuration;
 import org.kohsuke.MetaInfServices;
