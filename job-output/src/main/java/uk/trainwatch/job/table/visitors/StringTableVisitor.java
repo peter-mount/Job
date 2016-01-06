@@ -126,14 +126,19 @@ public class StringTableVisitor
                 f = formatters.get( col );
             }
 
-            if( sep ) {
-                int l = f.getMaxLength();
-                for( int i = 0; i < l; i++ ) {
-                    a.append( headerSeparator );
+            if( f != null ) {
+                if( sep ) {
+                    int l = f.getMaxLength();
+                    for( int i = 0; i < l; i++ ) {
+                        a.append( headerSeparator );
+                    }
                 }
-            }
-            else {
-                a.append( f.format( c.getValue() ) );
+                else {
+                    Object v = c.getValue();
+                    if( v != null ) {
+                        a.append( f.format( v ) );
+                    }
+                }
             }
 
             a.append( sep ? headerCorner : cellSeparator );
