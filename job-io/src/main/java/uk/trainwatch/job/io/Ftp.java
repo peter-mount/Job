@@ -9,15 +9,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.file.CopyOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPFileFilter;
 import uk.trainwatch.io.ftp.FTPClient;
 import uk.trainwatch.io.ftp.FTPClientBuilder;
 import uk.trainwatch.job.Job;
@@ -142,16 +141,37 @@ public class Ftp
         }
     }
 
-    public void retrieve( File file, CopyOption... options )
+    public void retrieve( Object v )
             throws IOException
     {
-        client.retrieve( file, options );
+        Object file = decode( v );
+        if( file instanceof File ) {
+            client.retrieve( (File) file, StandardCopyOption.REPLACE_EXISTING );
+        }
+        else if( file instanceof Path ) {
+            client.retrieve( (Path) file, StandardCopyOption.REPLACE_EXISTING );
+        }
+        else if( file instanceof FTPFile ) {
+            client.retrieve( (FTPFile) file, new File( ((FTPFile) file).getName() ), StandardCopyOption.REPLACE_EXISTING );
+        }
+        else {
+            throw new IllegalArgumentException( file.toString() );
+        }
     }
 
-    public Path retrieve( FTPFile f, Path target, CopyOption... options )
+    public void retrieve( FTPFile f, Object v )
             throws IOException
     {
-        return client.retrieve( f, target, options );
+        Object file = decode( v );
+        if( file instanceof File ) {
+            client.retrieve( f, (File) file, StandardCopyOption.REPLACE_EXISTING );
+        }
+        else if( file instanceof Path ) {
+            client.retrieve( f, (Path) file, StandardCopyOption.REPLACE_EXISTING );
+        }
+        else {
+            throw new IllegalArgumentException( file.toString() );
+        }
     }
 
     public Reader retrieveReader( String remote )
@@ -178,12 +198,6 @@ public class Ftp
         return client.deleteFile( pathname );
     }
 
-    public Collection<String> listNames( String pathname )
-            throws IOException
-    {
-        return client.listNames( pathname );
-    }
-
     public Collection<String> listNames()
             throws IOException
     {
@@ -196,34 +210,28 @@ public class Ftp
         return client.listDirectories();
     }
 
-    public Collection<FTPFile> listDirectories( String parent )
-            throws IOException
-    {
-        return client.listDirectories( parent );
-    }
-
-    public Collection<FTPFile> listFiles( String pathname )
-            throws IOException
-    {
-        return client.listFiles( pathname );
-    }
-
     public Collection<FTPFile> listFiles()
             throws IOException
     {
         return client.listFiles();
     }
 
-    public Collection<FTPFile> listFiles( String pathname, FTPFileFilter filter )
+    public String currentDirectory()
             throws IOException
     {
-        return client.listFiles( pathname, filter );
+        return client.printWorkingDirectory();
     }
 
-    public Collection<FTPFile> listFiles( FTPFileFilter filter )
+    public void changeToParentDirectory()
             throws IOException
     {
-        return client.listFiles( filter );
+        client.changeToParentDirectory();
+    }
+
+    public void changeDirectory( String pathName )
+            throws IOException
+    {
+        client.changeWorkingDirectory( pathName );
     }
 
     public boolean makeDirectory( String pathname )
