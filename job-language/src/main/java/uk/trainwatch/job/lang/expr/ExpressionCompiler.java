@@ -311,7 +311,7 @@ public class ExpressionCompiler
         op( ctx.BooleanLiteral(), n -> Boolean.valueOf( n.getText() ) ? Logic.trueOp() : Logic.falseOp() );
         op( ctx.FloatingPointLiteral(), n -> Constants.constant( Float.valueOf( n.getText() ) ) );
         op( ctx.IntegerLiteral(), n -> Constants.constant( Integer.valueOf( n.getText() ) ) );
-        op( ctx.StringLiteral(), n -> Constants.constant( getString( n ) ) );
+        op( ctx.StringLiteral(), n -> Constants.stringConstant( getString( n ) ) );
         op( ctx.NullLiteral(), n -> ( s, a ) -> null );
 
         if( ctx.CharacterLiteral() != null ) {
