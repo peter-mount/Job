@@ -58,6 +58,10 @@ public class TypeOp
         return ( s, a ) -> {
             try {
                 String realType = s.resolveType( type );
+                if( realType == null ) {
+                    throw new ClassNotFoundException( "Type " + type + " has not been defined" );
+                }
+                
                 Class clazz = Class.forName( realType );
 
                 Object args[] = invokeArguments( s, expArgs );
