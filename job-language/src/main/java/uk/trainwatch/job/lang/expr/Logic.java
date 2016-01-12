@@ -20,7 +20,7 @@ import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 public class Logic
 {
 
-    private static final Comparator natural = Comparator.naturalOrder();
+    private static final Comparator NATURAL = Comparator.naturalOrder();
 
     public static boolean isTrue( Object v )
     {
@@ -29,16 +29,17 @@ public class Logic
 
     public static boolean isFalse( Object o )
     {
-        if( o == null ) {
+        if( o == null )
+        {
             return false;
         }
         Object v = decode( o );
         return v == Boolean.FALSE
-               || v == (Integer) 0
-               || v == (Double) 0.0
-               || v == (Long) 0L
-               || BigInteger.ZERO.equals( v )
-               || BigDecimal.ZERO.equals( v );
+                || v == (Integer) 0
+                || v == (Double) 0.0
+                || v == (Long) 0L
+                || BigInteger.ZERO.equals( v )
+                || BigDecimal.ZERO.equals( v );
     }
 
     public static ExpressionOperation trueOp()
@@ -98,16 +99,27 @@ public class Logic
      */
     public static ExpressionOperation inclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return ( s, a ) -> {
-            Number l = Constants.toNumber( lhs.invoke( s ) );
-            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
-            if( l instanceof BigInteger ) {
-                return ((BigInteger) l).or( (BigInteger) r );
-            }
-            if( l instanceof BigDecimal ) {
-                throw new UnsupportedOperationException( "inclusive or not supported for BigDecimal" );
-            }
-            return l.longValue() | r.longValue();
+        return ( s, a )
+                -> 
+                {
+                    Number l = Constants.toNumber( lhs.invoke( s ) );
+                    Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+                    if( l == null )
+                    {
+                        return r;
+                    }
+                    else if( l instanceof BigInteger )
+                    {
+                        return ((BigInteger) l).or( (BigInteger) r );
+                    }
+                    else if( l instanceof BigDecimal )
+                    {
+                        throw new UnsupportedOperationException( "inclusive or not supported for BigDecimal" );
+                    }
+                    else
+                    {
+                        return l.longValue() | r.longValue();
+                    }
         };
     }
 
@@ -120,42 +132,76 @@ public class Logic
      */
     public static ExpressionOperation exclusiveOr( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return ( s, a ) -> {
-            Number l = Constants.toNumber( lhs.invoke( s ) );
-            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
-            if( l instanceof BigInteger ) {
-                return ((BigInteger) l).xor( (BigInteger) r );
-            }
-            if( l instanceof BigDecimal ) {
-                throw new UnsupportedOperationException( "xor not supported for BigDecimal" );
-            }
-            return l.longValue() ^ r.longValue();
+        return ( s, a )
+                -> 
+                {
+                    Number l = Constants.toNumber( lhs.invoke( s ) );
+                    Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+                    if( l == null )
+                    {
+                        return r;
+                    }
+                    else if( l instanceof BigInteger )
+                    {
+                        return ((BigInteger) l).xor( (BigInteger) r );
+                    }
+                    else if( l instanceof BigDecimal )
+                    {
+                        throw new UnsupportedOperationException( "xor not supported for BigDecimal" );
+                    }
+                    else
+                    {
+                        return l.longValue() ^ r.longValue();
+                    }
         };
     }
 
     public static ExpressionOperation and( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return ( s, a ) -> {
-            Number l = Constants.toNumber( lhs.invoke( s ) );
-            Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
-            if( l instanceof BigInteger ) {
-                return ((BigInteger) l).and( (BigInteger) r );
-            }
-            if( l instanceof BigDecimal ) {
-                throw new UnsupportedOperationException( "and not supported for BigDecimal" );
-            }
-            return l.longValue() & r.longValue();
+        return ( s, a )
+                -> 
+                {
+                    Number l = Constants.toNumber( lhs.invoke( s ) );
+                    Number r = convert( l, Constants.toNumber( rhs.invoke( s ) ) );
+                    if( l == null )
+                    {
+                        return r;
+                    }
+                    else if( l instanceof BigInteger )
+                    {
+                        return ((BigInteger) l).and( (BigInteger) r );
+                    }
+                    else if( l instanceof BigDecimal )
+                    {
+                        throw new UnsupportedOperationException( "and not supported for BigDecimal" );
+                    }
+                    else
+                    {
+                        return l.longValue() & r.longValue();
+                    }
         };
     }
 
     public static ExpressionOperation equality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return ( s, a ) -> lhs.invoke( s ) == rhs.invoke( s );
+        return ( s, a )
+                -> 
+                {
+                    Object l = lhs.invoke( s );
+                    Object r = rhs.invoke( s );
+                    return l == null ? r == null : l.equals( r );
+        };
     }
 
     public static ExpressionOperation inequality( ExpressionOperation lhs, ExpressionOperation rhs )
     {
-        return ( s, a ) -> lhs.invoke( s ) != rhs.invoke( s );
+        return ( s, a )
+                -> 
+                {
+                    Object l = lhs.invoke( s );
+                    Object r = rhs.invoke( s );
+                    return l == null ? r != null : !l.equals( r );
+        };
     }
 
     private static int compare( Scope scope, ExpressionOperation lhs, ExpressionOperation rhs )
@@ -163,7 +209,7 @@ public class Logic
     {
         Object l = lhs.invoke( scope );
         Object r = rhs.invoke( scope );
-        return l == r ? 0 : l == null ? -1 : r == null ? 1 : Objects.compare( l, r, natural );
+        return l == r ? 0 : l == null ? -1 : r == null ? 1 : Objects.compare( l, r, NATURAL );
     }
 
     public static ExpressionOperation lessThan( ExpressionOperation lhs, ExpressionOperation rhs )
