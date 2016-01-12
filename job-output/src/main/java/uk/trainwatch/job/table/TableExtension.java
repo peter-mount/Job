@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
-import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
 
 /**
@@ -17,7 +16,7 @@ import uk.trainwatch.job.lang.expr.ExpressionOperation;
  * <p>
  * @author peter
  */
-@MetaInfServices(Extension.class)
+@MetaInfServices( Extension.class )
 public class TableExtension
         implements Extension
 {
@@ -37,26 +36,32 @@ public class TableExtension
     @Override
     public ExpressionOperation getExpression( String name, ExpressionOperation... args )
     {
-        switch( name ) {
+        switch( name )
+        {
             case "table":
-                if( args == null || args.length == 0 ) {
+                if( args == null || args.length == 0 )
+                {
                     return ( s, a ) -> new Table();
                 }
-                else if( args.length == 1 ) {
+                else if( args.length == 1 )
+                {
                     return ( s, a ) -> new Table( (Iterable<Map<String, Object>>) args[0].invoke( s ) );
                 }
-                else {
+                else
+                {
                     throw new UnsupportedOperationException( "Syntax: table()" );
                 }
 
             case "stringFormat":
-                switch( args.length ) {
+                switch( args.length )
+                {
                     case 1:
-                        return ( s, a ) -> {
-                            Object p0 = args[0].invoke( s );
-                            return new TableStringFormat()
-                                    .setMaxLength( getInt( p0 ) )
-                                    .setAlignment( Alignment.get( p0 ) );
+                        return ( s, a ) -> 
+                                {
+                                    Object p0 = args[0].invoke( s );
+                                    return new TableStringFormat()
+                                            .setMaxLength( getInt( p0 ) )
+                                            .setAlignment( Alignment.get( p0 ) );
                         };
                     case 2:
                         return ( s, a ) -> new TableStringFormat()
@@ -67,20 +72,23 @@ public class TableExtension
                 }
 
             case "numberFormat":
-                switch( args.length ) {
+                switch( args.length )
+                {
                     case 1:
-                        return ( s, a ) -> {
-                            Object p0 = args[0].invoke( s );
-                            return new TableDecimalFormat()
-                                    .setFormat( Objects.toString( args[0].invoke( s ) ) );
+                        return ( s, a ) -> 
+                                {
+                                    Object p0 = args[0].invoke( s );
+                                    return new TableDecimalFormat()
+                                            .setFormat( Objects.toString( args[0].invoke( s ) ) );
                         };
                     case 2:
-                        return ( s, a ) -> {
-                            Object p0 = args[1].invoke( s );
-                            return new TableDecimalFormat()
-                                    .setFormat( Objects.toString( args[0].invoke( s ) ) )
-                                    .setAlignment( Alignment.get( p0 ) )
-                                    .setMaxLength( getInt( p0 ) );
+                        return ( s, a ) -> 
+                                {
+                                    Object p0 = args[1].invoke( s );
+                                    return new TableDecimalFormat()
+                                            .setFormat( Objects.toString( args[0].invoke( s ) ) )
+                                            .setAlignment( Alignment.get( p0 ) )
+                                            .setMaxLength( getInt( p0 ) );
                         };
                     case 3:
                         return ( s, a ) -> new TableDecimalFormat()
@@ -106,7 +114,8 @@ public class TableExtension
     {
         String s0 = Objects.toString( p0 );
         Alignment al = Alignment.get( s0 );
-        if( al == null ) {
+        if( al == null )
+        {
             return new TableDecimalFormat().setFormat( s0 );
         }
         return new TableStringFormat().setAlignment( al );

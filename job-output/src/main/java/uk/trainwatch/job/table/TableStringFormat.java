@@ -20,6 +20,8 @@ public class TableStringFormat<F extends TableStringFormat>
         extends Format
 {
 
+    private static final long serialVersionUID = -8779448911096500886L;
+
     private int maxLength;
     private Alignment alignment;
 

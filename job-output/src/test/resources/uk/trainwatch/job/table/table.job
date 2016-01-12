@@ -7,7 +7,7 @@ job "table";
     f1 = stringFormat("right",10);
     t.setFormat(0,f1);
 
-    f2 = numberFormat("####0.###",10,"right");
+    f2 = numberFormat("####0.###","right",10);
     t.setFormat(1,f2);
 
     row = t.newHeader();

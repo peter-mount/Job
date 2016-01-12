@@ -16,6 +16,8 @@ public class TableDecimalFormat
         extends TableStringFormat<TableDecimalFormat>
 {
 
+    private static final long serialVersionUID = 2264429972468918480L;
+
     private DecimalFormat f;
 
     public TableDecimalFormat setFormat( String fmt )
@@ -24,23 +26,25 @@ public class TableDecimalFormat
         return this;
     }
 
-    @SuppressWarnings("OverridableMethodCallInConstructor")
+    @SuppressWarnings( "OverridableMethodCallInConstructor" )
     public TableDecimalFormat()
     {
         this.f = null;
         setAlignment( Alignment.RIGHT );
     }
 
+    @Override
     public TableDecimalFormat setAlignment( Alignment alignment )
     {
         return super.setAlignment( alignment == null ? Alignment.RIGHT : alignment );
     }
 
     @Override
-    @SuppressWarnings("StringBufferMayBeStringBuilder")
+    @SuppressWarnings( "StringBufferMayBeStringBuilder" )
     public StringBuffer format( Object obj, StringBuffer toAppendTo, FieldPosition pos )
     {
-        if( f == null || !(obj instanceof Number) ) {
+        if( f == null || !(obj instanceof Number) )
+        {
             return super.format( obj, toAppendTo, pos );
         }
 
