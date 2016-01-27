@@ -78,7 +78,7 @@ class JobImpl
             fire( l -> l.jobStarted( this, scope ) );
             try {
                 if( declare != null ) {
-                    declare.invokeStatement( scope );
+                    declare.invokeStatement( scope.getGlobalScope() );
                 }
 
                 if( output != null ) {
