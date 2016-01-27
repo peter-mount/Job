@@ -29,6 +29,11 @@ public interface Extension
      */
     String getVersion();
 
+    /**
+     * Initialise the extension. Note this could be called multiple times so implementations must be able to cope with that.
+     *
+     * @throws Exception
+     */
     default void init()
             throws Exception
     {
@@ -88,9 +93,11 @@ public interface Extension
 
     /**
      * Returns a Statement if this extension supports Job Output
+     *
      * @param name
      * @param args
-     * @return 
+     *
+     * @return
      */
     default Statement getOutputStatement( String name, ExpressionOperation... args )
     {

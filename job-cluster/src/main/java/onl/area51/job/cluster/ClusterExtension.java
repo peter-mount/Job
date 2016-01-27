@@ -16,8 +16,8 @@
 package onl.area51.job.cluster;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.Scope;
@@ -27,6 +27,13 @@ import uk.trainwatch.job.lang.expr.ExpressionOperation;
 import uk.trainwatch.util.CDIUtils;
 
 /**
+ * Extends the job language by providing RPC calls.
+ * <p>
+ * execute() statements will invoke jobs using the usual queues as they start fresh jobs with no return. This means they will be throttle limited by the
+ * number of consumers on the main queue for the cluster.
+ * <p>
+ * call() and execute with a lambda function will use the job.sub queue's for the cluster as these are not limited on the number of invocations. If we don't do
+ * this then we will deadlock the cluster quickly as soon as a job starts.
  *
  * @author peter
  */
@@ -34,6 +41,8 @@ import uk.trainwatch.util.CDIUtils;
 public class ClusterExtension
         implements Extension
 {
+
+    private static final Logger LOG = Logger.getLogger( ClusterExtension.class.getName() );
 
     @Override
     public String getName()
@@ -51,10 +60,12 @@ public class ClusterExtension
     private JobCluster cluster;
 
     @Override
-    public void init()
+    public synchronized void init()
             throws Exception
     {
-        CDIUtils.inject( this );
+        if( cluster == null ) {
+            CDIUtils.inject( this );
+        }
     }
 
     @Override
@@ -65,7 +76,10 @@ public class ClusterExtension
                 switch( name ) {
                     // map = callCluster(cluster,name);
                     case "callCluster":
-                        return ( s, a ) -> cluster.call( args[0].getString( s ), args[1].getString( s ), new HashMap<>() );
+                        return ( s, a ) -> {
+                            String clusterName = args[0].getString( s );
+                            return cluster.call( clusterName, args[1].getString( s ), new HashMap<>(), 1, TimeUnit.MINUTES, "job.sub." + clusterName );
+                        };
 
                     default:
                         break;
@@ -77,7 +91,10 @@ public class ClusterExtension
                     // execute don't wait for reply
                     // executeCluster(cluster,name,map);
                     case "callCluster":
-                        return ( s, a ) -> cluster.call( args[0].getString( s ), args[1].getString( s ), args[2].get( s ) );
+                        return ( s, a ) -> {
+                            String clusterName = args[0].getString( s );
+                            return cluster.call( clusterName, args[1].getString( s ), args[2].get( s ), 1, TimeUnit.MINUTES, "job.sub." + clusterName );
+                        };
 
                     default:
                         break;
@@ -100,10 +117,6 @@ public class ClusterExtension
                     // executeCluster(cluster,name);
                     case "executeCluster":
                         return ( s, a ) -> cluster.execute( args[0].getString( s ), args[1].getString( s ), new HashMap<>() );
-
-                    // map = callCluster(cluster,name);
-                    case "callCluster":
-                        return ( s, a ) -> cluster.call( args[0].getString( s ), args[1].getString( s ), new HashMap<>(), 1, TimeUnit.MINUTES );
 
                     default:
                         break;
@@ -154,9 +167,9 @@ public class ClusterExtension
     {
         return ( scope, a ) -> {
             try {
-                cluster.execute( clusterName.getString( scope ),
-                                 jobName.getString( scope ),
-                                 args.get( scope ),
+                String cname = clusterName.getString( scope );
+                cluster.execute( cname, jobName.getString( scope ), args.get( scope ),
+                                 1, TimeUnit.MINUTES,
                                  resp -> {
                                      try( Scope lambdaScope = scope.begin() ) {
                                          resp.forEach( lambdaScope::setLocalVar );
@@ -165,7 +178,8 @@ public class ClusterExtension
                                      catch( Exception ex ) {
                                          throw new RuntimeException();
                                      }
-                                 } );
+                                 },
+                                 "job.sub." + cname );
             }
             catch( RuntimeException ex ) {
                 Throwable t = ex.getCause();

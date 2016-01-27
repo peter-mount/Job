@@ -39,6 +39,9 @@ public interface Constants
      */
     static final String ROUTING_KEY_PREFIX = "job.exec.";
 
+    static final String SUBQUEUE_NAME = "job.sub.";
+    static final String SUBROUTING_KEY_PREFIX = "job.sub.";
+
     static final String REPLY_TO = "replyTo";
     static final String CORR_ID = "corrId";
 

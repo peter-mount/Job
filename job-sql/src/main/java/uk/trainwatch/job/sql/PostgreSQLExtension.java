@@ -27,7 +27,7 @@ import uk.trainwatch.util.sql.DataSourceProducer;
 
 /**
  * Implements print, println and printf functionality.
- *
+ * <p>
  * TODO: Allow this to redirect to a specific PrintWriter
  *
  * @author peter
@@ -54,10 +54,12 @@ public class PostgreSQLExtension
     }
 
     @Override
-    public void init()
+    public synchronized void init()
             throws Exception
     {
-        postgreSQLManager = new PostgreSQLManager( DataSourceProducer.getInstance().getDataSource( "rail" ) );
+        if( postgreSQLManager == null ) {
+            postgreSQLManager = new PostgreSQLManager( DataSourceProducer.getInstance().getDataSource( "rail" ) );
+        }
     }
 
     /**

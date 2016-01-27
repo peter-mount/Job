@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -29,11 +31,13 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import static onl.area51.job.cluster.Constants.*;
+import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.rabbitmq.Rabbit;
 import uk.trainwatch.rabbitmq.RabbitConnection;
 import uk.trainwatch.rabbitmq.RabbitMQ;
 import uk.trainwatch.rabbitmq.RabbitRPCClient;
 import uk.trainwatch.rabbitmq.RabbitRPCInvoker;
+import uk.trainwatch.util.Consumers;
 
 /**
  * Handles the execution of jobs on a remote cluster
@@ -45,6 +49,7 @@ public class JobCluster
 {
 
     private static final Logger LOG = Logger.getLogger( JobCluster.class.getName() );
+    private ExecutorService executorService;
 
     @Inject
     private Rabbit rabbit;
@@ -55,26 +60,33 @@ public class JobCluster
     @PostConstruct
     void start()
     {
+        // We must ensure extensions have been initialised
+        ExtensionManager.INSTANCE.init();
+
         // clusterName is global to the VM
         String clusterName = ClusterContextListener.getClusterName();
         LOG.log( Level.INFO, () -> "Initialising Job Cluster " + clusterName );
         Objects.requireNonNull( clusterName, "No cluster name defined. Set with " + CLUSTER_NAME + " system property." );
 
-        String queueKey = QUEUE_NAME + clusterName;
-        String routingKey = ROUTING_KEY_PREFIX + clusterName;
+        RabbitConnection connection = rabbit.getConnection();
+        ClusterExecutor clusterExecutor = new ClusterExecutor( clusterName, jobRetriever );
+        RabbitRPCInvoker rpcInvoker = new RabbitRPCInvoker( connection, clusterExecutor );
 
         // Create the required number of client threads
-        RabbitConnection connection = rabbit.getConnection();
         Map<String, Object> props = new HashMap<>();
         // Don't append host name to queue - we want to share the cluster queue across nodes
         props.put( RabbitMQ.NO_HOSTNAME, true );
         int threads = ClusterContextListener.getThreadCount();
         LOG.log( Level.INFO, () -> "Initialising " + threads + " Job execution threads" );
         for( int t = 0; t < threads; t++ ) {
-            RabbitMQ.queueConsumer( connection, queueKey, RabbitMQ.DEFAULT_TOPIC, routingKey, false, props,
-                                    new RabbitRPCInvoker( connection, new ClusterExecutor( clusterName, jobRetriever ) )
-            );
+            RabbitMQ.queueConsumer( connection, QUEUE_NAME + clusterName, RabbitMQ.DEFAULT_TOPIC, ROUTING_KEY_PREFIX + clusterName, false, props, rpcInvoker );
         }
+
+        LOG.log( Level.INFO, () -> "Initialising Sub Job execution thread" );
+        executorService = Executors.newWorkStealingPool();
+        RabbitMQ.queueConsumer( connection, SUBQUEUE_NAME + clusterName, RabbitMQ.DEFAULT_TOPIC, SUBROUTING_KEY_PREFIX + clusterName, false, props,
+                                Consumers.executeWith( executorService, rpcInvoker )
+        );
     }
 
     /**
@@ -112,25 +124,6 @@ public class JobCluster
     }
 
     /**
-     * Execute a job on a remote cluster and then wait for a response.
-     *
-     * @param cluster cluster name
-     * @param job     job name
-     * @param args    arguments
-     *
-     * @return returned arguments
-     *
-     * @throws TimeoutException    if no response after 1 minute.
-     * @throws java.io.IOException
-     */
-    public Map<String, Object> call( String cluster, String job, Map<String, Object> args )
-            throws TimeoutException,
-                   IOException
-    {
-        return call( cluster, job, args, 1, TimeUnit.MINUTES );
-    }
-
-    /**
      * Execute a job on a remote cluster and then wait for a response
      *
      * @param cluster cluster name
@@ -148,24 +141,32 @@ public class JobCluster
             throws TimeoutException,
                    IOException
     {
-        Map<String, Object> params = getParams( cluster, job, args );
-        return RabbitRPCClient.mapCall( rabbit.getConnection(), "job.exec.test", (int) unit.toMillis( time ), params );
+        return call( cluster, job, args, time, unit, "job.exec." + cluster );
     }
 
-    public void execute( String cluster, String job, Map<String, Object> args, Consumer<Map<String, Object>> action )
+    Map<String, Object> call( String cluster, String job, Map<String, Object> args, long time, TimeUnit unit, String key )
             throws TimeoutException,
                    IOException
     {
-        execute( cluster, job, args, 1, TimeUnit.MINUTES, action );
+        Map<String, Object> params = getParams( cluster, job, args );
+        return RabbitRPCClient.mapCall( rabbit.getConnection(), key, (int) unit.toMillis( time ), params );
     }
 
     public void execute( String cluster, String job, Map<String, Object> args, long time, TimeUnit unit, Consumer<Map<String, Object>> action )
             throws TimeoutException,
                    IOException
     {
+        execute( cluster, job, args, time, unit, action, "job.exec." + cluster );
+    }
+
+    void execute( String cluster, String job, Map<String, Object> args, long time, TimeUnit unit, Consumer<Map<String, Object>> action, String key )
+            throws TimeoutException,
+                   IOException
+    {
         Map<String, Object> params = getParams( cluster, job, args );
-        RabbitRPCClient.execute( rabbit.getConnection(), "job.exec.test", (int) unit.toMillis( time ), params,
-                                 ret -> action.accept( (Map<String, Object>) ret.get( ARGS ) ) );
+        RabbitRPCClient.execute( rabbit.getConnection(), key, (int) unit.toMillis( time ), params,
+                                 ret -> action.accept( (Map<String, Object>) ret.get( ARGS ) )
+        );
     }
 
     private Map<String, Object> getParams( String cluster, String job, Map<String, Object> args )
