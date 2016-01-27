@@ -7,3 +7,6 @@
 /job-sql/target/
 /job-transform/target/
 /job-io/target/
+/job-cluster/target/
+/job-web/target/
+/job-cluster-db/target/

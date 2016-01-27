@@ -13,6 +13,8 @@
     </description>
     
     <modules>
+        <module>job-cluster</module>
+        <module>job-cluster-db</module>
         <module>job-commons</module>
         <module>job-io</module>
         <module>job-language</module>
@@ -20,6 +22,7 @@
         <module>job-shell</module>
         <module>job-sql</module>
         <module>job-transform</module>
+        <module>job-web</module>
     </modules>
     
     <properties>
