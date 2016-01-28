@@ -20,6 +20,7 @@
         <module>job-language</module>
         <module>job-output</module>
         <module>job-shell</module>
+        <module>job-schedule</module>
         <module>job-sql</module>
         <module>job-transform</module>
         <module>job-web</module>

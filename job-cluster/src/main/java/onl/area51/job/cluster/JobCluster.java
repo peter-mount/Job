@@ -165,8 +165,10 @@ public class JobCluster
     {
         Map<String, Object> params = getParams( cluster, job, args );
         RabbitRPCClient.execute( rabbit.getConnection(), key, (int) unit.toMillis( time ), params,
-                                 ret -> action.accept( (Map<String, Object>) ret.get( ARGS ) )
-        );
+                                 ret -> {
+                                     Map<String, Object> retArgs = (Map<String, Object>) ret.get( ARGS );
+                                     action.accept( retArgs == null ? Collections.emptyMap() : retArgs );
+                                 } );
     }
 
     private Map<String, Object> getParams( String cluster, String job, Map<String, Object> args )
