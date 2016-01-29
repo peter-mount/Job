@@ -1,0 +1,4 @@
+os1   FINE   Starting os1
+os1   INFO   test
+os1   INFO   42
+os1   FINE   Completed os1
