@@ -1,8 +1,6 @@
 /*
  * control2     Test if()
  */
-job "control2";
-run as "test";
 {
     // Test equality
     a = 1;

@@ -9,8 +9,6 @@
  * so the outer scope has no knowledge of it.
  *
  */
-job "scope1";
-run as "test";
 {
     // Test that a variable in the outer scope retains its value
     // when

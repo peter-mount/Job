@@ -4,8 +4,6 @@
  * Similar to scope1 but a is defined as a global variable
  *
  */
-job "scope2";
-run as "test";
 declare {
     a = 1;
 }

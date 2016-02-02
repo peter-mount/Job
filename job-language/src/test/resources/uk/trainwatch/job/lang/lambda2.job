@@ -1,8 +1,6 @@
 /*
  * lambda2  lambda functions on collections
  */
-job "lambda2";
-run as "test";
 {
     l = new List();
     l.add(7);

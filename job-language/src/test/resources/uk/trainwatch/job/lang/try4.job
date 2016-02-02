@@ -1,6 +1,4 @@
 // test of a resource
-job "try4";
-run as "test";
 {
     try( resource = new TempResource() ) {
         log "body start";

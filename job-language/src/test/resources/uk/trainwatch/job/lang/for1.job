@@ -1,8 +1,6 @@
 /*
  * for1     Test basic for statement
  */
-job "for1";
-run as "test";
 {
     log "Count 0..10";
 //a=0;

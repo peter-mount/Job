@@ -1,8 +1,6 @@
 /*
  * return2  Test return statement
  */
-job "return2";
-run as "test";
 {
     func = (a,b,c) -> {
         if(a) {

@@ -38,9 +38,6 @@ lexer grammar Literals;
 
 // LEXER
 
-JOB : 'job';
-RUN : 'run';
-AS : 'as';
 OUTPUT : 'output';
 DECLARE : 'declare';
 

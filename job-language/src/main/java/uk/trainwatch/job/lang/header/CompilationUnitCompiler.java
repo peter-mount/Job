@@ -9,13 +9,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import java.util.Objects;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.block.BlockCompiler;
 import uk.trainwatch.job.lang.JobParser;
 import uk.trainwatch.job.lang.JobParser.*;
-import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.Block;
 import uk.trainwatch.job.lang.block.TypeOp;
@@ -34,8 +33,9 @@ public class CompilationUnitCompiler
     private Statement block;
     private Statement declareBlock;
     private Statement outputBlock;
-    private JobDefinitionContext jobDefinitionContext;
     private String name;
+    private String id;
+    private String cluster;
 
     public Job compile( JobParser parser )
     {
@@ -47,18 +47,20 @@ public class CompilationUnitCompiler
     @Override
     public void enterCompilationUnit( CompilationUnitContext ctx )
     {
-        enterRule( ctx.jobDefinition() );
-
         // Optional declare { }
         blockCompiler.enterRule( ctx.declare() );
         declareBlock = blockCompiler.getBlock();
 
         // Optional output { }
-        if( ctx.output() == null ) {
-            outputBlock = ( s, a ) -> {
+        if( ctx.output() == null )
+        {
+            outputBlock = ( s, a )
+                    -> 
+                    {
             };
         }
-        else {
+        else
+        {
             outputStatements.clear();
             enterOutput( ctx.output() );
             outputBlock = Block.declare( outputStatements );
@@ -67,22 +69,17 @@ public class CompilationUnitCompiler
         // The main body
         block = blockCompiler.getBlock( ctx.block(), false );
 
-        List<TerminalNode> strings = jobDefinitionContext.StringLiteral();
-        final String id = getString( strings.get( 0 ) );
-        final String runAs = strings.size() > 1 ? getString( strings.get( 1 ) ) : "Local";
-
-        try {
-            job = new JobImpl( id, runAs, declareBlock, outputBlock, block );
-        }
-        catch( IOException ex ) {
+        try
+        {
+            job = new JobImpl( Objects.toString( id, "job" ),
+                               Objects.toString( cluster, "local" ),
+                               declareBlock,
+                               outputBlock,
+                               block );
+        } catch( IOException ex )
+        {
             throw new UncheckedIOException( ex );
         }
-    }
-
-    @Override
-    public void enterJobDefinition( JobDefinitionContext ctx )
-    {
-        jobDefinitionContext = ctx;
     }
 
     //<editor-fold defaultstate="collapsed" desc="Output Parsing">
@@ -95,7 +92,8 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatement( StatementContext ctx )
     {
-        if( ctx.statementWithoutTrailingSubstatement() == null ) {
+        if( ctx.statementWithoutTrailingSubstatement() == null )
+        {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
 
@@ -105,7 +103,8 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatementWithoutTrailingSubstatement( StatementWithoutTrailingSubstatementContext ctx )
     {
-        if( ctx.expressionStatement() == null ) {
+        if( ctx.expressionStatement() == null )
+        {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
         enterRule( ctx.expressionStatement() );
@@ -114,7 +113,8 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatementExpression( StatementExpressionContext ctx )
     {
-        if( ctx.extensionStatement() == null ) {
+        if( ctx.extensionStatement() == null )
+        {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
         enterRule( ctx.extensionStatement() );

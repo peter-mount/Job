@@ -1,8 +1,6 @@
 /*
  * control1     Test if()
  */
-job "control1";
-run as "test";
 {
     // Test boolean
     if( true )

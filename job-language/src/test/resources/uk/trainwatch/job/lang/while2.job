@@ -1,8 +1,6 @@
 /*
  * while2   Test do {s} while(c);
  */
-job "while2";
-run as "test";
 {
     log "Count 0..10";
     a=0;

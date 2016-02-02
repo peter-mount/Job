@@ -1,6 +1,4 @@
 // continue out of a standard for loop
-job "continue1";
-run as "test";
 {
     for(i=0;i<10;i=i+1) {
         if(i>5) continue;

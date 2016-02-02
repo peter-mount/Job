@@ -17,6 +17,7 @@
         <module>job-cluster-db</module>
         <module>job-commons</module>
         <module>job-io</module>
+        <module>job-jcl</module>
         <module>job-language</module>
         <module>job-output</module>
         <module>job-os</module>

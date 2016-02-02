@@ -12,6 +12,7 @@ import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.Statement;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
+import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 
 /**
  *

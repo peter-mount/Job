@@ -12,3 +12,5 @@
 /job-cluster-db/target/
 /job-schedule/target/
 /job-os/target/
+/target/
+/job-jcl/target/

@@ -27,18 +27,18 @@ class JobImpl
 
     private static final long serialVersionUID = 1L;
     private final String id;
-    private final String runAs;
+    private final String cluster;
     private final Statement declare;
     private final Statement output;
     private final Statement block;
     private JobOutputImpl jobOutput;
     private Set<JobListener> listeners;
 
-    public JobImpl( String id, String runAs, Statement declare, Statement output, Statement block )
+    public JobImpl( String id, String cluster, Statement declare, Statement output, Statement block )
             throws IOException
     {
         this.id = id;
-        this.runAs = runAs;
+        this.cluster = cluster;
         this.declare = declare;
         this.output = output;
         this.block = block;
@@ -52,9 +52,9 @@ class JobImpl
     }
 
     @Override
-    public String getRunAs()
+    public String getCluster()
     {
-        return runAs;
+        return cluster;
     }
 
     @Override

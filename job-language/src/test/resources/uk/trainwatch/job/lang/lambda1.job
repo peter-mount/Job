@@ -1,8 +1,6 @@
 /*
  * lambda1  Basic lambda functions
  */
-job "lambda1";
-run as "test";
 {
     // define a simple function
     add = (a,b)->a+b;

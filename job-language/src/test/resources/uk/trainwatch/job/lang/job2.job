@@ -1,7 +1,5 @@
 /*
  * job2     A bare minimal job, does nothing but defines the test user as the security context
  */
-job "job2";
-run as "test";
 {
 }

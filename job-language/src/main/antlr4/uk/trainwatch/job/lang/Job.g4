@@ -39,12 +39,7 @@ grammar Job;
 import Script,Literals;
 
 compilationUnit
-    :   jobDefinition output? declare? block EOF
-    ;
-
-jobDefinition
-    :   'job' StringLiteral ';'
-    |   'job' StringLiteral ';' 'run' 'as' StringLiteral ';'
+    :   output? declare? block EOF
     ;
 
 output

@@ -1,6 +1,4 @@
 // test of a resource and it gets closed when an exception is thrown
-job "try5";
-run as "test";
 {
     try( resource = new TempResource() ) {
         log "body start";

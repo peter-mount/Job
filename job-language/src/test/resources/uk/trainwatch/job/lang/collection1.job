@@ -1,8 +1,6 @@
 /*
  * collection1  Test new collections
  */
-job "collection1";
-run as "test";
 {
     l = new List();
     log l;

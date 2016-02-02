@@ -20,7 +20,7 @@ public interface Job
 
     String getId();
 
-    String getRunAs();
+    String getCluster();
 
     JobOutput getJobOutput();
 

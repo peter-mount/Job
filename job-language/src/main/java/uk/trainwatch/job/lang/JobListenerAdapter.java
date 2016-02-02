@@ -46,18 +46,6 @@ public class JobListenerAdapter
     }
 
     @Override
-    public void enterJobDefinition( JobParser.JobDefinitionContext ctx )
-    {
-
-    }
-
-    @Override
-    public void exitJobDefinition( JobParser.JobDefinitionContext ctx )
-    {
-
-    }
-
-    @Override
     public void enterOutput( JobParser.OutputContext ctx )
     {
         enterRule( ctx.outputStatements() );

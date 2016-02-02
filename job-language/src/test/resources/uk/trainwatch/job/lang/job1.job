@@ -1,6 +1,5 @@
 /*
  * job1     A bare minimal job, does nothing
  */
-job "job1";
 {
 }

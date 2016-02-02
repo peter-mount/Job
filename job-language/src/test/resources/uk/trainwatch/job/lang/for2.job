@@ -1,8 +1,6 @@
 /*
  * for2     Test enhanced for statement
  */
-job "for2";
-run as "test";
 {
     list = new List();
 

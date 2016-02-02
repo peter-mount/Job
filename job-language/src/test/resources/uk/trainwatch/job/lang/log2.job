@@ -1,8 +1,6 @@
 /*
  * log2     Test various logging output
  */
-job "log2";
-run as "test";
 {
     // Test addition
     a = 7 + 3;
