@@ -67,7 +67,9 @@ class JobImpl
                     output.invokeStatement( scope );
                 }
 
-                block.invokeStatement( scope );
+                if( block != null ) {
+                    block.invokeStatement( scope );
+                }
             }
             catch( Block.Throw ex ) {
                 Exception ex1 = ex.getException();
