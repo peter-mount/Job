@@ -14,21 +14,20 @@ class JclBuilder
         extends JclBaseListener
 {
 
-    private static <T extends ParserRuleContext> void forEach( T c, Consumer<T> a )
+    private static <T extends ParserRuleContext> void enter( T c, Consumer<T> a )
     {
-        if( c != null )
-        {
+        if( c != null ) {
             a.accept( c );
         }
     }
 
     private static <T extends ParserRuleContext> void forEach( Collection<T> c, Consumer<T> a )
     {
-        if( c != null && !c.isEmpty() )
-        {
+        if( c != null && !c.isEmpty() ) {
             c.forEach( a );
         }
     }
+    
     private String node;
     private String name;
 
@@ -45,8 +44,7 @@ class JclBuilder
     @Override
     public void enterJclScript( JclParser.JclScriptContext ctx )
     {
-        // Job is mandatory
-        enterJob( ctx.job() );
+        enter( ctx.job(), this::enterJob );
         forEach( ctx.jclStatement(), this::enterJclStatement );
     }
 
@@ -59,8 +57,7 @@ class JclBuilder
     public void enterJob( JclParser.JobContext ctx )
     {
         List<TerminalNode> l = ctx.Identifier();
-        if( l.size() != 2 )
-        {
+        if( l.size() != 2 ) {
             throw new IllegalArgumentException( "Missing args" );
         }
         node = l.get( 0 ).getText();

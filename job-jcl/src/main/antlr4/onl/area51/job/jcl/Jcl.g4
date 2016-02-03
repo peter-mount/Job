@@ -39,7 +39,7 @@ grammar Jcl;
 import JclLiterals;
 
 jclScript
-    :   PREFIX job SEMI (PREFIX jclStatement SEMI)*
+    :   (PREFIX job SEMI (PREFIX jclStatement SEMI)*)?
     ;
 
 jclStatement
