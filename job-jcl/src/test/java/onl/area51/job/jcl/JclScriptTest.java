@@ -28,7 +28,7 @@ public class JclScriptTest
 {
 
     private static final String PREFIX = "#!/bin/bash\n";
-    private static final String JOB = "## job Node.Name;\n";
+    private static final String JOB = "## job Node.Name\n";
     private static final String SCRIPT = "Test script\nLine2\n";
 
     private void test( JclScript<String> jclScript )

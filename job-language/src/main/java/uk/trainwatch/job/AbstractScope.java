@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import onl.area51.job.jcl.Jcl;
 
 /**
  *
@@ -22,7 +23,7 @@ public abstract class AbstractScope
         implements Scope
 {
 
-    private static final ThreadLocal<Scope> currentScope = new ThreadLocal<>();
+    private static final ThreadLocal<Scope> CURRENT_SCOPE = new ThreadLocal<>();
 
     private static final String STANDARD_IMPORTS[]
                                   = {
@@ -58,7 +59,7 @@ public abstract class AbstractScope
 
     public static Scope getCurrentScope()
     {
-        return currentScope.get();
+        return CURRENT_SCOPE.get();
     }
 
     @Override
@@ -86,6 +87,7 @@ public abstract class AbstractScope
 
         private final Map<String, String> imports = new LinkedHashMap<>();
         private Job job;
+        private Jcl jcl;
 
         protected Logger logger;
 
@@ -105,7 +107,7 @@ public abstract class AbstractScope
         {
             this.job = job;
 
-            currentScope.set( this );
+            CURRENT_SCOPE.set( this );
             this.logger = logger;
 
             for( int i = 0; i < STANDARD_IMPORTS.length; i += 2 ) {
@@ -123,6 +125,18 @@ public abstract class AbstractScope
         public void setJob( Job job )
         {
             this.job = job;
+        }
+
+        @Override
+        public Jcl getJcl()
+        {
+            return jcl;
+        }
+
+        @Override
+        public void setJcl( Jcl jcl )
+        {
+            this.jcl = jcl;
         }
 
         @Override
@@ -185,7 +199,7 @@ public abstract class AbstractScope
         public Scope begin()
         {
             Scope scope = new DefaultScope( this );
-            currentScope.set( scope );
+            CURRENT_SCOPE.set( scope );
             return scope;
         }
 
@@ -288,6 +302,12 @@ public abstract class AbstractScope
         }
 
         @Override
+        public Jcl getJcl()
+        {
+            return globalScope.getJcl();
+        }
+
+        @Override
         public Scope.GlobalScope getGlobalScope()
         {
             return globalScope;
@@ -362,7 +382,7 @@ public abstract class AbstractScope
         public Scope begin()
         {
             Scope scope = new SubScope( globalScope, this );
-            currentScope.set( scope );
+            CURRENT_SCOPE.set( scope );
             return scope;
         }
 
@@ -402,7 +422,7 @@ public abstract class AbstractScope
         @Override
         public void close()
         {
-            currentScope.set( globalScope );
+            CURRENT_SCOPE.set( globalScope );
             super.close();
         }
 
@@ -455,7 +475,7 @@ public abstract class AbstractScope
         @Override
         public void close()
         {
-            currentScope.set( parentScope );
+            CURRENT_SCOPE.set( parentScope );
             super.close();
         }
 

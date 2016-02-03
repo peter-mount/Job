@@ -17,7 +17,7 @@ package onl.area51.job.cluster;
 
 import java.io.IOException;
 import javax.enterprise.inject.Typed;
-import uk.trainwatch.job.Job;
+import onl.area51.job.jcl.Jcl;
 
 /**
  * An implementation that will retrieve a Job from some central location, a FileSystem or a Database
@@ -28,6 +28,26 @@ import uk.trainwatch.job.Job;
 public interface ClusterJobRetriever
 {
 
-    Job retrieveJob( String cluster, String name )
+    /**
+     * Retrieve a stored Job
+     *
+     * @param jcl Jcl to retrieve
+     *
+     * @return
+     *
+     * @throws IOException
+     */
+    String retrieveJob( Jcl jcl )
+            throws IOException;
+
+    /**
+     * Stores a job
+     *
+     * @param jcl Jcl to store
+     * @param job Full text of the job
+     *
+     * @throws IOException
+     */
+    void storeJob( Jcl jcl, String job )
             throws IOException;
 }

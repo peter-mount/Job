@@ -31,4 +31,70 @@ public interface Jcl
         String a = getNode(), b = getName();
         return a != null && !a.isEmpty() && b != null && !b.isEmpty();
     }
+
+    /**
+     * The job type
+     *
+     * @return
+     */
+    JclType getType();
+
+    /**
+     * The Job schedule.
+     * <p>
+     * This will be XML
+     *
+     * @return
+     */
+    String getSchedule();
+
+    /**
+     * Creates a basic Jcl
+     *
+     * @param node
+     * @param name
+     *
+     * @return
+     */
+    static Jcl create( String node, String name )
+    {
+        return create( node, name, JclType.UNKNOWN );
+    }
+
+    static Jcl create( String node, String name, JclType type )
+    {
+        return create( node, name, type, "<schedule/>" );
+    }
+
+    static Jcl create( String node, String name, JclType type, String schedule )
+    {
+        return new Jcl()
+        {
+
+            @Override
+            public String getName()
+            {
+                return name;
+            }
+
+            @Override
+            public String getNode()
+            {
+                return node;
+            }
+
+            @Override
+            public JclType getType()
+            {
+                return type;
+            }
+
+            @Override
+            public String getSchedule()
+            {
+                return schedule;
+            }
+
+        };
+    }
 }

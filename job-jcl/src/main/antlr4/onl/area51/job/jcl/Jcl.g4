@@ -39,22 +39,58 @@ grammar Jcl;
 import JclLiterals;
 
 jclScript
-    :   (PREFIX job SEMI (PREFIX jclStatement SEMI)*)?
+    :   (PREFIX job EOS (PREFIX jclStatement EOS)*)? EOS*
     ;
 
 jclStatement
-    :   schedule
+    :   runAt
+    |   runEvery
+    |   schedule
     ;
 
+// job Node.Name
 job
     :   JOB Identifier DOT Identifier
     ;
 
+// run at yyyy-dd-mm hh:mm
+// run at yyyy/dd/mm hh:mm
+// run at yyyy-dd-mm
+// run at yyyy/dd/mm
+// run at hh:mm
+runAt
+    :   RUN AT dateAndOrTime
+    ;
+
+// run every interval
+runEvery
+    :   RUN EVERY interval (FROM dateOptionalTime)?
+    ;
+
 schedule
-    :   SCHEDULE (CRON scheduleCronTab)
+    : SCHEDULE (CRON scheduleCronTab)
     ;
 
 // Cron m h dom mon dow
 scheduleCronTab
-    :   CronLiteral CronLiteral CronLiteral CronLiteral CronLiteral
+    :   INT INT INT INT INT
     ;
+
+// Interval
+interval
+    : INT? (DAY| HOUR| MINUTE)
+    ;
+
+// A date and time
+dateTime : date time ;
+
+dateOptionalTime : date time? ;
+
+// A date and/or time
+dateAndOrTime : (date time | date | time );
+
+// A Date in y-m-d format
+date : INT DATESEP INT DATESEP INT ;
+
+// A time in h:m format
+time : INT COLON INT ;

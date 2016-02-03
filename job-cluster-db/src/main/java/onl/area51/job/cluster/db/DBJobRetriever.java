@@ -16,7 +16,6 @@
 package onl.area51.job.cluster.db;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,14 +26,12 @@ import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import onl.area51.job.cluster.ClusterJobRetriever;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import uk.trainwatch.io.IOFunction;
-import uk.trainwatch.job.Job;
-import uk.trainwatch.job.lang.Compiler;
+import onl.area51.job.jcl.Jcl;
 import uk.trainwatch.util.sql.Database;
 import uk.trainwatch.util.sql.SQL;
 
 /**
+ * {@link ClusterJobRetriever} implementation that utilises a database for storage
  *
  * @author peter
  */
@@ -49,24 +46,13 @@ public class DBJobRetriever
     private DataSource dataSource;
 
     @Override
-    public Job retrieveJob( String cluster, String name )
+    public String retrieveJob( Jcl jcl )
             throws IOException
     {
         try( Connection con = dataSource.getConnection() ) {
-            try( PreparedStatement ps = SQL.prepare( con,
-                                                     "SELECT d.outpt, d.decl,d.text,d.version"
-                                                     + " FROM jobdef d"
-                                                     + " INNER JOIN job j ON d.id=j.id"
-                                                     + " INNER JOIN cluster c ON j.clusterid=c.id"
-                                                     + " WHERE c.name=? AND j.name=?"
-                                                     + " ORDER BY d.version DESC"
-                                                     + " LIMIT 1",
-                                                     cluster, name ) ) {
-                return SQL.stream( ps, rs -> mapper( cluster, name, rs ) )
+            try( PreparedStatement ps = SQL.prepare( con, "SELECT * FROM getJob(?,?)", jcl.getNode(), jcl.getName() ) ) {
+                return SQL.stream( ps, SQL.STRING_LOOKUP )
                         .limit( 1 )
-                        .map( StringReader::new )
-                        .map( IOFunction.guard( ANTLRInputStream::new ) )
-                        .map( Compiler::compile )
                         .findAny()
                         .orElse( null );
             }
@@ -77,26 +63,17 @@ public class DBJobRetriever
         }
     }
 
-    private String mapper( String cluster, String name, ResultSet rs )
-            throws SQLException
+    @Override
+    public void storeJob( Jcl jcl, String job )
+            throws IOException
     {
-        StringBuilder sb = new StringBuilder()
-                .append( "job \"" ).append( name ).append( "\";\n" )
-                .append( "run as \"" ).append( cluster ).append( "\";\n" );
-
-        append( sb, "output", rs.getString( "outpt" ) );
-        append( sb, "declare", rs.getString( "decl" ) );
-        append( sb, null, rs.getString( "text" ) );
-        return sb.toString();
-    }
-
-    private void append( StringBuilder sb, String prefix, String s )
-    {
-        if( s != null ) {
-            if( prefix != null ) {
-                sb.append( prefix ).append( ' ' );
-            }
-            sb.append( "{\n" ).append( s ).append( "\n}\n" );
+        try( Connection con = dataSource.getConnection() ) {
+            SQL.executeFunction( con, "storeJob(?,?,?)", jcl.getNode(), jcl.getName(), job );
+        }
+        catch( SQLException |
+               UncheckedIOException ex ) {
+            throw new IOException( ex );
         }
     }
+
 }

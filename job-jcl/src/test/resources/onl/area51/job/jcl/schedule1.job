@@ -1,4 +1,4 @@
-## job Test.schedule1 ;
-## schedule cron * * * * *;
-## schedule cron 0 * * * *;
-## schedule cron 0 0-6 * * *;
+## job Test.schedule1
+# run at 2016-10-21 12:34
+# run at 12:34
+# run at 2016-10-21

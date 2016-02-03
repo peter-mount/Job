@@ -8,6 +8,7 @@ package uk.trainwatch.job;
 import java.util.Collection;
 import java.util.logging.Logger;
 import javax.script.Bindings;
+import onl.area51.job.jcl.Jcl;
 
 /**
  *
@@ -18,6 +19,8 @@ public interface Scope
 {
 
     Job getJob();
+
+    Jcl getJcl();
 
     /**
      * Create a new scope
@@ -99,6 +102,8 @@ public interface Scope
     {
 
         void setJob( Job job );
+
+        void setJcl( Jcl jcl );
 
         void setLogger( Logger logger );
     }

@@ -22,6 +22,9 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static onl.area51.job.cluster.Constants.*;
+import onl.area51.job.jcl.Jcl;
+import onl.area51.job.jcl.JclScript;
+import uk.trainwatch.job.lang.Compiler;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
 
@@ -56,7 +59,7 @@ public class ClusterExecutor
 {
 
     private static final Logger LOG = Logger.getLogger( ClusterExecutor.class.getName() );
-    private final String cluster;
+    private final String node;
     private final ClusterJobRetriever jobRetriever;
 
     /**
@@ -66,7 +69,7 @@ public class ClusterExecutor
      */
     public ClusterExecutor( String cluster, ClusterJobRetriever jobRetriever )
     {
-        this.cluster = cluster;
+        this.node = cluster;
         this.jobRetriever = jobRetriever;
     }
 
@@ -75,11 +78,11 @@ public class ClusterExecutor
     {
         try {
             String requestedCluster = Objects.toString( request.get( CLUSTER ), null );
-            if( cluster.equals( requestedCluster ) ) {
+            if( node.equals( requestedCluster ) ) {
                 return execute( request );
             }
             else {
-                LOG.log( Level.WARNING, () -> "Received job for wrong cluster " + requestedCluster + " was expecting " + this.cluster );
+                LOG.log( Level.WARNING, () -> "Received job for wrong cluster " + requestedCluster + " was expecting " + this.node );
             }
         }
         catch( Throwable ex ) {
@@ -93,29 +96,33 @@ public class ClusterExecutor
         String jobName = Objects.toString( request.get( JOB ), null );
 
         try {
-            Job job = jobRetriever.retrieveJob( cluster, jobName );
-            if( job == null ) {
-                LOG.log( Level.WARNING, () -> "Cannot find Job " + cluster + ":" + jobName );
+            String src = jobRetriever.retrieveJob( Jcl.create( node, jobName ) );
+            if( src == null ) {
+                LOG.log( Level.WARNING, () -> "Cannot find Job " + node + ":" + jobName );
                 return null;
             }
+
+            JclScript<Job> jclScript = JclScript.read( src, Compiler::compile );
+            Job job = jclScript.getScript();
 
             // globalScope contains var's in declare section. These will be returned if needed
             try( Scope.GlobalScope globalScope = (Scope.GlobalScope) Scope.newInstance( LOG ) ) {
                 globalScope.setJob( job );
+                globalScope.setJcl( jclScript.getJcl() );
 
                 try {
                     run( (Map<String, Object>) request.get( ARGS ), job, globalScope );
                     return globalScope;
                 }
                 catch( Throwable t ) {
-                    LOG.log( Level.SEVERE, t, () -> "Exception in job " + cluster + ":" + jobName );
+                    LOG.log( Level.SEVERE, t, () -> "Exception in job " + node + ":" + jobName );
                     globalScope.put( EXCEPTION, t.toString() );
                     return globalScope;
                 }
             }
         }
         catch( Exception ex ) {
-            LOG.log( Level.SEVERE, ex, () -> "Failed to execute Job " + cluster + ":" + jobName );
+            LOG.log( Level.SEVERE, ex, () -> "Failed to execute Job " + node + ":" + jobName );
             return null;
         }
     }

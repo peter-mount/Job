@@ -1,0 +1,4 @@
+## job Test.schedule2
+# schedule cron * * * * *
+# schedule cron 0 * * * *
+# schedule cron 0 0-6 * * *

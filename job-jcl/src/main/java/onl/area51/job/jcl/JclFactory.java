@@ -67,8 +67,6 @@ public class JclFactory
     public static Jcl compileJcl( CharStream s )
     {
         JclParser p = parse( s );
-        JclBuilder b = new JclBuilder();
-        b.enterJclScript( p.jclScript() );
-        return new DefaultJcl( b.getNode(), b.getName() );
+        return JclBuilder.build( p );
     }
 }
