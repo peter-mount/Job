@@ -40,11 +40,14 @@ lexer grammar JclLiterals;
 
 PREFIX : '##';
 
-CLUSTER : 'cluster';
 JOB : 'job';
+SUBJOB : 'sub' WS? 'job';
+DELETEJOB : 'delete' WS? 'job' ;
+
 RUN : 'run';
 AT : 'at';
 EVERY : 'every';
+
 SCHEDULE : 'schedule';
 CRON : 'cron' ;
 

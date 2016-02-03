@@ -31,6 +31,24 @@ public class JclFactoryTest
 {
 
     private static final String JOB = "## job Node.Name\n";
+    // subjob can have whitespace between sub & job
+    private static final String SUBJOB[] = {
+        "## subjob Node.Name\n",
+        "## sub job Node.Name\n",
+        "## sub  job Node.Name\n",
+        "## sub\tjob Node.Name\n",
+        "## sub\t job Node.Name\n",
+        "## sub \tjob Node.Name\n"
+    };
+    // deletejob can have whitespace between delete & job
+    private static final String DELETEJOB[] = {
+        "## deletejob Node.Name\n",
+        "## delete job Node.Name\n",
+        "## delete  job Node.Name\n",
+        "## delete\tjob Node.Name\n",
+        "## delete \tjob Node.Name\n",
+        "## delete\t job Node.Name\n"
+    };
 
     /**
      * Test that a Jcl actually gets populated. This is the bare minimum Jcl
@@ -38,7 +56,29 @@ public class JclFactoryTest
     @Test
     public void job()
     {
-        test( JclFactory.compileJcl( JOB ) );
+        Jcl jcl = JclFactory.compileJcl( JOB );
+        test( jcl );
+        assertSame( JclType.EXECUTABLE, jcl.getType() );
+    }
+
+    @Test
+    public void subjob()
+    {
+        for( String job: SUBJOB ) {
+            Jcl jcl = JclFactory.compileJcl( job );
+            test( jcl );
+            assertSame( job, JclType.SUBROUTINE, jcl.getType() );
+        }
+    }
+
+    @Test
+    public void deletejob()
+    {
+        for( String job: DELETEJOB ) {
+            Jcl jcl = JclFactory.compileJcl( job );
+            test( jcl );
+            assertSame( job, JclType.DELETE, jcl.getType() );
+        }
     }
 
     private void test( Jcl jcl )
@@ -61,6 +101,7 @@ public class JclFactoryTest
                                          + "## run at 18:24\n"
         );
         test( jcl );
+        assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         String today = LocalDate.now().toString();
         String now = LocalTime.now().truncatedTo( ChronoUnit.MINUTES ).toString();
@@ -80,14 +121,15 @@ public class JclFactoryTest
     {
         Jcl jcl = JclFactory.compileJcl( JOB
                                          + "## run every minute\n"
-                                                 + "## run every 10 minutes\n"
-                                                 + "## run every hour\n"
-                                                 + "## run every 3 hours\n"
-                                                 + "## run every day\n"
-                                                 + "## run every 2 days\n"
-                                                 + "## run every 2 day\n"
+                                         + "## run every 10 minutes\n"
+                                         + "## run every hour\n"
+                                         + "## run every 3 hours\n"
+                                         + "## run every day\n"
+                                         + "## run every 2 days\n"
+                                         + "## run every 2 day\n"
         );
         test( jcl );
+        assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         LocalDateTime dt = LocalDateTime.now().truncatedTo( ChronoUnit.MINUTES );
         String now = dt.toLocalDate().toString() + " " + dt.toLocalTime().toString();
@@ -95,12 +137,12 @@ public class JclFactoryTest
         assertEquals( "Schedule",
                       "<schedule>"
                       + "<repeat next=\"" + now + "\" step=\"1 minute\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"10 minute\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"1 hour\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"3 hour\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"1 day\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"2 day\"/>"
-                                            + "<repeat next=\""+now+"\" step=\"2 day\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"10 minute\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"3 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 day\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"2 day\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"2 day\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }

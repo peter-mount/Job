@@ -24,12 +24,14 @@ public enum JclType
 {
     /**
      * The Jcl doesn't define what type it is
+     *//**
+     * The Jcl doesn't define what type it is
      */
     UNKNOWN,
     /**
      * The Jcl indicates the job should be deleted
      */
-    DELETABLE,
+    DELETE,
     /**
      * The Jcl is for a job that should be executed immediately
      */

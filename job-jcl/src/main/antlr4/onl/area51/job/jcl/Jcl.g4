@@ -50,7 +50,7 @@ jclStatement
 
 // job Node.Name
 job
-    :   JOB Identifier DOT Identifier
+    :   (JOB | DELETEJOB | SUBJOB) Identifier DOT Identifier
     ;
 
 // run at yyyy-dd-mm hh:mm

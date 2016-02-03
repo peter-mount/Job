@@ -136,9 +136,38 @@ class JclBuilder
     }
 
     @Override
+    public void enterJob( JclParser.JobContext ctx )
+    {
+        List<TerminalNode> l = ctx.Identifier();
+        if( l.size() != 2 ) {
+            throw new IllegalArgumentException( "Missing args" );
+        }
+        node = l.get( 0 ).getText();
+        name = l.get( 1 ).getText();
+
+        type = ctx.JOB() != null ? JclType.EXECUTABLE
+               : ctx.SUBJOB() != null ? JclType.SUBROUTINE
+                 : ctx.DELETEJOB() != null ? JclType.DELETE
+                   : JclType.UNKNOWN;
+    }
+
+    /**
+     * Mark the job as schedulable only if we are executable
+     */
+    private void schedule()
+    {
+        if( type == JclType.EXECUTABLE || type == JclType.SCHEDULABLE ) {
+            type = JclType.SCHEDULABLE;
+        }
+        else {
+            throw new IllegalArgumentException( "Unable to schedule Jcl type " + type );
+        }
+    }
+
+    @Override
     public void enterRunAt( JclParser.RunAtContext ctx )
     {
-        type = JclType.SCHEDULABLE;
+        schedule();
         schedule.append( "<once at=\"" );
         append( schedule, getDateAndOrTime( ctx.dateAndOrTime(),
                                             LocalDate::now,
@@ -159,7 +188,7 @@ class JclBuilder
             return "";
         };
         JclParser.IntervalContext ic = ctx.interval();
-        type = JclType.SCHEDULABLE;
+        schedule();
         schedule.append( "<repeat next=\"" );
         append( schedule, getDateOptionalTime( ctx.dateOptionalTime(),
                                                LocalDateTime::now,
@@ -169,20 +198,6 @@ class JclBuilder
                 .append( ' ' )
                 .append( ic.DAY() != null ? "day" : ic.HOUR() != null ? "hour" : "minute" )
                 .append( "\"/>" );
-    }
-
-    @Override
-    public void enterJob( JclParser.JobContext ctx )
-    {
-        List<TerminalNode> l = ctx.Identifier();
-        if( l.size() != 2 ) {
-            throw new IllegalArgumentException( "Missing args" );
-        }
-        node = l.get( 0 ).getText();
-        name = l.get( 1 ).getText();
-        if( node != null && !node.isEmpty() && name != null && !name.isEmpty() ) {
-            type = JclType.EXECUTABLE;
-        }
     }
 
 }
