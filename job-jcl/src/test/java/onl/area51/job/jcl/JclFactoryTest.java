@@ -106,7 +106,6 @@ public class JclFactoryTest
                                          + "## run at 2016/2/10 18:24 retry every 1 hour maximum 3 times\n"
         );
         test( jcl );
-        System.out.println( jcl.getSchedule() );
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         String today = LocalDate.now().toString();
@@ -150,7 +149,7 @@ public class JclFactoryTest
                                          + "## run every hour between 21:00 and 03:00 retry 10 minutes maximum 3 times\n"
         );
         test( jcl );
-        System.out.println( jcl.getSchedule() );
+
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         LocalDateTime dt = LocalDateTime.now().truncatedTo( ChronoUnit.MINUTES );
@@ -175,12 +174,52 @@ public class JclFactoryTest
                       + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\"/>"
                       + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
                       // Between 2100-0300 crossing midnight
-                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\"/>"
                       + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\"/>"
+                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\"/>"
                       // Between 2100-0300 crossing midnight retry 10 minutes max 3
-                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
                       + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
+                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }
+
+    /**
+     * Test we schedule to run at a specific date/time
+     */
+    @Test
+    public void runCron()
+    {
+        Jcl jcl = JclFactory.compileJcl( JOB
+                                         + "## run cron * * * * *\n"
+                                         + "## run cron 0 3 * * *\n"
+                                         // example of retrieving from darwin
+                                         + "## run cron 0 3 * * * retry 1 hour\n"
+                                         + "## run cron 0 3 * * * retry 1 hour maximum 4\n"
+        // Run during the morning only
+        // This currently doesn't work
+        //+ "## run cron 0 6-9 * * *\n"
+        );
+        test( jcl );
+
+        System.out.println( jcl.getSchedule().replace( "><", ">\n<" ) );
+
+        assertSame( JclType.SCHEDULABLE, jcl.getType() );
+
+        assertEquals( "Schedule",
+                      "<schedule>"
+                      + "<cron/>"
+                      // example of retrieving from darwin
+                      + "<cron m=\"0\" h=\"3\"/>"
+                      + "<cron m=\"0\" h=\"3\" retry=\"1 hour\"/>"
+                      + "<cron m=\"0\" h=\"3\" retry=\"1 hour\" max=\"4\"/>"
+                      // Run during the morning only
+                      // This currently doesn't work
+//                      + "<cron m=\"0\" h=\"6\"/>"
+//                      + "<cron m=\"0\" h=\"7\"/>"
+//                      + "<cron m=\"0\" h=\"8\"/>"
+//                      + "<cron m=\"0\" h=\"9\"/>"
+                      + "</schedule>",
+                      jcl.getSchedule() );
+    }
+
 }

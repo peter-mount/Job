@@ -52,6 +52,16 @@ class AbstractJclBuilder
         xml.attr( name, dt );
     }
 
+    protected final void optionalAttr( String name, Object value )
+    {
+        xml.optionalAttr( name, value );
+    }
+
+    protected final void optionalAttr( String name, LocalDateTime dt )
+    {
+        xml.optionalAttr( name, dt );
+    }
+
     protected final <T extends ParserRuleContext> void enter( T c, Consumer<T> a )
     {
         if( c != null ) {

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.function.IntConsumer;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -53,7 +54,7 @@ class JclBuilder
     {
         enter( ctx.runAt(), this::enterRunAt );
         enter( ctx.runEvery(), this::enterRunEvery );
-        enter( ctx.schedule(), this::enterSchedule );
+        enter( ctx.runCron(), this::enterRunCron );
     }
 
     @Override
@@ -134,6 +135,79 @@ class JclBuilder
 
              retry( ctx.retry() );
          } );
+    }
+
+    @Override
+    public void enterRunCron( JclParser.RunCronContext ctx )
+    {
+        schedule();
+
+        // 0=m, 1=h, 2=dom, 3=mon, 4=dow
+        List<JclParser.CronEntryContext> entries = ctx.scheduleCronTab().cronEntry();
+
+        forCron( entries.get( 0 ), 0, 59,
+                 m -> forCron( entries.get( 1 ), 0, 59,
+                               h -> forCron( entries.get( 2 ), 0, 59,
+                                             dom -> forCron( entries.get( 3 ), 0, 31,
+                                                             mon -> forCron( entries.get( 4 ), 0, 6,
+                                                                             dow -> between( "cron", ctx.between(), () -> {
+                                                                                         cronAttr( "m", m );
+                                                                                         cronAttr( "h", h );
+                                                                                         cronAttr( "d", dom );
+                                                                                         cronAttr( "m", mon );
+                                                                                         cronAttr( "w", dow );
+                                                                                         retry( ctx.retry() );
+                                                                                     } )
+                                                             )
+                                             )
+                               )
+                 )
+        );
+    }
+
+    /**
+     * Run through a cron entry
+     *
+     * @param ctx  context
+     * @param min  min valid value
+     * @param max  max valid value
+     * @param each consumer to run. when value is -1 then its wild card
+     */
+    private void forCron( JclParser.CronEntryContext ctx, int min, int max, IntConsumer each )
+    {
+        if( ctx.STAR() != null ) {
+            each.accept( -1 );
+        }
+        else {
+            // For now INT(-INT)?(/INT)? doesn't work so allow just a single entry
+            int s = Math.max( min, Math.min( max, getInt( ctx.INT() ) ) );
+//            int s = Math.max( min, Math.min( max, getInt( ctx.INT( 0 ) )));
+//            int e = Math.min( max, getInt( ctx.INT( 1 ), -1 ) ));
+//            int j = Math.max( 1, Math.min( max, getInt( ctx.INT( 2 ), 1 ) ) );
+//            if( e > s ) {
+//                // range with optional step
+//                for( int i = s; i <= e; i += j ) {
+//                    each.accept( i );
+//                }
+//            }
+//            else if( j > 1 ) {
+//                // Step from stat up to max
+//                for( int i = s; i <= max; i += j ) {
+//                    each.accept( i );
+//                }
+//            }
+//            else {
+                // Just a single value
+                each.accept( s );
+//            }
+        }
+    }
+
+    protected final void cronAttr( String name, int value )
+    {
+        if( value > -1 ) {
+            attr( name, value );
+        }
     }
 
 }

@@ -55,8 +55,7 @@ EVERY       : 'every';
 BETWEEN     : 'between';
 AND         : 'and';
 
-SCHEDULE : 'schedule';
-CRON : 'cron' ;
+CRON : 'cron';
 
 INT : DIGIT+ ;
 fragment DIGIT : [0-9] ;
@@ -95,6 +94,7 @@ RBRACK : ']';
 SEMI   : ';';
 COMMA  : ',';
 DOT    : '.';
+STAR   : '*';
 
 // §3.8 Identifiers (must appear after all keywords in the grammar)
 

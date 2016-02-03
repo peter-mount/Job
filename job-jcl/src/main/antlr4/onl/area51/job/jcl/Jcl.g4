@@ -45,7 +45,7 @@ jclScript
 jclStatement
     :   runAt
     |   runEvery
-    |   schedule
+    |   runCron
     ;
 
 // job Node.Name
@@ -65,18 +65,26 @@ runEvery
     :   RUN EVERY interval (AT time | FROM dateOptionalTime)? between? retry?
     ;
 
-schedule
-    : SCHEDULE (CRON scheduleCronTab)
+runCron
+    : RUN CRON scheduleCronTab between? retry?
     ;
 
 // Cron m h dom mon dow
 scheduleCronTab
-    :   INT INT INT INT INT
+    :   cronEntry cronEntry cronEntry cronEntry cronEntry
+    ;
+
+// For now 
+cronEntry
+    :   INT
+    // The following doesnt work right now
+  //|   INT (HYPHEN INT)? (SLASH INT)?
+    |   STAR
     ;
 
 // Interval
 interval
-    : INT? (DAY| HOUR| MINUTE)
+    : INT? (DAY|HOUR|MINUTE)
     ;
 
 // Retry on failure

@@ -47,6 +47,22 @@ public interface JclXmlWriter
         return attr( name, dt.toLocalDate().toString() + " " + dt.toLocalTime().toString() );
     }
 
+    default JclXmlWriter optionalAttr( String name, Object value )
+    {
+        if( value != null ) {
+            attr( name, value );
+        }
+        return this;
+    }
+
+    default JclXmlWriter optionalAttr( String name, LocalDateTime value )
+    {
+        if( value != null ) {
+            attr( name, value );
+        }
+        return this;
+    }
+
     static String begin( String tag, Consumer<JclXmlWriter> action )
     {
         StringBuilder b = new StringBuilder();
