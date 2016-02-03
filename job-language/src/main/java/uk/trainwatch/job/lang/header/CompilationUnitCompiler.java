@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.lang.AbstractCompiler;
 import uk.trainwatch.job.lang.block.BlockCompiler;
@@ -52,15 +51,12 @@ public class CompilationUnitCompiler
         declareBlock = blockCompiler.getBlock();
 
         // Optional output { }
-        if( ctx.output() == null )
-        {
+        if( ctx.output() == null ) {
             outputBlock = ( s, a )
-                    -> 
-                    {
+                    -> {
             };
         }
-        else
-        {
+        else {
             outputStatements.clear();
             enterOutput( ctx.output() );
             outputBlock = Block.declare( outputStatements );
@@ -69,15 +65,12 @@ public class CompilationUnitCompiler
         // The main body
         block = blockCompiler.getBlock( ctx.block(), false );
 
-        try
-        {
-            job = new JobImpl( Objects.toString( id, "job" ),
-                               Objects.toString( cluster, "local" ),
-                               declareBlock,
+        try {
+            job = new JobImpl( declareBlock,
                                outputBlock,
                                block );
-        } catch( IOException ex )
-        {
+        }
+        catch( IOException ex ) {
             throw new UncheckedIOException( ex );
         }
     }
@@ -92,8 +85,7 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatement( StatementContext ctx )
     {
-        if( ctx.statementWithoutTrailingSubstatement() == null )
-        {
+        if( ctx.statementWithoutTrailingSubstatement() == null ) {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
 
@@ -103,8 +95,7 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatementWithoutTrailingSubstatement( StatementWithoutTrailingSubstatementContext ctx )
     {
-        if( ctx.expressionStatement() == null )
-        {
+        if( ctx.expressionStatement() == null ) {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
         enterRule( ctx.expressionStatement() );
@@ -113,8 +104,7 @@ public class CompilationUnitCompiler
     @Override
     public void enterStatementExpression( StatementExpressionContext ctx )
     {
-        if( ctx.extensionStatement() == null )
-        {
+        if( ctx.extensionStatement() == null ) {
             throw new IllegalStateException( "Unsupported statement within job output" );
         }
         enterRule( ctx.extensionStatement() );

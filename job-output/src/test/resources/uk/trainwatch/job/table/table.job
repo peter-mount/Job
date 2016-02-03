@@ -1,5 +1,4 @@
 // Test of the table generation functionality
-job "table";
 {
     log "Test of tables";
 

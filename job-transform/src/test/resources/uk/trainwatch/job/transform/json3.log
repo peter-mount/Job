@@ -1,3 +1,1 @@
-json3 FINE   Starting json3
 json3 INFO   [42,"json",["name","value"],{"value":"val","key":"name"}]
-json3 FINE   Completed json3

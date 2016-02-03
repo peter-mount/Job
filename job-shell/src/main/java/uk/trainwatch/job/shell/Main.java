@@ -83,8 +83,6 @@ public class Main
     private static void run( Job job )
     {
         try {
-            LOG.log( Level.INFO, () -> "Job: " + job.getId() );
-
             if( output != null ) {
                 job.getJobOutput().addJobOutputArchiver( ZipArchiver.archive( output ) );
             }

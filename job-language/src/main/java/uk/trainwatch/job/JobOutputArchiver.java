@@ -21,7 +21,7 @@ public interface JobOutputArchiver
     default void archiveLog( Job job, File logFile )
             throws IOException
     {
-        archive( job.getId() + ".log", logFile );
+        archive( "job.log", logFile );
     }
 
     /**

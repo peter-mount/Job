@@ -1,6 +1,4 @@
 // Test creation of Json Objects
-job "json2";
-run as "test";
 {
     b = new JsonArrayBuilder();
     b.add( 42 );

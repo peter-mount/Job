@@ -18,10 +18,6 @@ public interface Job
         extends Statement
 {
 
-    String getId();
-
-    String getCluster();
-
     JobOutput getJobOutput();
 
     void addListener( JobListener l );

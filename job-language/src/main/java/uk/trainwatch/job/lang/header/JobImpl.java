@@ -25,36 +25,19 @@ class JobImpl
         implements Job
 {
 
-    private static final long serialVersionUID = 1L;
-    private final String id;
-    private final String cluster;
     private final Statement declare;
     private final Statement output;
     private final Statement block;
     private JobOutputImpl jobOutput;
     private Set<JobListener> listeners;
 
-    public JobImpl( String id, String cluster, Statement declare, Statement output, Statement block )
+    public JobImpl( Statement declare, Statement output, Statement block )
             throws IOException
     {
-        this.id = id;
-        this.cluster = cluster;
         this.declare = declare;
         this.output = output;
         this.block = block;
         jobOutput = new JobOutputImpl( this );
-    }
-
-    @Override
-    public String getId()
-    {
-        return id;
-    }
-
-    @Override
-    public String getCluster()
-    {
-        return cluster;
     }
 
     @Override
@@ -74,7 +57,6 @@ class JobImpl
         try( JobOutputImpl outputImpl = jobOutput ) {
             jobOutput = outputImpl;
 
-            scope.getLogger().log( Level.FINE, () -> "Starting " + id );
             fire( l -> l.jobStarted( this, scope ) );
             try {
                 if( declare != null ) {
@@ -93,7 +75,6 @@ class JobImpl
                 throw ex1;
             }
             finally {
-                scope.getLogger().log( Level.FINE, () -> "Completed " + id );
                 fire( l -> l.jobCompleted( this, scope ) );
             }
         }

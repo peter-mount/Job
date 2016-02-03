@@ -57,6 +57,11 @@ public class Compiler
         return new CompilationUnitCompiler().compile( parser );
     }
 
+    public static Job compile( String s )
+    {
+        return compile( new ANTLRInputStream( s ) );
+    }
+
     public static Job compile( CharStream input )
     {
         return compile( parse( input ) );

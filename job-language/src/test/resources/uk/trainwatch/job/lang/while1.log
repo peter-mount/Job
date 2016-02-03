@@ -1,4 +1,3 @@
-while1FINE   Starting while1
 while1INFO   Count 0..10
 while1INFO   Before a=0
 while1INFO   a=0
@@ -12,4 +11,3 @@ while1INFO   a=7
 while1INFO   a=8
 while1INFO   a=9
 while1INFO   After a=10
-while1FINE   Completed while1

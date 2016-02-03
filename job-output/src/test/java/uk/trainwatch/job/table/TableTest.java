@@ -44,7 +44,7 @@ public class TableTest
     {
         try {
             Job job = compile( n );
-            execute( job );
+            execute( n, job );
             System.out.println( n + " Passed" );
         }
         catch( Throwable ex ) {
@@ -80,7 +80,6 @@ public class TableTest
     {
         Job job = compileJob( n );
         assertNotNull( "No Job from compilation", job );
-        assertEquals( "Job id", n, job.getId() );
         return job;
     }
 
@@ -128,11 +127,9 @@ public class TableTest
      * @param job <p>
      * @throws Exception
      */
-    protected final void execute( Job job )
+    protected final void execute( String n, Job job )
             throws Exception
     {
-        String n = job.getId();
-
         List<String> log = new ArrayList<>();
 
         Logger logger = LogHandler.getLogger( "test." + n,
@@ -155,7 +152,7 @@ public class TableTest
     {
         Job job = compile( "table" );
 
-        execute( job );
+        execute( "table", job );
         
         //fail();
     }

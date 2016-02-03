@@ -1,7 +1,5 @@
-log2  FINE   Starting log2
 log2  INFO   Sum is 10
 log2  INFO   Sub is 4
 log2  INFO   Mult is 25
 log2  INFO   Div is 5
 log2  INFO   Mod is 1
-log2  FINE   Completed log2

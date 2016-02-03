@@ -17,12 +17,10 @@ import java.util.stream.Stream;
 import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.activation.MimetypesFileTypeMap;
-import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
-import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
@@ -30,7 +28,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import javax.mail.util.ByteArrayDataSource;
 import org.apache.commons.configuration.Configuration;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutputArchiver;
@@ -78,11 +75,11 @@ public class MailArchiver
     {
         try {
             StringBuilder txt = new StringBuilder()
-                    .append( "Please find the output of Job " ).append( job.getId() )
+                    .append( "Please find the output of Job " )
                     .append( ".\n\n" );
 
             StringBuilder html = new StringBuilder()
-                    .append( "<p>Please find the output of Job " ).append( job.getId() )
+                    .append( "<p>Please find the output of Job " )
                     .append( ".</p>" );
 
             String log = null;
@@ -122,7 +119,7 @@ public class MailArchiver
                 }
 
             } ) );
-            part.setFileName( job.getId() + ".log" );
+            part.setFileName( "job.log" );
             part.setDisposition( Part.ATTACHMENT );
             multipart.addBodyPart( part );
         }

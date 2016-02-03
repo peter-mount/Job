@@ -23,7 +23,9 @@ import uk.trainwatch.util.config.PrivateConfiguration;
  * {@link Container} that will accept jobs from the cluster
  * <p>
  * @author peter
+ * @deprecated Use the new cluster functionality
  */
+@Deprecated
 public class ClusterContainer
         implements Container
 {
@@ -64,13 +66,13 @@ public class ClusterContainer
     {
         try {
             Job job = Compiler.compile( new ANTLRInputStream( script ) );
-            LOG.log( Level.INFO, () -> "Job: " + job.getId() );
+            //LOG.log( Level.INFO, () -> "Job: " + job.getId() );
 
             try( Scope scope = Scope.newInstance( LOG ) ) {
                 job.invoke( scope );
             }
 
-            LOG.log( Level.INFO, () -> "Job: " + job.getId() + " completed" );
+            //LOG.log( Level.INFO, () -> "Job: " + job.getId() + " completed" );
         }
         catch( Exception ex ) {
             LOG.log( Level.SEVERE, null, ex );

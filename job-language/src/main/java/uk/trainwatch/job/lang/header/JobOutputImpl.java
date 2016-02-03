@@ -45,7 +45,7 @@ public final class JobOutputImpl
     {
         this.job = job;
 
-        logFile = File.createTempFile( job.getId(), ".log" );
+        logFile = File.createTempFile( "job", ".log" );
         logFile.deleteOnExit();
         log = new PrintWriter( logFile );
     }
@@ -168,21 +168,21 @@ public final class JobOutputImpl
         Objects.requireNonNull( prefix, "Prefix is mandatory" );
 
         return tempFiles.computeIfAbsent( prefix + suffix, n -> {
-            try {
-                // File.createTempFile will throw an IllegalArgumentException if prefix is under 3 characters so pad out with _
-                String p = prefix;
-                if( p.length() < 3 ) {
-                    p = (p + "___").substring( 0, 3 );
-                }
+                                      try {
+                                          // File.createTempFile will throw an IllegalArgumentException if prefix is under 3 characters so pad out with _
+                                          String p = prefix;
+                                          if( p.length() < 3 ) {
+                                              p = (p + "___").substring( 0, 3 );
+                                          }
 
-                File f = File.createTempFile( p, suffix );
-                f.deleteOnExit();
-                return f;
-            }
-            catch( IOException e ) {
-                throw new UncheckedIOException( e );
-            }
-        } );
+                                          File f = File.createTempFile( p, suffix );
+                                          f.deleteOnExit();
+                                          return f;
+                                      }
+                                      catch( IOException e ) {
+                                          throw new UncheckedIOException( e );
+                                      }
+                                  } );
     }
 
     @Override

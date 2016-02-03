@@ -1,6 +1,5 @@
-/*
- * collection1  Test new collections
- */
+# collection1  Test new collections
+## job Test.collection1
 {
     l = new List();
     log l;

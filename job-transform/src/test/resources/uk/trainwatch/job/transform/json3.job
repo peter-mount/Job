@@ -1,6 +1,4 @@
 // Test we can insert collections into json
-job "json3";
-run as "test";
 {
     b = new JsonArrayBuilder();
     b.add( 42 );

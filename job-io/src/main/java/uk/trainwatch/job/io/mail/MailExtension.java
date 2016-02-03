@@ -68,7 +68,7 @@ public class MailExtension
         if( "mail".equals( name ) && args != null && args.length > 0 ) {
 
             return ( s, a ) -> {
-                String subject = args.length == 1 ? "Job result: " + s.getJob().getId() : null;
+                String subject = args.length == 1 ? "Job result" : null;
 
                 Collection<String> addresses = new ArrayList<>();
                 for( ExpressionOperation exp: args ) {

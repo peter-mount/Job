@@ -1,6 +1,4 @@
 // Test execution of basic shell commands
-job "os1";
-run as "test";
 {
     execute( "echo", "test" );
     execute( "echo", 6*7 );
