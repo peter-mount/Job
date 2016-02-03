@@ -4,12 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
@@ -17,98 +12,24 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * @author peter
  */
 class JclBuilder
-        extends JclBaseListener
+        extends AbstractJclBuilder
 {
 
     static Jcl build( JclParser p )
     {
         JclBuilder b = new JclBuilder();
-        b.enterJclScript( p.jclScript() );
 
-        return Jcl.create( b.getNode(), b.getName(),
-                           b.type,
-                           b.type == JclType.SCHEDULABLE ? b.schedule.append( "</schedule>" ).toString() : "<schedule/>" );
-    }
+        // Parse the job. Note: the outer xml tag is meaningless here
+        String xml = JclXmlWriter.begin( "schedule", w -> {
+                                     b.parse( p.jclScript(), w );
+                                 } );
 
-    private static <T extends ParserRuleContext> void enter( T c, Consumer<T> a )
-    {
-        if( c != null ) {
-            a.accept( c );
-        }
-    }
-
-    private static <T extends ParserRuleContext> void forEach( Collection<T> c, Consumer<T> a )
-    {
-        if( c != null && !c.isEmpty() ) {
-            c.forEach( a );
-        }
-    }
-
-    private static int getInt( TerminalNode i )
-    {
-        return getInt( i, 0 );
-    }
-
-    private static int getInt( TerminalNode i, int d )
-    {
-        return i == null || i.getText().isEmpty() ? d : Integer.parseInt( i.getText() );
-    }
-
-    private static LocalDate getDate( JclParser.DateContext ctx, Supplier<LocalDate> defaultDate )
-    {
-        return ctx == null ? defaultDate.get() : getDate( ctx );
-    }
-
-    private static LocalDate getDate( JclParser.DateContext ctx )
-    {
-
-        List<TerminalNode> l = ctx.INT();
-        return LocalDate.of( getInt( l.get( 0 ) ), getInt( l.get( 1 ) ), getInt( l.get( 2 ) ) );
-    }
-
-    private static LocalTime getTime( JclParser.TimeContext ctx, Supplier<LocalTime> defaultTime )
-    {
-        return (ctx == null ? defaultTime.get() : getTime( ctx ))
-                .truncatedTo( ChronoUnit.MINUTES );
-    }
-
-    private static LocalTime getTime( JclParser.TimeContext ctx )
-    {
-        List<TerminalNode> l = ctx.INT();
-        return LocalTime.of( getInt( l.get( 0 ) ), getInt( l.get( 1 ) ) )
-                .truncatedTo( ChronoUnit.MINUTES );
-    }
-
-    private static LocalDateTime getDateTime( JclParser.DateTimeContext c, Supplier<LocalDateTime> defaultDateTime )
-    {
-        return (c == null ? defaultDateTime.get() : LocalDateTime.of( getDate( c.date() ), getTime( c.time() ) ))
-                .truncatedTo( ChronoUnit.MINUTES );
-    }
-
-    private static LocalDateTime getDateAndOrTime( JclParser.DateAndOrTimeContext c, Supplier<LocalDate> defaultDate, Supplier<LocalTime> defaultTime )
-    {
-        return LocalDateTime.of( getDate( c == null ? null : c.date(), defaultDate ),
-                                 getTime( c == null ? null : c.time(), defaultTime ) )
-                .truncatedTo( ChronoUnit.MINUTES );
-    }
-
-    private static LocalDateTime getDateOptionalTime( JclParser.DateOptionalTimeContext c, Supplier<LocalDateTime> defaultDate, Supplier<LocalTime> defaultTime )
-    {
-        return (c == null ? defaultDate.get() : LocalDateTime.of( getDate( c.date() ), getTime( c.time(), defaultTime ) ))
-                .truncatedTo( ChronoUnit.MINUTES );
-    }
-
-    private static void append( StringBuilder b, LocalDateTime dt )
-    {
-        b.append( dt.toLocalDate() )
-                .append( ' ' )
-                .append( dt.toLocalTime() );
+        return Jcl.create( b.getNode(), b.getName(), b.type, xml );
     }
 
     private String node;
     private String name;
     private JclType type = JclType.UNKNOWN;
-    private final StringBuilder schedule = new StringBuilder( "<schedule>" );
 
     public String getNode()
     {
@@ -164,40 +85,55 @@ class JclBuilder
         }
     }
 
+    /**
+     * Run a job once at a a datetime/time with optional retry
+     *
+     * @param ctx
+     */
     @Override
     public void enterRunAt( JclParser.RunAtContext ctx )
     {
         schedule();
-        schedule.append( "<once at=\"" );
-        append( schedule, getDateAndOrTime( ctx.dateAndOrTime(),
-                                            LocalDate::now,
-                                            () -> LocalTime.now().truncatedTo( ChronoUnit.MINUTES ) ) );
-        schedule.append( "\"/>" );
+        start( "once", () -> {
+           attr( "at", getDateAndOrTime( ctx.dateAndOrTime(),
+                                         LocalDate::now,
+                                         () -> LocalTime.now().truncatedTo( ChronoUnit.MINUTES ) ) );
+           retry( ctx.retry() );
+       } );
     }
 
+    /**
+     * Run a job at regular intervals
+     *
+     * @param ctx
+     */
     @Override
     public void enterRunEvery( JclParser.RunEveryContext ctx )
     {
-        BiFunction<TerminalNode, String, String> c = ( t, f ) -> {
-            if( t != null ) {
-                int i = getInt( t );
-                if( i > 0 ) {
-                    return " " + i + " " + f + (i > 1 ? "s" : "");
-                }
-            }
-            return "";
-        };
-        JclParser.IntervalContext ic = ctx.interval();
         schedule();
-        schedule.append( "<repeat next=\"" );
-        append( schedule, getDateOptionalTime( ctx.dateOptionalTime(),
-                                               LocalDateTime::now,
-                                               () -> LocalTime.now().truncatedTo( ChronoUnit.MINUTES ) ) );
-        schedule.append( "\" step=\"" )
-                .append( getInt( ic.INT(), 1 ) )
-                .append( ' ' )
-                .append( ic.DAY() != null ? "day" : ic.HOUR() != null ? "hour" : "minute" )
-                .append( "\"/>" );
+        between( "repeat", ctx.between(), () -> {
+             LocalDateTime dt;
+             if( ctx.dateOptionalTime() != null ) {
+                 dt = getDateOptionalTime( ctx.dateOptionalTime(),
+                                           LocalDateTime::now,
+                                           () -> LocalTime.now().truncatedTo( ChronoUnit.MINUTES ) );
+             }
+             else if( ctx.time() != null ) {
+                 // AT time. If time is before now then make certain the next time occurs tomorrow
+                 dt = LocalDateTime.of( LocalDate.now(), getTime( ctx.time() ) );
+                 if( dt.isBefore( LocalDateTime.now() ) ) {
+                     dt = dt.plusDays( 1 );
+                 }
+             }
+             else {
+                 dt = LocalDateTime.now();
+             }
+             attr( "next", dt.truncatedTo( ChronoUnit.MINUTES ) );
+
+             interval( "step", ctx.interval() );
+
+             retry( ctx.retry() );
+         } );
     }
 
 }

@@ -40,13 +40,20 @@ lexer grammar JclLiterals;
 
 PREFIX : '##';
 
-JOB : 'job';
-SUBJOB : 'sub' WS? 'job';
-DELETEJOB : 'delete' WS? 'job' ;
+JOB         : 'job';
+SUBJOB      : 'sub' WS? 'job';
+DELETEJOB   : 'delete' WS? 'job' ;
 
-RUN : 'run';
-AT : 'at';
-EVERY : 'every';
+RETRY       : 'retry' ;
+MAXIMUM     : 'maximum' ;
+TIMES       : 'times' ;
+ONCE        : 'once' ;
+
+RUN         : 'run';
+AT          : 'at';
+EVERY       : 'every';
+BETWEEN     : 'between';
+AND         : 'and';
 
 SCHEDULE : 'schedule';
 CRON : 'cron' ;

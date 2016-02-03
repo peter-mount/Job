@@ -99,8 +99,14 @@ public class JclFactoryTest
                                          + "## run at 2016/2/10 18:24\n"
                                          + "## run at 2016-2-10\n"
                                          + "## run at 18:24\n"
+                                         // retry on failure after 1 hour
+                                         + "## run at 18:24 retry 1 hour\n"
+                                         + "## run at 18:24 retry 1 hour maximum 3\n"
+                                         + "## run at 2016/2/10 18:24 retry every 1 hour\n"
+                                         + "## run at 2016/2/10 18:24 retry every 1 hour maximum 3 times\n"
         );
         test( jcl );
+        System.out.println( jcl.getSchedule() );
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         String today = LocalDate.now().toString();
@@ -112,6 +118,11 @@ public class JclFactoryTest
                       + "<once at=\"2016-02-10 18:24\"/>"
                       + "<once at=\"2016-02-10 " + now + "\"/>"
                       + "<once at=\"" + today + " 18:24\"/>"
+                      // retry on failure after 1 hour
+                      + "<once at=\"" + today + " 18:24\" retry=\"1 hour\"/>"
+                      + "<once at=\"" + today + " 18:24\" retry=\"1 hour\" max=\"3\"/>"
+                      + "<once at=\"2016-02-10 18:24\" retry=\"1 hour\"/>"
+                      + "<once at=\"2016-02-10 18:24\" retry=\"1 hour\" max=\"3\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }
@@ -127,8 +138,19 @@ public class JclFactoryTest
                                          + "## run every day\n"
                                          + "## run every 2 days\n"
                                          + "## run every 2 day\n"
+                                         // retry on failure after 1 hour
+                                         + "## run every day retry 1 hour\n"
+                                         + "## run every day retry 1 hour maximum 3 times\n"
+                                         + "## run every day retry every 1 hour\n"
+                                         + "## run every day retry every 1 hour maximum 3\n"
+                                         // Between
+                                         + "## run every hour between 00:00 and 06:00\n"
+                                         + "## run every hour between 00:00 and 06:00 retry 10 minutes maximum 3 times\n"
+                                         + "## run every hour between 21:00 and 03:00\n"
+                                         + "## run every hour between 21:00 and 03:00 retry 10 minutes maximum 3 times\n"
         );
         test( jcl );
+        System.out.println( jcl.getSchedule() );
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         LocalDateTime dt = LocalDateTime.now().truncatedTo( ChronoUnit.MINUTES );
@@ -143,6 +165,21 @@ public class JclFactoryTest
                       + "<repeat next=\"" + now + "\" step=\"1 day\"/>"
                       + "<repeat next=\"" + now + "\" step=\"2 day\"/>"
                       + "<repeat next=\"" + now + "\" step=\"2 day\"/>"
+                      // retry on failure after 1 hour
+                      + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\" max=\"3\"/>"
+                      // same but with every keyword
+                      + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\" max=\"3\"/>"
+                      // Between
+                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\"/>"
+                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
+                      // Between 2100-0300 crossing midnight
+                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\"/>"
+                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\"/>"
+                      // Between 2100-0300 crossing midnight retry 10 minutes max 3
+                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
+                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }

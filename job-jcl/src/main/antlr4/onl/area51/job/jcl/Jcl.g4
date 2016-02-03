@@ -49,22 +49,20 @@ jclStatement
     ;
 
 // job Node.Name
+// deletejob Node.Name
+// subjob Node.Name
 job
     :   (JOB | DELETEJOB | SUBJOB) Identifier DOT Identifier
     ;
 
-// run at yyyy-dd-mm hh:mm
-// run at yyyy/dd/mm hh:mm
-// run at yyyy-dd-mm
-// run at yyyy/dd/mm
-// run at hh:mm
+// Run a job once
 runAt
-    :   RUN AT dateAndOrTime
+    :   RUN ONCE? AT dateAndOrTime retry?
     ;
 
 // run every interval
 runEvery
-    :   RUN EVERY interval (FROM dateOptionalTime)?
+    :   RUN EVERY interval (AT time | FROM dateOptionalTime)? between? retry?
     ;
 
 schedule
@@ -79,6 +77,16 @@ scheduleCronTab
 // Interval
 interval
     : INT? (DAY| HOUR| MINUTE)
+    ;
+
+// Retry on failure
+retry
+    : RETRY (ONCE|EVERY)? interval (MAXIMUM INT TIMES?)?
+    ;
+
+// Between two times - ensures jobs don't run outside specific hours
+between
+    : BETWEEN time AND time
     ;
 
 // A date and time
