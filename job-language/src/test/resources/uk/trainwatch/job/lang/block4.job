@@ -1,0 +1,7 @@
+##################################
+# Block4 no outer block with Jcl
+##################################
+## job Test.block4
+##################################
+log "Hello world";
+severe "Something went wrong";

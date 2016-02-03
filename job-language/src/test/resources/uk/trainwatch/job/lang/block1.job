@@ -1,0 +1,7 @@
+/*
+ * Block1 an outer block
+ */
+{
+    log "Hello world";
+    severe "Something went wrong";
+}

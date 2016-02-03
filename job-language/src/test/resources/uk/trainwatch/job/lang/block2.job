@@ -1,0 +1,5 @@
+/*
+ * block2 A job with no outer block
+ */
+log "Hello world";
+severe "Something went wrong";

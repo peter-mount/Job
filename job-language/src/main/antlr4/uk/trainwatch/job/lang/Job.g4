@@ -39,7 +39,7 @@ grammar Job;
 import Script,Literals;
 
 compilationUnit
-    :   output? declare? block EOF
+    :   output? declare? blockStatements? EOF
     ;
 
 output

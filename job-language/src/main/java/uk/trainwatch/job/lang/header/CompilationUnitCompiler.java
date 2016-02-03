@@ -63,7 +63,7 @@ public class CompilationUnitCompiler
         }
 
         // The main body
-        block = blockCompiler.getBlock( ctx.block(), false );
+        block = blockCompiler.getBlock( ctx.blockStatements(), false );
 
         try {
             job = new JobImpl( declareBlock,

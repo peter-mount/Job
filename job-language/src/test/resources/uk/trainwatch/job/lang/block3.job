@@ -1,0 +1,6 @@
+# Block3 an outer block with Jcl
+## job Test.block3;
+{
+    log "Hello world";
+    severe "Something went wrong";
+}
