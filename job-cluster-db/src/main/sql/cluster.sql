@@ -1,10 +1,16 @@
 -- Reference table that holds available cluster's
 
-DROP TABLE jobrepeat;
+DROP TABLE runonce;
+DROP TABLE runevery;
+DROP TABLE schedule;
+DROP SEQUENCE scheduleid;
+
 DROP TABLE jobdef;
 DROP TABLE jobname;
 DROP TABLE jobnode;
+DROP TYPE jobstate;
 
+-- ====================================================================================================
 -- Normalisation of Job node's
 CREATE TABLE jobnode (
     id SERIAL NOT NULL,
@@ -35,8 +41,8 @@ CREATE TABLE jobdef (
 );
 ALTER TABLE jobdef OWNER TO job;
 
+-- ====================================================================================================
 -- The job status
-DROP TYPE jobstate;
 CREATE TYPE jobstate AS ENUM (
     -- Never run
     'WAITING',
@@ -50,37 +56,65 @@ CREATE TYPE jobstate AS ENUM (
     'FAILED'
 );
 
+-- ====================================================================================================
+-- The core schedule table
+
+CREATE SEQUENCE scheduleid;
+ALTER SEQUENCE scheduleid OWNER TO job;
+
+CREATE TABLE schedule (
+    id          BIGINT NOT NULL,
+    -- The job this schedule relates to
+    jobid       BIGINT NOT NULL REFERENCES jobname(id),
+    -- The job state
+    state       jobstate NOT NULL DEFAULT 'WAITING',
+    -- When the job last run and next expected to run
+    lastrun     TIMESTAMP WITHOUT TIME ZONE,
+    nextrun     TIMESTAMP WITHOUT TIME ZONE,
+    attempt     INTEGER NOT NULL DEFAULT 0,
+    -- The time of day this job is valid between
+    tstart      TIME NOT NULL DEFAULT '00:00:00'::TIME,
+    tend        TIME NOT NULL DEFAULT '23:59:59'::TIME,
+    -- The retry count
+    retry       INTERVAL,
+    maxretry    INTEGER NOT NULL DEFAULT (2^31)-1,
+    -- The job timeout
+    timeout     INTERVAL NOT NULL DEFAULT '24 hours',
+    PRIMARY KEY(id)
+);
+CREATE INDEX schedule_i ON schedule(id);
+CREATE INDEX schedule_ij ON schedule(id,jobid);
+CREATE INDEX schedule_j ON schedule(jobid);
+CREATE INDEX schedule_js ON schedule(jobid,state);
+CREATE INDEX schedule_jn ON schedule(jobid,nextrun);
+ALTER TABLE schedule OWNER TO job;
+
 -- Defines a job to run once in the future
-CREATE TABLE jobonce (
-    id      SERIAL NOT NULL,
-    jobid   BIGINT NOT NULL REFERENCES jobname(id),
+CREATE TABLE runonce (
     run TIMESTAMP WITHOUT TIME ZONE,
     PRIMARY KEY (id)
-);
-CREATE INDEX jobonce_ij ON jobrepeat(id,jobid);
-CREATE INDEX jobonce_j ON jobrepeat(jobid);
-CREATE INDEX jobonce_jn ON jobrepeat(jobid,run);
-ALTER TABLE jobonce OWNER TO job;
-ALTER SEQUENCE jobonce_id_seq OWNER TO job;
+) INHERITS (schedule);
+
+CREATE INDEX runonce_i ON runonce(id);
+CREATE INDEX runonce_ij ON runonce(id,jobid);
+CREATE INDEX runonce_j ON runonce(jobid);
+CREATE INDEX runonce_nextrun ON runonce(state,nextrun);
+ALTER TABLE runonce OWNER TO job;
 
 -- Defines a repeating job
-CREATE TABLE jobrepeat (
-    id      SERIAL NOT NULL,
-    jobid   BIGINT NOT NULL REFERENCES jobname(id),
-    state   jobstate NOT NULL DEFAULT 'WAITING',
-    lastrun TIMESTAMP WITHOUT TIME ZONE,
-    nextrun TIMESTAMP WITHOUT TIME ZONE,
+CREATE TABLE runevery (
     step    INTERVAL NOT NULL,
     PRIMARY KEY (id)
-);
-CREATE INDEX jobrepeat_ij ON jobrepeat(id,jobid);
-CREATE INDEX jobrepeat_j ON jobrepeat(jobid);
-CREATE INDEX jobrepeat_js ON jobrepeat(jobid,state);
-CREATE INDEX jobrepeat_jn ON jobrepeat(jobid,nextrun);
-CREATE INDEX jobrepeat_jsn ON jobrepeat(jobid,state,nextrun);
-ALTER TABLE jobrepeat OWNER TO job;
-ALTER SEQUENCE jobrepeat_id_seq OWNER TO job;
+) INHERITS (schedule);
+CREATE INDEX runevery_i ON runevery(id);
+CREATE INDEX runevery_ij ON runevery(id,jobid);
+CREATE INDEX runevery_j ON runevery(jobid);
+CREATE INDEX runevery_js ON runevery(jobid,state);
+CREATE INDEX runevery_jn ON runevery(jobid,nextrun);
+CREATE INDEX runevery_jsn ON runevery(jobid,state,nextrun);
+ALTER TABLE runevery OWNER TO job;
 
+-- ====================================================================================================
 -- Return the internal JobNode id
 CREATE OR REPLACE FUNCTION getJobNode( pname NAME )
 RETURNS INTEGER AS $$
@@ -108,6 +142,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ====================================================================================================
 -- Return the internal JobName id
 CREATE OR REPLACE FUNCTION getJobName( pnode NAME, pname NAME )
 RETURNS INTEGER AS $$
@@ -137,6 +172,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ====================================================================================================
 -- Return the job script by name
 CREATE OR REPLACE FUNCTION getJob( pnode NAME, pname NAME )
 RETURNS TABLE (text TEXT) AS $$
@@ -147,41 +183,92 @@ RETURNS TABLE (text TEXT) AS $$
         WHERE n.name=UPPER(pnode) AND d.name=UPPER(pname);
 $$ LANGUAGE sql STABLE;
 
+-- ====================================================================================================
+CREATE OR REPLACE FUNCTION xtTime(pxml XML,pattr NAME,pdef TIME)
+RETURNS TIME AS $$
+DECLARE
+    tm TIME;
+BEGIN
+    tm=(xpath(pattr,pxml))[1]::TEXT::TIME;
+    IF tm IS NULL THEN
+        RETURN pdef;
+    ELSE
+        RETURN tm;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION xtInt(pxml XML,pattr NAME,pdef INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    tm INTEGER;
+BEGIN
+    tm=(xpath(pattr,pxml))[1]::TEXT::INTEGER;
+    IF tm IS NULL THEN
+        RETURN pdef;
+    ELSE
+        RETURN tm;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================================================================================================
 CREATE OR REPLACE FUNCTION scheduleJob( pnameid INTEGER, pxml XML )
 RETURNS VOID AS $$
 DECLARE
     rec     RECORD;
+    sid     BIGINT;
     anameid INTEGER;
     axml    XML;
     ats     TIMESTAMP WITHOUT TIME ZONE;
 BEGIN
+    -- Wipe down all existing schedules
+    DELETE FROM schedule WHERE jobid=pnameid;
 
     -- run once at a specific time <once when="timestamp"/>
-    DELETE FROM jobonce WHERE jobid=pnameid;
     FOREACH axml IN ARRAY xpath('//once',pxml)
     LOOP
         ats = (xpath('@when',axml))[1]::TEXT::TIMESTAMP WITHOUT TIME ZONE;
         -- Don't schedule in the past otherwise we may run stuff we don't want to
         IF ats>=now()
         THEN
-            INSERT INTO jobonce (jobid,run) VALUES ( pnameid, ats );
+            INSERT INTO runonce (
+                id,jobid,
+                retry,maxretry,
+                run
+            ) VALUES (
+                nextval('scheduleid'), pnameid,
+                (xpath('@retry',axml))[1]::TEXT::INTERVAL,
+                xtInt(axml,'@max',2147483647),
+                ats
+            );
         END IF;
     END LOOP;
 
     -- repeating schedules <repeat next="timestamp" step="interval"/>
-    DELETE FROM jobrepeat WHERE jobid=pnameid;
+    DELETE FROM runevery WHERE jobid=pnameid;
     FOREACH axml IN ARRAY xpath('//repeat',pxml)
     LOOP
-        INSERT INTO jobrepeat (jobid,state,lastrun,nextrun,step)
-            VALUES (pnameid, 'WAITING',null,
-                (xpath('@next',axml))[1]::TEXT::TIMESTAMP WITHOUT TIME ZONE,
-                (xpath('@step',axml))[1]::TEXT::INTERVAL
-            );
+        INSERT INTO runevery (
+            id,jobid,
+            tstart,tend,
+            retry,maxretry,
+            nextrun,step
+        ) VALUES (
+            nextval('scheduleid'), pnameid,
+            xtTime(axml,'@betweenStart','00:00:00'::TIME),
+            xtTime(axml,'@betweenEnd','23:59:59'::TIME),
+            (xpath('@retry',axml))[1]::TEXT::INTERVAL,
+            xtInt(axml,'@max',2147483647),
+            (xpath('@next',axml))[1]::TEXT::TIMESTAMP WITHOUT TIME ZONE,
+            (xpath('@step',axml))[1]::TEXT::INTERVAL
+        );
     END LOOP;
 
 END;
 $$ LANGUAGE plpgsql;
 
+-- ====================================================================================================
 -- Persist a job script
 CREATE OR REPLACE FUNCTION storeJob( pnode NAME, pname NAME, pjob TEXT, pxml XML )
 RETURNS VOID AS $$
@@ -207,6 +294,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ====================================================================================================
 -- Delete a job script
 CREATE OR REPLACE FUNCTION deleteJob( pnode NAME, pname NAME, pjob TEXT )
 RETURNS VOID AS $$
@@ -218,7 +306,7 @@ BEGIN
         WHERE n.name=UPPER(pnode) AND d.name=UPPER(pname);
     IF FOUND THEN
         -- Remove the 
-        DELETE FROM jobrepeat WHERE jobid=rec.id;
+        DELETE FROM runevery WHERE jobid=rec.id;
         -- Remove the job definition
         DELETE FROM jobdef WHERE id=rec.id;
         DELETE FROM jobname WHERE id=rec.id;
@@ -226,12 +314,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ====================================================================================================
 SELECT storeJob('test','test','a test','<schedule>
-<once when="2016-02-09 18:00"/>
-<once when="2016-02-01 18:00"/>
-<repeat next="2016-02-03 18:00" step="1 hour"/>
+<once at="2016-02-10 18:24"/>
+<once at="2016-02-04 18:34" retry="1 hour" max="3"/>
+<once at="2016-02-10 18:44" retry="1 hour"/>
+<repeat next="2016-02-04 07:33" step="1 minute"/>
+<repeat next="2016-02-04 07:33" step="10 minute"/>
+<repeat next="2016-02-04 07:33" step="1 day" retry="1 hour"/>
+<repeat next="2016-02-04 07:33" step="1 day" retry="1 hour" max="3"/>
+<repeat betweenStart="00:00" betweenEnd="06:00" next="2016-02-04 07:33" step="1 hour"/>
+<repeat betweenStart="21:00" betweenEnd="23:59" next="2016-02-04 07:33" step="1 hour" retry="10 minute" max="3"/>
+<cron m="0" h="3"/>
+<cron m="0" h="3" retry="1 hour" max="4"/>
 </schedule>'::xml);
 
 select * from jobname;
-select * from jobonce;
-select * from jobrepeat;
+select * from schedule;
+select * from runonce;
+select * from runevery;

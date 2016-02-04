@@ -106,6 +106,9 @@ public class JclFactoryTest
                                          + "## run at 2016/2/10 18:24 retry every 1 hour maximum 3 times\n"
         );
         test( jcl );
+
+        System.out.println( "runat\n"+jcl.getSchedule().replace( "><", ">\n<" ) );
+        
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         String today = LocalDate.now().toString();
@@ -150,6 +153,8 @@ public class JclFactoryTest
         );
         test( jcl );
 
+        System.out.println( jcl.getSchedule().replace( "><", ">\n<" ) );
+        
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
 
         LocalDateTime dt = LocalDateTime.now().truncatedTo( ChronoUnit.MINUTES );
