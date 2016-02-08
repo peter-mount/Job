@@ -44,8 +44,37 @@ RETURNS TIMERANGE AS $$
 $$
 LANGUAGE 'sql' IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION timerange(XML,NAME,NAME)
-RETURNS TIMERANGE AS $$
-    SELECT timerange( (XPATH(($2),($1)))[1]::TEXT::TIME, (XPATH(($3),($1)))[1]::TEXT::TIME );
+-- Allow to convert a text range into a timerange using a cast
+CREATE OR REPLACE FUNCTION timerange(pt TEXT)
+RETURNS TIMERANGE AS
 $$
-LANGUAGE 'sql' IMMUTABLE;
+DECLARE
+    i   INTEGER;
+    l   INTEGER;
+BEGIN
+    -- null means 24 hours
+    IF pt IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    i = POSITION('-' IN pt);
+    l = CHAR_LENGTH(pt);
+    CASE
+        -- '-' or '' means null/24 hours
+        WHEN i=0 OR (i=1 AND l=1) THEN
+            RETURN NULL;
+        -- '-hh:mm' means midnight to time
+        WHEN i=1 THEN
+            RETURN timerange(null,substring(pt FROM 2)::TIME);
+        -- 'hh:mm-' means time to midnight
+        WHEN i=l THEN
+            RETURN timerange(substring(pt FOR l-1)::TIME,NULL);
+        -- 'hh:mm-hh:mm' time range
+        ELSE
+            RETURN timerange(substring(pt FOR i-1)::TIME,substring(pt FROM i+1)::TIME);
+    END CASE;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE CAST (TEXT AS TIMERANGE) WITH FUNCTION timerange(TEXT) AS ASSIGNMENT;
