@@ -10,6 +10,9 @@
 --
 -- ============================================================
 
+DROP FUNCTION timerange(TIME,TIME);
+DROP OPERATOR === (TIME WITHOUT TIME ZONE,TIMERANGE);
+DROP FUNCTION timerange_contains(TIME,TIMERANGE);
 DROP TYPE TIMERANGE;
 
 CREATE TYPE TIMERANGE AS (s TIME, e TIME );
@@ -27,3 +30,22 @@ LANGUAGE 'sql' IMMUTABLE;
 -- time === timerange will return true if time is within the specified time range
 
 CREATE OPERATOR === ( LEFTARG = TIME WITHOUT TIME ZONE, RIGHTARG = TIMERANGE, PROCEDURE = timerange_contains );
+
+-- Will return an appropriate timerange for two times.
+-- If both are null then returns null.
+-- If first is null then 00:00 is used. If second null then 23:59:59 is used.
+CREATE OR REPLACE FUNCTION timerange(TIME,TIME)
+RETURNS TIMERANGE AS $$
+    SELECT CASE WHEN ($1) IS NULL AND ($2) IS NULL THEN NULL
+                WHEN ($1) IS NULL THEN ('00:00'::TIME,($2))::TIMERANGE
+                WHEN ($2) IS NULL THEN (($1),'23:59:59'::TIME)::TIMERANGE
+                ELSE (($1),($2))::TIMERANGE
+                END;
+$$
+LANGUAGE 'sql' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION timerange(XML,NAME,NAME)
+RETURNS TIMERANGE AS $$
+    SELECT timerange( (XPATH(($2),($1)))[1]::TEXT::TIME, (XPATH(($3),($1)))[1]::TEXT::TIME );
+$$
+LANGUAGE 'sql' IMMUTABLE;

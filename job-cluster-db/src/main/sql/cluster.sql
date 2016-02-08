@@ -2,13 +2,16 @@
 
 DROP TABLE runonce;
 DROP TABLE runevery;
+
+DROP FUNCTION nextjobs();
 DROP TABLE schedule;
 DROP SEQUENCE scheduleid;
 
 DROP TABLE jobdef;
 DROP TABLE jobname;
 DROP TABLE jobnode;
-DROP TYPE jobstate;
+DROP TABLE jobstate;
+DROP TABLE jobtype;
 
 -- ====================================================================================================
 -- Normalisation of Job node's
@@ -42,19 +45,38 @@ CREATE TABLE jobdef (
 ALTER TABLE jobdef OWNER TO job;
 
 -- ====================================================================================================
--- The job status
-CREATE TYPE jobstate AS ENUM (
-    -- Never run
-    'WAITING',
-    -- Schedule triggered, waiting to be run
-    'PENDING',
-    -- Job running
-    'RUNNING',
-    -- Job completed
-    'COMPLETED',
-    -- Job failed
-    'FAILED'
+-- The job type
+CREATE TABLE jobtype (
+    id      INTEGER NOT NULL,
+    name    NAME,
+    PRIMARY KEY(id)
 );
+CREATE INDEX jobtype_n ON (jobstate);
+ALTER TABLE jobtype OWNER TO job;
+INSERT INTO jobtype VALUES (1,"runonce");
+INSERT INTO jobtype VALUES (2,"runevery");
+INSERT INTO jobtype VALUES (3,"runcron");
+
+-- ====================================================================================================
+-- The job status
+CREATE TABLE jobstate (
+    id      INTEGER NOT NULL,
+    name    NAME,
+    PRIMARY KEY(id)
+);
+CREATE INDEX jobstate_n ON (jobstate);
+ALTER TABLE jobstate OWNER TO job;
+
+-- Never run
+INSERT INTO jobstate VALUES (0,'WAITING');
+-- Schedule triggered, waiting to be run
+INSERT INTO jobstate VALUES (1,'PENDING');
+-- Job running
+INSERT INTO jobstate VALUES (2,'RUNNING');
+-- Job completed
+INSERT INTO jobstate VALUES (3,'COMPLETED');
+-- Job failed
+INSERT INTO jobstate VALUES (4,'FAILED');
 
 -- ====================================================================================================
 -- The core schedule table
@@ -66,15 +88,16 @@ CREATE TABLE schedule (
     id          BIGINT NOT NULL,
     -- The job this schedule relates to
     jobid       BIGINT NOT NULL REFERENCES jobname(id),
+    -- The job type
+    type        INTEGER NOT NULL REFERENCES jobtype(id),
     -- The job state
-    state       jobstate NOT NULL DEFAULT 'WAITING',
+    state       INTEGER NOT NULL REFERENCES jobstate(id) DEFAULT 0,
     -- When the job last run and next expected to run
     lastrun     TIMESTAMP WITHOUT TIME ZONE,
     nextrun     TIMESTAMP WITHOUT TIME ZONE,
     attempt     INTEGER NOT NULL DEFAULT 0,
     -- The time of day this job is valid between
-    tstart      TIME NOT NULL DEFAULT '00:00:00'::TIME,
-    tend        TIME NOT NULL DEFAULT '23:59:59'::TIME,
+    valid       TIMERANGE,
     -- The retry count
     retry       INTERVAL,
     maxretry    INTEGER NOT NULL DEFAULT (2^31)-1,
@@ -184,19 +207,6 @@ RETURNS TABLE (text TEXT) AS $$
 $$ LANGUAGE sql STABLE;
 
 -- ====================================================================================================
-CREATE OR REPLACE FUNCTION xtTime(pxml XML,pattr NAME,pdef TIME)
-RETURNS TIME AS $$
-DECLARE
-    tm TIME;
-BEGIN
-    tm=(xpath(pattr,pxml))[1]::TEXT::TIME;
-    IF tm IS NULL THEN
-        RETURN pdef;
-    ELSE
-        RETURN tm;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION xtInt(pxml XML,pattr NAME,pdef INTEGER)
 RETURNS INTEGER AS $$
@@ -233,11 +243,11 @@ BEGIN
         IF ats>=now()
         THEN
             INSERT INTO runonce (
-                id,jobid,
+                id,jobid,type,
                 retry,maxretry,
                 run
             ) VALUES (
-                nextval('scheduleid'), pnameid,
+                nextval('scheduleid'), pnameid, 1,
                 (xpath('@retry',axml))[1]::TEXT::INTERVAL,
                 xtInt(axml,'@max',2147483647),
                 ats
@@ -246,18 +256,16 @@ BEGIN
     END LOOP;
 
     -- repeating schedules <repeat next="timestamp" step="interval"/>
-    DELETE FROM runevery WHERE jobid=pnameid;
     FOREACH axml IN ARRAY xpath('//repeat',pxml)
     LOOP
         INSERT INTO runevery (
-            id,jobid,
-            tstart,tend,
+            id,jobid,type,
+            valid,
             retry,maxretry,
             nextrun,step
         ) VALUES (
-            nextval('scheduleid'), pnameid,
-            xtTime(axml,'@betweenStart','00:00:00'::TIME),
-            xtTime(axml,'@betweenEnd','23:59:59'::TIME),
+            nextval('scheduleid'), pnameid, 2,
+            timerange( axml,'@betweenStart','@betweenEnd' ),
             (xpath('@retry',axml))[1]::TEXT::INTERVAL,
             xtInt(axml,'@max',2147483647),
             (xpath('@next',axml))[1]::TEXT::TIMESTAMP WITHOUT TIME ZONE,
@@ -306,11 +314,33 @@ BEGIN
         WHERE n.name=UPPER(pnode) AND d.name=UPPER(pname);
     IF FOUND THEN
         -- Remove the 
-        DELETE FROM runevery WHERE jobid=rec.id;
+        DELETE FROM schedule WHERE jobid=rec.id;
         -- Remove the job definition
         DELETE FROM jobdef WHERE id=rec.id;
         DELETE FROM jobname WHERE id=rec.id;
     END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================================================================================================
+-- Return the next set of available jobs
+CREATE OR REPLACE FUNCTION nextJobs()
+RETURNS SETOF schedule AS $$
+DECLARE
+    rec schedule%rowtype;
+    n   TIMESTAMP WITHOUT TIME ZONE = now();
+    t   TIME = now()::TIME;
+BEGIN
+    FOR rec IN SELECT *
+         FROM schedule
+        WHERE nextrun < n
+          AND state IN (0,3,4)
+          AND t === schedule.valid
+    LOOP
+        UPDATE schedule SET state=1 WHERE id=rec.id;
+        RETURN NEXT rec;
+    END LOOP;
+    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -323,8 +353,7 @@ SELECT storeJob('test','test','a test','<schedule>
 <repeat next="2016-02-04 07:33" step="10 minute"/>
 <repeat next="2016-02-04 07:33" step="1 day" retry="1 hour"/>
 <repeat next="2016-02-04 07:33" step="1 day" retry="1 hour" max="3"/>
-<repeat betweenStart="00:00" betweenEnd="06:00" next="2016-02-04 07:33" step="1 hour"/>
-<repeat betweenStart="21:00" betweenEnd="23:59" next="2016-02-04 07:33" step="1 hour" retry="10 minute" max="3"/>
+<repeat betweenStart="21:00" betweenEnd="06:00" next="2016-02-04 07:33" step="1 hour"/>
 <cron m="0" h="3"/>
 <cron m="0" h="3" retry="1 hour" max="4"/>
 </schedule>'::xml);
