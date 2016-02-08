@@ -77,7 +77,7 @@ public class ClusterExtension
                     // map = callCluster(cluster,name);
                     case "callCluster":
                         return ( s, a ) -> {
-                            String clusterName = args[0].getString( s );
+                            String clusterName = args[0].getString( s ).toLowerCase();
                             return cluster.call( clusterName, args[1].getString( s ), new HashMap<>(), 1, TimeUnit.MINUTES, "job.sub." + clusterName );
                         };
 

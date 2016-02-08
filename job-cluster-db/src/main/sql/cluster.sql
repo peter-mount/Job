@@ -58,6 +58,7 @@ CREATE TABLE jobdependency (
 );
 CREATE INDEX jobdependency_i ON jobdependency(id);
 CREATE INDEX jobdependency_d ON jobdependency(depends);
+ALTER TABLE jobdependency OWNER TO job;
 
 -- ====================================================================================================
 -- The job type
@@ -121,6 +122,7 @@ CREATE TABLE schedule (
     maxretry    INTEGER NOT NULL DEFAULT (2^31)-1,
     -- The job timeout
     timeout     INTERVAL NOT NULL DEFAULT '24 hours',
+    error       TEXT,
     PRIMARY KEY(id)
 );
 CREATE INDEX schedule_i ON schedule(id);
@@ -250,6 +252,7 @@ DECLARE
     ats     TIMESTAMP WITHOUT TIME ZONE;
     anode   NAME;
     aname   NAME;
+    timeout INTERVAL;
 BEGIN
     -- Wipe down all existing schedules & dependencies
     DELETE FROM schedule WHERE jobid=pnameid;
@@ -281,6 +284,27 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- Run immediately
+    FOREACH axml IN ARRAY xpath('//immediately',pxml)
+    LOOP
+        timeout = (xpath('@timeout',axml))[1]::TEXT::INTERVAL;
+        IF timeout IS NULL THEN
+            timeout = '1 day';
+        END IF;
+
+        INSERT INTO runonce (
+            id,jobid,type,
+            valid, timeout,
+            retry,maxretry,
+            runat, nextrun
+        ) VALUES (
+            nextval('scheduleid'), pnameid, 1,
+            NULL, timeout,
+            NULL, 1,
+            now(), now()
+        );
+    END LOOP;
+
     -- run once at a specific time <once when="timestamp"/>
     FOREACH axml IN ARRAY xpath('//once',pxml)
     LOOP
@@ -288,14 +312,20 @@ BEGIN
         -- Don't schedule in the past otherwise we may run stuff we don't want to
         IF ats>=now()
         THEN
+            timeout = (xpath('@timeout',axml))[1]::TEXT::INTERVAL;
+            IF timeout IS NULL THEN
+                timeout = '1 day';
+            END IF;
+
             INSERT INTO runonce (
                 id,jobid,type,
-                valid,
+                valid, timeout,
                 retry,maxretry,
                 runat, nextrun
             ) VALUES (
                 nextval('scheduleid'), pnameid, 1,
                 (xpath('@between',axml))[1]::TEXT::TIMERANGE,
+                timeout,
                 (xpath('@retry',axml))[1]::TEXT::INTERVAL,
                 xtInt(axml,'@max',2147483647),
                 ats, ats
@@ -307,15 +337,22 @@ BEGIN
     FOREACH axml IN ARRAY xpath('//repeat',pxml)
     LOOP
         ats = (xpath('@next',axml))[1]::TEXT::TIMESTAMP WITHOUT TIME ZONE;
+
+        timeout = (xpath('@timeout',axml))[1]::TEXT::INTERVAL;
+        IF timeout IS NULL THEN
+            timeout = '1 day';
+        END IF;
+
         INSERT INTO runevery (
             id,jobid,type,
-            valid,
+            valid, timeout,
             retry,maxretry,
             runat,nextrun,
             step
         ) VALUES (
             nextval('scheduleid'), pnameid, 2,
             (xpath('@between',axml))[1]::TEXT::TIMERANGE,
+            timeout,
             (xpath('@retry',axml))[1]::TEXT::INTERVAL,
             xtInt(axml,'@max',2147483647),
             ats, ats,
@@ -363,9 +400,8 @@ BEGIN
             INNER JOIN jobnode n ON d.nodeid=n.id
         WHERE n.name=UPPER(pnode) AND d.name=UPPER(pname);
     IF FOUND THEN
-        -- Remove the 
         DELETE FROM schedule WHERE jobid=rec.id;
-        -- Remove the job definition
+        DELETE FROM jobdependency WHERE id=rec.id;
         DELETE FROM jobdef WHERE id=rec.id;
         DELETE FROM jobname WHERE id=rec.id;
     END IF;
@@ -379,7 +415,7 @@ $$ LANGUAGE plpgsql;
 -- Unless they have hit their max retries.
 --
 CREATE OR REPLACE FUNCTION nextJobs()
-RETURNS TABLE (jid BIGINT, node NAME, name NAME ) AS $$
+RETURNS TABLE (jid BIGINT, node NAME, name NAME, timeout INTERVAL ) AS $$
 DECLARE
     rec         RECORD;
     nt          TIMESTAMP WITHOUT TIME ZONE = now();
@@ -389,13 +425,17 @@ DECLARE
     srec        RECORD;
 BEGIN
     -- Housekeeping - find any running jobs that have timed out and fail them
-    FOR rec IN SELECT id FROM schedule WHERE state=2 AND lastrun+timeout < now()
+    FOR rec IN SELECT s.id FROM schedule s WHERE s.state=2 AND s.lastrun+s.timeout < now()
     LOOP
         PERFORM jobfail(rec.id);
     END LOOP;
 
     -- More housekeeping, any run once jobs in COMPLETED or FAIL states older than 24 hours remove them
-    FOR rec IN SELECT id, jobid FROM schedule WHERE state IN (3,4) AND nextrun IS NULL
+    FOR rec IN SELECT id, jobid
+        FROM schedule
+        WHERE state IN (3,4)
+          AND nextrun IS NULL
+          AND (lastrun IS NULL OR lastrun < now()-'1 day'::INTERVAL)
     LOOP
         -- Remove the run once job schedule
         DELETE FROM schedule WHERE id=rec.id;
@@ -408,7 +448,7 @@ BEGIN
     END LOOP;
 
     -- Now get the next set of jobs to be run, effectively all states other than running
-    FOR rec IN SELECT s.id AS jid, n.name AS name, j.name AS node, s.attempt, s.maxretry, s.jobid
+    FOR rec IN SELECT s.id AS jid, n.name AS name, j.name AS node, s.timeout, s.attempt, s.maxretry, s.jobid
          FROM schedule s
             INNER JOIN jobname n ON s.jobid=n.id
             INNER JOIN jobnode j ON n.nodeid=j.id
@@ -437,7 +477,7 @@ BEGIN
                 UPDATE schedule
                     SET state=2, attempt=attempt+1, lastrun=now()
                     WHERE id=rec.jid;
-                RETURN QUERY SELECT rec.jid, rec.node, rec.name ;
+                RETURN QUERY SELECT rec.jid, rec.node, rec.name, rec.timeout ;
             ELSE
                 -- Mark as pending as it's waiting on another job
                 UPDATE schedule SET state=1 WHERE id=rec.jid;
@@ -452,35 +492,28 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ====================================================================================================
--- Mark a job as running - deprecated as now in nextjobs()
-DROP FUNCTION jobrun(BIGINT);
--- CREATE OR REPLACE FUNCTION jobrun(BIGINT)
--- RETURNS VOID AS $$
---     UPDATE schedule SET state=2, lastrun=now() WHERE id=($1);
--- $$ LANGUAGE 'sql';
-
--- ====================================================================================================
 -- Reschedule a job to it's next schedule time
 CREATE OR REPLACE FUNCTION jobnextrun(pid BIGINT,ps INTEGER)
 RETURNS VOID AS $$
 DECLARE
     rec     RECORD;
     nt      TIMESTAMP WITHOUT TIME ZONE;
+    nt0     TIMESTAMP WITHOUT TIME ZONE = date_trunc('minute',now());
 BEGIN
     SELECT INTO rec * FROM schedule WHERE id=pid;
     IF FOUND THEN
         IF rec.type = 2 THEN
             -- Move schedule to next run time
             SELECT INTO rec * FROM runevery WHERE id=pid;
-            nt = rec.runat + rec.step;
+            nt = rec.runat;
             -- in case nt is that far behind ensure it's in the future
-            WHILE nt < now() LOOP
+            WHILE nt <= nt0 LOOP
                 nt = nt + rec.step;
             END LOOP;
-            UPDATE schedule SET runat=nt, nextrun=nt, attempt=0, state=3 WHERE id=pid;
+            UPDATE schedule SET runat=nt, nextrun=nt, attempt=0, state=ps WHERE id=pid;
         ELSE
             -- Just mark the unknown type as completed.
-            UPDATE schedule SET attempt=0, state=3 WHERE id=pid;
+            UPDATE schedule SET attempt=0, state=ps WHERE id=pid;
         END IF;
     END IF;
 END;
@@ -498,8 +531,9 @@ BEGIN
     IF FOUND THEN
         IF rec.type = 1 THEN
             -- Just mark as completed
-            UPDATE schedule SET nextrun=NULL, state=3 WHERE id=pid;
+            UPDATE schedule SET nextrun=NULL, state=3, error=NULL WHERE id=pid;
         ELSE
+            UPDATE schedule SET error=NULL WHERE id=pid;
             PERFORM jobnextrun(pid,3);
         END IF;
     END IF;
@@ -515,21 +549,29 @@ DECLARE
     rec     RECORD;
     nt      TIMESTAMP WITHOUT TIME ZONE;
 BEGIN
+    PERFORM jobfail(pid,'Failed');
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION jobfail(pid BIGINT,perr TEXT)
+RETURNS VOID AS $$
+DECLARE
+    rec     RECORD;
+    nt      TIMESTAMP WITHOUT TIME ZONE;
+BEGIN
     SELECT INTO rec * FROM schedule WHERE id=pid;
     IF FOUND THEN
-        IF rec.retry IS NULL THEN
-            -- No retry defined or we've done too many then just set state
-            UPDATE schedule SET state=4, nextrun=NULL WHERE id=pid;
-        ELSIF rec.attempt<rec.maxretry THEN 
+        IF rec.retry IS NOT NULL AND rec.attempt<rec.maxretry THEN 
             -- retry at the next interval
             nt = rec.runat + rec.retry;
             -- in case nt is that far behind ensure it's in the future
             WHILE nt < now() LOOP
                 nt = nt + rec.retry;
             END LOOP;
-            UPDATE schedule SET nextrun=nt, state=4 WHERE id=pid;
+            UPDATE schedule SET nextrun=nt, state=4, error=perr WHERE id=pid;
         ELSE
             -- Try to reschedule at the next time
+            UPDATE schedule SET error=perr WHERE id=pid;
             PERFORM jobnextrun(pid,4);
         END IF;
     END IF;
@@ -588,43 +630,3 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
-
--- ====================================================================================================
--- Example of dependencies
-SELECT storeJob('test','retrgrib','a test','<schedule><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
--- depends on retrgrib
-SELECT storeJob('test','genmap1','a test','<schedule><depends name="retrgrib"/><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
--- depends on retrgrib but has a dependent of its own
-SELECT storeJob('test','genmap2','a test','<schedule><depends node="test" name="retrgrib"/><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
--- depends on retrgrib and genmap2
-SELECT storeJob('test','genmap3','a test','<schedule>
-<depends name="retrgrib"/>
-<depends name="genmap2"/>
-<repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
-
-SELECT storeJob('test','test','a test','<schedule>
-<once at="2016-03-10 18:24"/>
-<once at="2016-03-04 18:34" retry="1 hour" max="3"/>
-<once at="2016-03-10 18:44" retry="1 hour"/>
-<repeat next="2016-02-04 07:33" step="1 minute"/>
-<repeat next="2016-02-04 07:33" step="10 minute"/>
-<repeat next="2016-02-04 07:33" step="1 day" retry="1 hour"/>
-<repeat next="2016-02-04 07:33" step="1 day" retry="1 hour" max="3"/>
-<repeat between="21:00-06:00" next="2016-02-04 07:33" step="1 hour"/>
-</schedule>'::xml);
-
-select * from jobname;
-select * from jobdependency;
-select * from schedule;
-select * from runonce;
-select * from runevery;
-
-select * from nextjobs();
-select jobsuccess(1);
-select * from nextjobs();
-select jobsuccess(2);
-select * from nextjobs();
-select jobsuccess(3);
-select * from nextjobs();
-select jobsuccess(4);
-select * from nextjobs();

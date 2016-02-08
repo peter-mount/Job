@@ -2,3 +2,6 @@
 # run at 2016-10-21 12:34
 # run at 12:34
 # run at 2016-10-21
+## job test.helloworld
+## run every minute timeout 5 minutes
+log "Hello";

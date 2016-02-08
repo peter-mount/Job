@@ -46,7 +46,7 @@ public class ClusterContextListener
         LOG.log( Level.WARNING, () -> "CTX " + name );
 
         if( name != null && !name.isEmpty() ) {
-            clusterName = name;
+            clusterName = name.toLowerCase();
         }
 
         try {

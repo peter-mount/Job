@@ -45,41 +45,24 @@ jclScript
 jclStatement
     :   runAt
     |   runEvery
-    |   runCron
     ;
 
+// run job Node.Name
 // job Node.Name
 // deletejob Node.Name
 // subjob Node.Name
 job
-    :   (JOB | DELETEJOB | SUBJOB) Identifier DOT Identifier
+    :   (JOB | RUNJOB | DELETEJOB | SUBJOB) Identifier DOT Identifier
     ;
 
 // Run a job once
 runAt
-    :   RUN ONCE? AT dateAndOrTime retry?
+    :   RUN ONCE? AT dateAndOrTime retry? timeout?
     ;
 
 // run every interval
 runEvery
-    :   RUN EVERY interval (AT time | FROM dateOptionalTime)? between? retry?
-    ;
-
-runCron
-    : RUN CRON scheduleCronTab between? retry?
-    ;
-
-// Cron m h dom mon dow
-scheduleCronTab
-    :   cronEntry cronEntry cronEntry cronEntry cronEntry
-    ;
-
-// For now 
-cronEntry
-    :   INT
-    // The following doesnt work right now
-  //|   INT (HYPHEN INT)? (SLASH INT)?
-    |   STAR
+    :   RUN EVERY interval (AT time | FROM dateOptionalTime)? between? retry? timeout?
     ;
 
 // Interval
@@ -95,6 +78,10 @@ retry
 // Between two times - ensures jobs don't run outside specific hours
 between
     : BETWEEN time AND time
+    ;
+
+timeout
+    : TIMEOUT interval
     ;
 
 // A date and time

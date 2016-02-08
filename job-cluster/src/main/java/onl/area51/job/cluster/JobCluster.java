@@ -79,12 +79,13 @@ public class JobCluster
         int threads = ClusterContextListener.getThreadCount();
         LOG.log( Level.INFO, () -> "Initialising " + threads + " Job execution threads" );
         for( int t = 0; t < threads; t++ ) {
-            RabbitMQ.queueConsumer( connection, QUEUE_NAME + clusterName, RabbitMQ.DEFAULT_TOPIC, ROUTING_KEY_PREFIX + clusterName, false, props, rpcInvoker );
+            RabbitMQ.queueConsumer( connection, "job." + clusterName + ".exec", RabbitMQ.DEFAULT_TOPIC, ROUTING_KEY_PREFIX + clusterName, false, props,
+                                    rpcInvoker );
         }
 
         LOG.log( Level.INFO, () -> "Initialising Sub Job execution thread" );
         executorService = Executors.newWorkStealingPool();
-        RabbitMQ.queueConsumer( connection, SUBQUEUE_NAME + clusterName, RabbitMQ.DEFAULT_TOPIC, SUBROUTING_KEY_PREFIX + clusterName, false, props,
+        RabbitMQ.queueConsumer( connection, "job." + clusterName + ".sub", RabbitMQ.DEFAULT_TOPIC, SUBROUTING_KEY_PREFIX + clusterName, false, props,
                                 Consumers.executeWith( executorService, rpcInvoker )
         );
     }
@@ -141,7 +142,7 @@ public class JobCluster
             throws TimeoutException,
                    IOException
     {
-        return call( cluster, job, args, time, unit, "job.exec." + cluster );
+        return call( cluster, job, args, time, unit, "job.exec." + cluster.toLowerCase() );
     }
 
     Map<String, Object> call( String cluster, String job, Map<String, Object> args, long time, TimeUnit unit, String key )
@@ -156,13 +157,14 @@ public class JobCluster
             throws TimeoutException,
                    IOException
     {
-        execute( cluster, job, args, time, unit, action, "job.exec." + cluster );
+        execute( cluster, job, args, time, unit, action, "job.exec." + cluster.toLowerCase() );
     }
 
     void execute( String cluster, String job, Map<String, Object> args, long time, TimeUnit unit, Consumer<Map<String, Object>> action, String key )
             throws TimeoutException,
                    IOException
     {
+        LOG.log( Level.INFO,()-> "execute "+cluster+"."+job+":"+key);
         Map<String, Object> params = getParams( cluster, job, args );
         RabbitRPCClient.execute( rabbit.getConnection(), key, (int) unit.toMillis( time ), params,
                                  ret -> {
@@ -177,8 +179,8 @@ public class JobCluster
         Objects.requireNonNull( job, "Job not defined" );
 
         Map<String, Object> params = new HashMap<>();
-        params.put( CLUSTER, cluster );
-        params.put( JOB, job );
+        params.put( CLUSTER, cluster.toLowerCase() );
+        params.put( JOB, job.toLowerCase() );
         params.put( ARGS, args == null ? Collections.emptyMap() : args );
         return params;
     }

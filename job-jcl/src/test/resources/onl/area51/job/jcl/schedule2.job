@@ -1,4 +1,7 @@
 ## job Test.schedule2
-# schedule cron * * * * *
-# schedule cron 0 * * * *
-# schedule cron 0 0-6 * * *
+## RUN EVERY minute
+## RUN EVERY minute BETWEEN 06:00 AND 02:00
+## RUN EVERY hour AT 18:00
+## RUN EVERY hour FROM 2016-10-10
+## RUN EVERY hour FROM 2016-10-10 10:10
+

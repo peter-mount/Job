@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -105,6 +106,9 @@ class AbstractJclBuilder
 
     protected final LocalTime getTime( JclParser.TimeContext ctx )
     {
+        if( ctx == null ) {
+            return null;
+        }
         List<TerminalNode> l = ctx.INT();
         return LocalTime.of( getInt( l.get( 0 ) ), getInt( l.get( 1 ) ) )
                 .truncatedTo( ChronoUnit.MINUTES );
@@ -170,43 +174,26 @@ class AbstractJclBuilder
         }
     }
 
-    // 23:59
-    private static final LocalTime MAXTIME = LocalTime.MAX.truncatedTo( ChronoUnit.MINUTES );
-
     /**
-     * For entries that supports between, if betweenCtx is null then just runs action.
-     * Otherwise gets the start and end times. If start is before end then runs the action with the start/end attributes.
-     * If start is after end (i.e. crosses midnight) then runs the action twice. Once from start to midnight, once for midnight to end.
+     * For entries that supports between.
      *
-     * @param <T>
-     * @param name
      * @param betweenCtx
-     * @param ctx
-     * @param action
      */
-    protected void between( String name, JclParser.BetweenContext betweenCtx, Runnable action )
+    protected void between( JclParser.BetweenContext betweenCtx )
     {
-        if( betweenCtx == null ) {
-            start( name, action );
-        }
-        else {
+        if( betweenCtx != null ) {
             LocalTime start = getTime( betweenCtx.time( 0 ) );
             LocalTime end = getTime( betweenCtx.time( 1 ) );
-
-            BiConsumer<LocalTime, LocalTime> c = ( s, e ) -> start( name, () -> {
-                                                                attr( "betweenStart", s );
-                                                                attr( "betweenEnd", e );
-                                                                action.run();
-                                                            } );
-
-            if( start.isBefore( end ) ) {
-                c.accept( start, end );
-            }
-            else {
-                c.accept( LocalTime.MIN, end );
-                c.accept( start, MAXTIME );
+            if( start != null || end != null ) {
+                attr( "between", Objects.toString( start, "" ) + "-" + Objects.toString( end, "" ) );
             }
         }
     }
 
+    protected void timeout( JclParser.TimeoutContext ctx )
+    {
+        if( ctx != null ) {
+            interval( "timeout", ctx.interval() );
+        }
+    }
 }

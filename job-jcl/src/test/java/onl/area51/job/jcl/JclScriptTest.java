@@ -38,8 +38,8 @@ public class JclScriptTest
         Jcl jcl = jclScript.getJcl();
         assertNotNull( jcl );
         assertTrue( "Jcl should be valid", jcl.isValid() );
-        assertEquals( "Node", "Node", jcl.getNode() );
-        assertEquals( "Name", "Name", jcl.getName() );
+        assertEquals( "Node", "node", jcl.getNode() );
+        assertEquals( "Name", "name", jcl.getName() );
 
         String script = jclScript.getScript();
         assertNotNull( "Script", script );

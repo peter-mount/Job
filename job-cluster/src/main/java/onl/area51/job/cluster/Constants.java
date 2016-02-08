@@ -33,7 +33,7 @@ public interface Constants
     /**
      * The queue name prefix to receive jobs
      */
-    static final String QUEUE_NAME = "job.exec.";
+//    static final String QUEUE_NAME = "job.exec.";
     /**
      * The routing key prefix used when submitting jobs
      */

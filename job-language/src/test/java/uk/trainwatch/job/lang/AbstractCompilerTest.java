@@ -63,8 +63,8 @@ public abstract class AbstractCompilerTest
 
             Jcl jcl = script.getJcl();
             if( jcl.isValid() ) {
-                assertEquals( "Invalid Jcl", "Test", jcl.getNode() );
-                assertEquals( "Invalid Jcl", n, jcl.getName() );
+                assertEquals( "Invalid Jcl", "test", jcl.getNode() );
+                assertEquals( "Invalid Jcl", n.toLowerCase(), jcl.getName() );
             }
 
             Job job = script.getScript();

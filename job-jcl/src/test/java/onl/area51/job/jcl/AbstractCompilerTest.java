@@ -28,17 +28,17 @@ public abstract class AbstractCompilerTest
     {
         System.out.println( "Starting " + n );
         try {
-            Jcl jcl = compileJcl(n);
-            assertNotNull( "jcl node", jcl.getNode());
-            assertFalse( "jcl node", jcl.getNode().isEmpty());
-            assertEquals( "jcl node", "Test", jcl.getNode());
-            
-            assertNotNull( "jcl name", jcl.getName());
-            assertFalse( "jcl name", jcl.getName().isEmpty());
-            assertEquals( "jcl name", n, jcl.getName() );
-            
+            Jcl jcl = compileJcl( n );
+            assertNotNull( "jcl node", jcl.getNode() );
+            assertFalse( "jcl node", jcl.getNode().isEmpty() );
+            assertEquals( "jcl node", "test", jcl.getNode() );
+
+            assertNotNull( "jcl name", jcl.getName() );
+            assertFalse( "jcl name", jcl.getName().isEmpty() );
+            assertEquals( "jcl name", n.toLowerCase(), jcl.getName() );
+
             System.out.printf( "Jcl node \"%s\" job \"%s\"\n", jcl.getNode(), jcl.getName() );
-            
+
             System.out.println( n + " Passed" );
         }
         catch( Throwable ex ) {

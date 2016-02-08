@@ -43,6 +43,7 @@ PREFIX : '##';
 JOB         : 'job';
 SUBJOB      : 'sub' WS? 'job';
 DELETEJOB   : 'delete' WS? 'job' ;
+RUNJOB      : RUN WS? JOB ;
 
 RETRY       : 'retry' ;
 MAXIMUM     : 'maximum' ;
@@ -54,6 +55,7 @@ AT          : 'at';
 EVERY       : 'every';
 BETWEEN     : 'between';
 AND         : 'and';
+TIMEOUT     : 'timeout';
 
 CRON : 'cron';
 

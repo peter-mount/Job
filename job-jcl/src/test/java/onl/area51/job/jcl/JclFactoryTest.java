@@ -84,8 +84,8 @@ public class JclFactoryTest
     private void test( Jcl jcl )
     {
         assertNotNull( jcl );
-        assertEquals( "Node", "Node", jcl.getNode() );
-        assertEquals( "Name", "Name", jcl.getName() );
+        assertEquals( "Node", "node", jcl.getNode() );
+        assertEquals( "Name", "name", jcl.getName() );
     }
 
     /**
@@ -176,55 +176,41 @@ public class JclFactoryTest
                       + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\"/>"
                       + "<repeat next=\"" + now + "\" step=\"1 day\" retry=\"1 hour\" max=\"3\"/>"
                       // Between
-                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\"/>"
-                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"06:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 hour\" between=\"00:00-06:00\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\" between=\"00:00-06:00\"/>"
                       // Between 2100-0300 crossing midnight
-                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\"/>"
-                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 hour\" between=\"21:00-03:00\"/>"
                       // Between 2100-0300 crossing midnight retry 10 minutes max 3
-                      + "<repeat betweenStart=\"00:00\" betweenEnd=\"03:00\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
-                      + "<repeat betweenStart=\"21:00\" betweenEnd=\"23:59\" next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 hour\" retry=\"10 minute\" max=\"3\" between=\"21:00-03:00\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }
 
-    /**
-     * Test we schedule to run at a specific date/time
-     */
     @Test
-    public void runCron()
+    public void timeout()
     {
         Jcl jcl = JclFactory.compileJcl( JOB
-                                         + "## run cron * * * * *\n"
-                                         + "## run cron 0 3 * * *\n"
-                                         // example of retrieving from darwin
-                                         + "## run cron 0 3 * * * retry 1 hour\n"
-                                         + "## run cron 0 3 * * * retry 1 hour maximum 4\n"
-        // Run during the morning only
-        // This currently doesn't work
-        //+ "## run cron 0 6-9 * * *\n"
+                                         + "## run at 2016-2-10 18:24 timeout 1 minute\n"
+                                         + "## run at 2016/2/10 18:24 timeout 1 hour\n"
+                                         + "## run every minute timeout minute\n"
+                                         + "## run every 10 minutes timeout 5 minutes\n"
         );
         test( jcl );
 
         System.out.println( jcl.getSchedule().replace( "><", ">\n<" ) );
-
+        
         assertSame( JclType.SCHEDULABLE, jcl.getType() );
+
+        LocalDateTime dt = LocalDateTime.now().truncatedTo( ChronoUnit.MINUTES );
+        String now = dt.toLocalDate().toString() + " " + dt.toLocalTime().toString();
 
         assertEquals( "Schedule",
                       "<schedule>"
-                      + "<cron/>"
-                      // example of retrieving from darwin
-                      + "<cron m=\"0\" h=\"3\"/>"
-                      + "<cron m=\"0\" h=\"3\" retry=\"1 hour\"/>"
-                      + "<cron m=\"0\" h=\"3\" retry=\"1 hour\" max=\"4\"/>"
-                      // Run during the morning only
-                      // This currently doesn't work
-//                      + "<cron m=\"0\" h=\"6\"/>"
-//                      + "<cron m=\"0\" h=\"7\"/>"
-//                      + "<cron m=\"0\" h=\"8\"/>"
-//                      + "<cron m=\"0\" h=\"9\"/>"
+                      + "<once at=\"2016-02-10 18:24\" timeout=\"1 minute\"/>"
+                      + "<once at=\"2016-02-10 18:24\" timeout=\"1 hour\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"1 minute\" timeout=\"1 minute\"/>"
+                      + "<repeat next=\"" + now + "\" step=\"10 minute\" timeout=\"5 minute\"/>"
                       + "</schedule>",
                       jcl.getSchedule() );
     }
-
 }

@@ -68,19 +68,21 @@ public interface Jcl
 
     static Jcl create( String node, String name, JclType type, String schedule )
     {
+        String nd = node == null ? null : node.toLowerCase();
+        String nm = name == null ? null : name.toLowerCase();
         return new Jcl()
         {
 
             @Override
             public String getName()
             {
-                return name;
+                return nm;
             }
 
             @Override
             public String getNode()
             {
-                return node;
+                return nd;
             }
 
             @Override

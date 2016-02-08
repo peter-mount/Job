@@ -64,12 +64,12 @@ public class ClusterExecutor
 
     /**
      *
-     * @param cluster      Cluster name to listen under
+     * @param node         Cluster name to listen under
      * @param jobRetriever function to retrieve a {@link Job} from it's cluster & job names
      */
-    public ClusterExecutor( String cluster, ClusterJobRetriever jobRetriever )
+    public ClusterExecutor( String node, ClusterJobRetriever jobRetriever )
     {
-        this.node = cluster;
+        this.node = node;
         this.jobRetriever = jobRetriever;
     }
 
@@ -77,6 +77,7 @@ public class ClusterExecutor
     public Map<String, Object> apply( Map<String, Object> request )
     {
         try {
+            LOG.log( Level.INFO, () -> Objects.toString( request ) );
             String requestedCluster = Objects.toString( request.get( CLUSTER ), null );
             if( node.equals( requestedCluster ) ) {
                 return execute( request );

@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import onl.area51.job.cluster.JobCluster;
-import uk.trainwatch.util.JsonUtils;
 
 /**
  * Handles the request to execute jobs
@@ -38,7 +37,7 @@ import uk.trainwatch.util.JsonUtils;
  *
  * @author peter
  */
-@WebServlet(name = "JobServlet", urlPatterns = "/job", loadOnStartup = 0)
+@WebServlet(name = "JobServlet", urlPatterns = "/job/run", loadOnStartup = 0)
 public class JobServlet
         extends HttpServlet
 {
