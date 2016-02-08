@@ -7,6 +7,8 @@ DROP FUNCTION nextjobs();
 DROP TABLE schedule;
 DROP SEQUENCE scheduleid;
 
+DROP TABLE jobdependency;
+
 DROP TABLE jobdef;
 DROP TABLE jobname;
 DROP TABLE jobnode;
@@ -43,6 +45,19 @@ CREATE TABLE jobdef (
     PRIMARY KEY (id)
 );
 ALTER TABLE jobdef OWNER TO job;
+
+-- ====================================================================================================
+-- Job Dependencies - i.e. A job can only run if all dependent jobs have run successfully.
+-- For example, we have a job that retrieves the current GFS Grib files. No point in running map
+-- generation jobs if that job has not run correctly.
+
+CREATE TABLE jobdependency (
+    id      BIGINT NOT NULL REFERENCES jobname(id),
+    depends BIGINT NOT NULL REFERENCES jobname(id),
+    PRIMARY KEY(id,depends)
+);
+CREATE INDEX jobdependency_i ON jobdependency(id);
+CREATE INDEX jobdependency_d ON jobdependency(depends);
 
 -- ====================================================================================================
 -- The job type
@@ -233,9 +248,38 @@ DECLARE
     anameid INTEGER;
     axml    XML;
     ats     TIMESTAMP WITHOUT TIME ZONE;
+    anode   NAME;
+    aname   NAME;
 BEGIN
-    -- Wipe down all existing schedules
+    -- Wipe down all existing schedules & dependencies
     DELETE FROM schedule WHERE jobid=pnameid;
+    DELETE FROM jobdependency where id=pnameid;
+
+    -- dependencies. Only create a dependency if the name exists
+    FOREACH axml IN ARRAY xpath('//depends',pxml)
+    LOOP
+        anode = (xpath('@node',axml))[1]::TEXT::NAME;
+        aname = (xpath('@name',axml))[1]::TEXT::NAME;
+
+        -- node is optional, if missing then use the same node as this job
+        IF anode IS NULL OR anode = '' THEN
+            SELECT INTO rec j.name FROM jobnode j INNER JOIN jobname n ON j.id=n.nodeid WHERE n.name=UPPER(aname);
+            IF FOUND THEN
+                anode=rec.name;
+            END IF;
+        END IF;
+
+        -- If we have anode then look up the dependency and link as needed
+        IF anode IS NOT NULL AND anode != '' THEN
+            SELECT INTO rec n.*
+                FROM jobname n
+                INNER JOIN jobnode j ON n.nodeid=j.id
+                WHERE j.name = UPPER(anode) AND n.name = UPPER(aname);
+            IF FOUND THEN
+                INSERT INTO jobdependency (id,depends) VALUES (pnameid,rec.id);
+            END IF;
+        END IF;
+    END LOOP;
 
     -- run once at a specific time <once when="timestamp"/>
     FOREACH axml IN ARRAY xpath('//once',pxml)
@@ -337,9 +381,12 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION nextJobs()
 RETURNS TABLE (jid BIGINT, node NAME, name NAME ) AS $$
 DECLARE
-    rec RECORD;
-    nt  TIMESTAMP WITHOUT TIME ZONE = now();
-    t   TIME = now()::TIME;
+    rec         RECORD;
+    nt          TIMESTAMP WITHOUT TIME ZONE = now();
+    t           TIME = now()::TIME;
+    runnable    BOOLEAN;
+    drec        RECORD;
+    srec        RECORD;
 BEGIN
     -- Housekeeping - find any running jobs that have timed out and fail them
     FOR rec IN SELECT id FROM schedule WHERE state=2 AND lastrun+timeout < now()
@@ -347,22 +394,54 @@ BEGIN
         PERFORM jobfail(rec.id);
     END LOOP;
 
-    -- Now get the next set of jobs to be run
-    FOR rec IN SELECT s.id AS jid, n.name AS name, j.name AS node
+    -- More housekeeping, any run once jobs in COMPLETED or FAIL states older than 24 hours remove them
+    FOR rec IN SELECT id, jobid FROM schedule WHERE state IN (3,4) AND nextrun IS NULL
+    LOOP
+        -- Remove the run once job schedule
+        DELETE FROM schedule WHERE id=rec.id;
+        -- Remove the job if there's no more schedules of ANY type for it
+        SELECT INTO drec * FROM schedule WHERE jobid=rec.jobid LIMIT 1;
+        IF NOT FOUND THEN
+            DELETE FROM jobdef WHERE id=rec.jobid;
+            DELETE FROM jobname WHERE id=rec.jobid;
+        END IF;
+    END LOOP;
+
+    -- Now get the next set of jobs to be run, effectively all states other than running
+    FOR rec IN SELECT s.id AS jid, n.name AS name, j.name AS node, s.attempt, s.maxretry, s.jobid
          FROM schedule s
             INNER JOIN jobname n ON s.jobid=n.id
             INNER JOIN jobnode j ON n.nodeid=j.id
-        WHERE nextrun < nt
-          AND state IN (0,3,4)
+        WHERE nextrun IS NOT NULL AND nextrun < nt
+          AND state IN (0,1,3,4)
           AND t === s.valid
           AND attempt < maxretry
     LOOP
         IF rec.attempt < rec.maxretry THEN
-            -- Mark as pending and return this entry
-            UPDATE schedule
-                SET state=1, attempt=attempt+1
-                WHERE id=rec.jid;
-            RETURN QUERY SELECT rec.jid, rec.node, rec.name ;
+            -- Look at last run for the dependencies
+            runnable = true;
+            FOR drec IN SELECT * FROM jobdependency WHERE id=rec.jobid
+            LOOP
+                SELECT INTO srec *
+                    FROM schedule
+                    WHERE jobid = drec.depends
+                    ORDER BY lastrun DESC
+                    LIMIT 1;
+                IF FOUND THEN
+                    runnable = srec.state = 3;
+                END IF;
+            END LOOP;
+            
+            IF runnable THEN
+                -- Mark as running and return this entry
+                UPDATE schedule
+                    SET state=2, attempt=attempt+1, lastrun=now()
+                    WHERE id=rec.jid;
+                RETURN QUERY SELECT rec.jid, rec.node, rec.name ;
+            ELSE
+                -- Mark as pending as it's waiting on another job
+                UPDATE schedule SET state=1 WHERE id=rec.jid;
+            END IF;
         ELSE
             -- Max attempts hit so fail the job
             PERFORM jobfail(rec.jid);
@@ -373,11 +452,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ====================================================================================================
--- Mark a job as running
-CREATE OR REPLACE FUNCTION jobrun(BIGINT)
-RETURNS VOID AS $$
-    UPDATE schedule SET state=2, lastrun=now() WHERE id=($1);
-$$ LANGUAGE 'sql';
+-- Mark a job as running - deprecated as now in nextjobs()
+DROP FUNCTION jobrun(BIGINT);
+-- CREATE OR REPLACE FUNCTION jobrun(BIGINT)
+-- RETURNS VOID AS $$
+--     UPDATE schedule SET state=2, lastrun=now() WHERE id=($1);
+-- $$ LANGUAGE 'sql';
 
 -- ====================================================================================================
 -- Reschedule a job to it's next schedule time
@@ -417,14 +497,8 @@ BEGIN
     SELECT INTO rec * FROM schedule WHERE id=pid;
     IF FOUND THEN
         IF rec.type = 1 THEN
-            -- Remove the run once job schedule
-            DELETE FROM schedule WHERE id=pid;
-            -- Remove the job if there's no more schedules of ANY type
-            SELECT INTO rec * FROM schedule WHERE jobid=rec.jobid;
-            IF NOT FOUND THEN
-                DELETE FROM jobdef WHERE id=rec.id;
-                DELETE FROM jobname WHERE id=rec.id;
-            END IF;
+            -- Just mark as completed
+            UPDATE schedule SET nextrun=NULL, state=3 WHERE id=pid;
         ELSE
             PERFORM jobnextrun(pid,3);
         END IF;
@@ -445,7 +519,7 @@ BEGIN
     IF FOUND THEN
         IF rec.retry IS NULL THEN
             -- No retry defined or we've done too many then just set state
-            UPDATE schedule SET state=4 WHERE id=pid;
+            UPDATE schedule SET state=4, nextrun=NULL WHERE id=pid;
         ELSIF rec.attempt<rec.maxretry THEN 
             -- retry at the next interval
             nt = rec.runat + rec.retry;
@@ -463,6 +537,71 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ====================================================================================================
+-- Schedules a job to run now, regardless of any existing schedules. Normal dependency rules will apply.
+CREATE OR REPLACE FUNCTION runnow(pnode NAME, pname NAME)
+RETURNS BIGINT AS $$
+DECLARE
+    ajobid  BIGINT;
+BEGIN
+    SELECT INTO ajobid n.id
+        FROM jobname n
+        INNER JOIN jobnode j ON n.nodeid = j.id
+        WHERE j.name=UPPER(pnode) and n.name=UPPER(pname);
+    IF FOUND THEN
+        INSERT INTO runonce (
+            id,jobid,type,
+            valid,
+            retry,maxretry,
+            runat, nextrun
+        ) VALUES (
+            nextval('scheduleid'), ajobid, 1,
+            NULL, NULL, 1,
+            now(), now()
+        );
+        RETURN ajobid;
+    ELSE
+        RETURN 0;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================================================================================================
+-- Schedules a job and any dependents to run, regardless of schedules.
+-- This is the same as running runnow on a job and each dependent
+CREATE OR REPLACE FUNCTION runjob(pnode NAME, pname NAME)
+RETURNS VOID AS $$
+DECLARE
+    ajobid  BIGINT;
+    rec     RECORD;
+BEGIN
+    ajobid = runnow(pnode,pname);
+    IF ajobid > 0 THEN
+        FOR rec IN SELECT j.name AS node, n.name AS name
+            FROM jobname n
+            INNER JOIN jobnode j ON n.nodeid=j.id
+            INNER JOIN jobdependency d ON n.id=d.id
+            WHERE d.depends = ajobid
+            GROUP BY j.name, n.name
+        LOOP
+            PERFORM runnow(rec.node,rec.name);
+        END LOOP;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================================================================================================
+-- Example of dependencies
+SELECT storeJob('test','retrgrib','a test','<schedule><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
+-- depends on retrgrib
+SELECT storeJob('test','genmap1','a test','<schedule><depends name="retrgrib"/><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
+-- depends on retrgrib but has a dependent of its own
+SELECT storeJob('test','genmap2','a test','<schedule><depends node="test" name="retrgrib"/><repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
+-- depends on retrgrib and genmap2
+SELECT storeJob('test','genmap3','a test','<schedule>
+<depends name="retrgrib"/>
+<depends name="genmap2"/>
+<repeat next="2016-02-04 07:00" step="6 hour"/></schedule>'::xml);
+
 SELECT storeJob('test','test','a test','<schedule>
 <once at="2016-03-10 18:24"/>
 <once at="2016-03-04 18:34" retry="1 hour" max="3"/>
@@ -472,11 +611,20 @@ SELECT storeJob('test','test','a test','<schedule>
 <repeat next="2016-02-04 07:33" step="1 day" retry="1 hour"/>
 <repeat next="2016-02-04 07:33" step="1 day" retry="1 hour" max="3"/>
 <repeat between="21:00-06:00" next="2016-02-04 07:33" step="1 hour"/>
-<cron m="0" h="3"/>
-<cron m="0" h="3" retry="1 hour" max="4"/>
 </schedule>'::xml);
 
 select * from jobname;
+select * from jobdependency;
 select * from schedule;
 select * from runonce;
 select * from runevery;
+
+select * from nextjobs();
+select jobsuccess(1);
+select * from nextjobs();
+select jobsuccess(2);
+select * from nextjobs();
+select jobsuccess(3);
+select * from nextjobs();
+select jobsuccess(4);
+select * from nextjobs();
