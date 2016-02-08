@@ -79,6 +79,12 @@
             <groupId>uk.trainwatch</groupId>
             <artifactId>opendata-core</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.enterprise</groupId>
+                    <artifactId>cdi-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <!-- web application specific -->
@@ -90,6 +96,11 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>job-scheduler</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>job-os</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -40,9 +40,9 @@ lexer grammar JclLiterals;
 
 PREFIX : '##';
 
-JOB         : 'job';
-SUBJOB      : 'sub' WS? 'job';
-DELETEJOB   : 'delete' WS? 'job' ;
+JOB         : 'job' ;
+SUBJOB      : 'sub' WS? JOB ;
+DELETEJOB   : 'delete' WS? JOB ;
 RUNJOB      : RUN WS? JOB ;
 
 RETRY       : 'retry' ;
@@ -56,8 +56,6 @@ EVERY       : 'every';
 BETWEEN     : 'between';
 AND         : 'and';
 TIMEOUT     : 'timeout';
-
-CRON : 'cron';
 
 INT : DIGIT+ ;
 fragment DIGIT : [0-9] ;
@@ -97,6 +95,7 @@ SEMI   : ';';
 COMMA  : ',';
 DOT    : '.';
 STAR   : '*';
+AT     : '@';
 
 // §3.8 Identifiers (must appear after all keywords in the grammar)
 
