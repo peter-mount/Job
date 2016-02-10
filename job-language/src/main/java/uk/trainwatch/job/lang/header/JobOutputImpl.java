@@ -13,9 +13,11 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutput;
@@ -40,6 +42,8 @@ public final class JobOutputImpl
     private final Map<String, File> tempFiles = new HashMap<>();
     private Collection<JobOutputArchiver> archivers;
 
+    private Set<AutoCloseable> resources;
+
     public JobOutputImpl( Job job )
             throws IOException
     {
@@ -63,15 +67,24 @@ public final class JobOutputImpl
                     archive();
                 }
                 finally {
-                    for( JobOutputArchiver a: archivers ) {
+                    new ArrayList<>( archivers ).forEach( a -> {
                         try {
                             a.close();
                         }
                         catch( IOException ex ) {
 
                         }
-                    }
+                    } );
                 }
+            }
+            if( resources != null ) {
+                new ArrayList<>( resources ).forEach( r -> {
+                    try {
+                        r.close();
+                    }
+                    catch( Throwable t ) {
+                    }
+                } );
             }
         }
     }
@@ -253,6 +266,23 @@ public final class JobOutputImpl
             if( archivers.isEmpty() ) {
                 archivers = null;
             }
+        }
+    }
+
+    @Override
+    public void addResource( AutoCloseable resource )
+    {
+        if( resources == null ) {
+            resources = new HashSet<>();
+        }
+        resources.add( resource );
+    }
+
+    @Override
+    public void removeResource( AutoCloseable resource )
+    {
+        if( resources != null ) {
+            resources.remove( resource );
         }
     }
 

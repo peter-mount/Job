@@ -15,6 +15,7 @@
     <modules>
         <module>job-cluster</module>
         <module>job-cluster-db</module>
+        <module>job-cluster-web</module>
         <module>job-commons</module>
         <module>job-io</module>
         <module>job-jcl</module>

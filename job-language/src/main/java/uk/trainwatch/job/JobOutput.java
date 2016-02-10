@@ -150,4 +150,8 @@ public interface JobOutput
     void addJobOutputArchiver( JobOutputArchiver a );
 
     void removeJobOutputArchiver( JobOutputArchiver a );
+
+    void addResource( AutoCloseable resource );
+
+    void removeResource( AutoCloseable resource );
 }
