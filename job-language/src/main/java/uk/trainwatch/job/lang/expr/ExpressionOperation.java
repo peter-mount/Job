@@ -6,7 +6,6 @@
 package uk.trainwatch.job.lang.expr;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import uk.trainwatch.job.Scope;
@@ -118,7 +117,7 @@ public interface ExpressionOperation
         return Logic.isFalse( s );
     }
 
-    static Collection<Object> invoke( ExpressionOperation ops[], Scope s )
+    static List<Object> invoke( ExpressionOperation ops[], Scope s )
             throws Exception
     {
         List<Object> l = new ArrayList<>( ops.length );
