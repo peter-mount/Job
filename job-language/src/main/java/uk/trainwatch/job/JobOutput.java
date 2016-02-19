@@ -5,8 +5,8 @@
  */
 package uk.trainwatch.job;
 
-import java.io.File;
-import java.util.Collection;
+import java.io.Closeable;
+import java.nio.file.Path;
 import java.util.logging.Level;
 
 /**
@@ -15,108 +15,17 @@ import java.util.logging.Level;
  * @author peter
  */
 public interface JobOutput
+        extends Closeable
 {
 
     /**
-     * Cleanup the output. Client code must call this if the VM is long lived otherwise the temp files will remain on disk
-     */
-    void cleanup();
-
-    /**
-     * Create a permanent file for use by the job.
-     * <p>
-     * This file will not be deleted when the job completes.
-     * <p>
+     * Returns a path to a file local to the job's output
+     *
      * @param name
-     *             <p>
+     * @param more
      * @return
      */
-    File createFile( String name );
-
-    /**
-     * Create a temporary file.
-     * <p>
-     * This file will be deleted once the job completes.
-     * <p>
-     * @param name
-     *             <p>
-     * @return
-     */
-    default File createTempFile( String name )
-    {
-        int i = name.lastIndexOf( '.' );
-        if( i > -1 ) {
-            return createTempFile( name.substring( 0, i ), name.substring( i ) );
-        }
-        return createTempFile( name, null );
-    }
-
-    /**
-     * Create a temporary file.
-     * <p>
-     * This file will be deleted once the job completes.
-     * <p>
-     * @param prefix
-     * @param suffix
-     *               <p>
-     * @return
-     */
-    File createTempFile( String prefix, String suffix );
-
-    /**
-     * Retrieve the named file
-     * <p>
-     * @param name
-     *             <p>
-     * @return
-     */
-    File getFile( String name );
-
-    /**
-     * Add a file to the permanent list.
-     * <p>
-     * This file will not be deleted when the job completes.
-     * <p>
-     * @param file
-     */
-    void addFile( File file );
-
-    /**
-     * Add a file to the temporary list.
-     * <p>
-     * This file will be deleted once the job completes.
-     * <p>
-     * @param file
-     */
-    void addTempFile( File file );
-
-    /**
-     * Delete a file. Once deleted it's no longer part of the job output.
-     * <p>
-     * @param file File
-     */
-    void delete( File file );
-
-    /**
-     * Delete a file. Once deleted it's no longer part of the job output.
-     * <p>
-     * @param name file name
-     */
-    void delete( String name );
-
-    /**
-     * Return a collection of all files managed by this job.
-     * <p>
-     * @return
-     */
-    Collection<File> getFiles();
-
-    /**
-     * Retrieve the log file
-     * <p>
-     * @return
-     */
-    File getLog();
+    Path pathOf( String name, String... more );
 
     /**
      * Set the logging level.
@@ -128,8 +37,7 @@ public interface JobOutput
     /**
      * Is this Level above the current logging level. When true then logging will be recorded.
      * <p>
-     * @param level
-     *              <p>
+     * @param level <p>
      * @return
      */
     boolean isLoggable( Level level );

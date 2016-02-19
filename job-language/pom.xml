@@ -70,6 +70,12 @@
     
     <dependencies>
         
+        <dependency>
+            <groupId>onl.area51.filesystem</groupId>
+            <artifactId>filesystem-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
         <!-- JSR353 Java API for JSON processing - needed to support JsonValue decoding -->
         <dependency>
             <groupId>javax.json</groupId>

@@ -5,10 +5,12 @@
  */
 package uk.trainwatch.job.shell;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
@@ -37,7 +39,7 @@ public class Main
 
     private static final Logger LOG = Logger.getLogger( "main" );
 
-    private static final Semaphore semaphore = new Semaphore( 0 );
+    private static final Semaphore SEMAPHORE = new Semaphore( 0 );
     private static CommandLine cmd;
 
     private static boolean database;
@@ -45,7 +47,7 @@ public class Main
     private static boolean daemon;
     private static boolean cluster;
     private static String clusterName;
-    private static File output;
+    private static Path output;
 
     public static void main( String... args )
             throws Exception
@@ -61,38 +63,44 @@ public class Main
                 .map( Compiler::compile )
                 .collect( Collectors.toList() );
 
-        if( jobs.isEmpty() && !daemon ) {
+        if( jobs.isEmpty() && !daemon )
+        {
             LOG.log( Level.SEVERE, "No scripts to run and not in daemon mode" );
             System.exit( 1 );
         }
 
-        try( Container c = boot() ) {
+        try( Container c = boot() )
+        {
             c.open();
 
             jobs.forEach( Main::run );
 
-            if( daemon ) {
-                semaphore.acquire();
+            if( daemon )
+            {
+                SEMAPHORE.acquire();
             }
-        }
-        catch( RuntimeException ex ) {
+        } catch( RuntimeException ex )
+        {
             LOG.log( Level.SEVERE, ex, () -> "Fatal exception" );
         }
     }
 
     private static void run( Job job )
     {
-        try {
-            if( output != null ) {
-                job.getJobOutput().addJobOutputArchiver( ZipArchiver.archive( output ) );
+        try
+        {
+            if( output != null )
+            {
+                job.getJobOutput().addJobOutputArchiver( ZipArchiver.archive( output, StandardOpenOption.CREATE, StandardOpenOption.WRITE ) );
             }
 
-            try( Scope scope = Scope.newInstance( Logger.getAnonymousLogger() ) ) {
+            try( Scope scope = Scope.newInstance( Logger.getAnonymousLogger() ) )
+            {
                 job.invoke( scope );
             }
 
-        }
-        catch( Exception ex ) {
+        } catch( Exception ex )
+        {
             throw new RuntimeException( ex );
         }
     }
@@ -117,24 +125,28 @@ public class Main
         cdi = cluster || cmd.hasOption( "cdi" );
         daemon = cluster || cmd.hasOption( "daemon" );
 
-        if( database ) {
+        if( database )
+        {
             DataSourceProducer.setFactory( read( cmd.getOptionValue( "database" ) ) );
             DataSourceProducer.setUseJndi( false );
         }
 
-        if( cmd.hasOption( "output" ) ) {
-            if( daemon || cluster ) {
+        if( cmd.hasOption( "output" ) )
+        {
+            if( daemon || cluster )
+            {
                 // Why store as a file when it will be overwritten for each job run?
                 throw new IllegalArgumentException( "Output is not supported in this mode" );
             }
-            output = new File( cmd.getOptionValue( "output" ) );
+            output = Paths.get( cmd.getOptionValue( "output" ) );
         }
     }
 
     private static Properties read( String name )
             throws IOException
     {
-        try( Reader r = new FileReader( name ) ) {
+        try( Reader r = new FileReader( name ) )
+        {
             Properties p = new Properties();
             p.load( r );
             return p;
@@ -146,11 +158,13 @@ public class Main
     {
         Container c = null;
 
-        if( cdi ) {
+        if( cdi )
+        {
             c = Container.andThen( c, new WeldContainer() );
         }
 
-        if( cluster ) {
+        if( cluster )
+        {
             c = Container.andThen( c, new ClusterContainer( clusterName ) );
         }
 
@@ -159,6 +173,6 @@ public class Main
 
     public static void exit()
     {
-        semaphore.release( 10 );
+        SEMAPHORE.release( 10 );
     }
 }

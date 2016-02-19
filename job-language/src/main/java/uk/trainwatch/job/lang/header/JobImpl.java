@@ -8,6 +8,7 @@ package uk.trainwatch.job.lang.header;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import uk.trainwatch.job.Job;
@@ -25,6 +26,7 @@ class JobImpl
         implements Job
 {
 
+    private UUID uuid;
     private final Statement declare;
     private final Statement output;
     private final Statement block;
@@ -41,6 +43,16 @@ class JobImpl
     }
 
     @Override
+    public synchronized UUID getJobUUID()
+    {
+        if( uuid == null )
+        {
+            uuid = UUID.randomUUID();
+        }
+        return uuid;
+    }
+
+    @Override
     public JobOutput getJobOutput()
     {
         return jobOutput;
@@ -50,33 +62,40 @@ class JobImpl
     public void invokeStatement( Scope scope, Object... args )
             throws Exception
     {
-        if( scope instanceof Scope.GlobalScope ) {
+        if( scope instanceof Scope.GlobalScope )
+        {
             ((Scope.GlobalScope) scope).setJob( this );
         }
 
-        try( JobOutputImpl outputImpl = jobOutput ) {
+        try( JobOutputImpl outputImpl = jobOutput )
+        {
             jobOutput = outputImpl;
 
             fire( l -> l.jobStarted( this, scope ) );
-            try {
-                if( declare != null ) {
+            try
+            {
+                if( declare != null )
+                {
                     declare.invokeStatement( scope.getGlobalScope() );
                 }
 
-                if( output != null ) {
+                if( output != null )
+                {
                     output.invokeStatement( scope );
                 }
 
-                if( block != null ) {
+                if( block != null )
+                {
                     block.invokeStatement( scope );
                 }
-            }
-            catch( Block.Throw ex ) {
+            } catch( Block.Throw ex )
+            {
                 Exception ex1 = ex.getException();
                 fire( l -> l.jobException( this, scope, ex1 ) );
                 throw ex1;
             }
-            finally {
+            finally
+            {
                 fire( l -> l.jobCompleted( this, scope ) );
             }
         }
@@ -85,7 +104,8 @@ class JobImpl
     @Override
     public void addListener( JobListener l )
     {
-        if( listeners == null ) {
+        if( listeners == null )
+        {
             listeners = new HashSet<>();
         }
         listeners.add( l );
@@ -94,8 +114,10 @@ class JobImpl
     @Override
     public void removeListener( JobListener l )
     {
-        if( listeners != null && listeners.remove( l ) ) {
-            if( listeners.isEmpty() ) {
+        if( listeners != null && listeners.remove( l ) )
+        {
+            if( listeners.isEmpty() )
+            {
                 listeners = null;
             }
         }
@@ -104,7 +126,8 @@ class JobImpl
     @Override
     public void fire( Consumer<JobListener> c )
     {
-        if( listeners != null ) {
+        if( listeners != null )
+        {
             listeners.forEach( c );
         }
     }

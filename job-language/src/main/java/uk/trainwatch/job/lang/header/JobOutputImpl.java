@@ -5,20 +5,24 @@
  */
 package uk.trainwatch.job.lang.header;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import uk.trainwatch.io.IOConsumer;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutput;
 import uk.trainwatch.job.JobOutputArchiver;
@@ -28,18 +32,18 @@ import uk.trainwatch.job.JobOutputArchiver;
  * @author peter
  */
 public final class JobOutputImpl
-        implements JobOutput,
-                   Closeable
+        implements JobOutput
 {
 
     private final Job job;
+
+    private URI fileSystemUri;
+    private FileSystem fileSystem;
 
     private volatile int levelValue = Level.INFO.intValue();
     private final File logFile;
     private final PrintWriter log;
 
-    private final Map<String, File> permFiles = new HashMap<>();
-    private final Map<String, File> tempFiles = new HashMap<>();
     private Collection<JobOutputArchiver> archivers;
 
     private Set<AutoCloseable> resources;
@@ -54,169 +58,85 @@ public final class JobOutputImpl
         log = new PrintWriter( logFile );
     }
 
+    private FileSystem getFileSystem()
+    {
+        if( fileSystem != null )
+        {
+            try
+            {
+                fileSystemUri = URI.create( "local://" + job.getJobUUID().toString() + "?deleteOnExit=true" );
+                fileSystem = FileSystems.newFileSystem( fileSystemUri, new HashMap<>() );
+            } catch( IOException ex )
+            {
+                throw new UncheckedIOException( ex );
+            }
+        }
+        return fileSystem;
+    }
+
+    @Override
+    public Path pathOf( String name, String... more )
+    {
+        return getFileSystem().getPath( name, more );
+    }
+
     @Override
     public void close()
             throws IOException
     {
-        try {
+        try
+        {
             log.close();
+            archive();
+            logFile.delete();
         }
-        finally {
-            if( archivers != null ) {
-                try {
-                    archive();
-                }
-                finally {
-                    new ArrayList<>( archivers ).forEach( a -> {
-                        try {
-                            a.close();
-                        }
-                        catch( IOException ex ) {
+        finally
+        {
+            closeAll( archivers );
+            closeAll( resources );
+            if( fileSystem != null )
+            {
+                fileSystem.close();
+            }
+        }
+    }
 
+    private void closeAll( Collection<? extends AutoCloseable> c )
+    {
+        if( c != null && !c.isEmpty() )
+        {
+            c.forEach( a
+                    -> 
+                    {
+                        try
+                        {
+                            a.close();
+                        } catch( Exception ex )
+                        {
+                            // Ignore as we are closing down
                         }
-                    } );
-                }
-            }
-            if( resources != null ) {
-                new ArrayList<>( resources ).forEach( r -> {
-                    try {
-                        r.close();
-                    }
-                    catch( Throwable t ) {
-                    }
-                } );
-            }
+            } );
         }
     }
 
     private void archive()
             throws IOException
     {
-        Collection<Map.Entry<String, File>> files = new ArrayList<>( tempFiles.entrySet() );
-        files.addAll( permFiles.entrySet() );
-
-        for( JobOutputArchiver a: archivers ) {
-
-            a.archiveLog( job, logFile );
-
-            for( Map.Entry<String, File> e: files ) {
-                a.archive( e.getKey(), e.getValue() );
-            }
+        if( archivers == null || archivers.isEmpty() )
+        {
+            return;
         }
+
+        archive( logFile.toPath() );
+
+        Files.walk( pathOf( "/" ), FileVisitOption.FOLLOW_LINKS )
+                .filter( p -> Files.isRegularFile( p, LinkOption.NOFOLLOW_LINKS ) )
+                .forEach( this::archive );
     }
 
-    /**
-     * Cleanup the output. Client code must call this if the VM is long lived otherwise the temp files will remain on disk
-     */
-    @Override
-    public void cleanup()
+    private void archive( Path p )
     {
-        logFile.delete();
-        tempFiles.values().forEach( File::delete );
-        tempFiles.clear();
-        permFiles.clear();
-    }
-
-    @Override
-    public File getFile( String name )
-    {
-        return permFiles.get( name );
-    }
-
-    @Override
-    public void delete( File file )
-    {
-        if( file != null ) {
-            permFiles.entrySet()
-                    .stream()
-                    .filter( e -> file.equals( e.getValue() ) )
-                    .findAny()
-                    .ifPresent( e -> {
-                        File f = e.getValue();
-                        permFiles.remove( e.getKey() );
-                        deleteImpl( f );
-                    } );
-
-            tempFiles.entrySet()
-                    .stream()
-                    .filter( e -> file.equals( e.getValue() ) )
-                    .findAny()
-                    .ifPresent( e -> {
-                        File f = e.getValue();
-                        tempFiles.remove( e.getKey() );
-                        deleteImpl( f );
-                    } );
-        }
-    }
-
-    @Override
-    public void delete( String name )
-    {
-        deleteImpl( permFiles.remove( name ) );
-        deleteImpl( tempFiles.remove( name ) );
-    }
-
-    private void deleteImpl( File f )
-    {
-        if( f != null ) {
-            f.delete();
-        }
-    }
-
-    @Override
-    public File createFile( String name )
-    {
-        return permFiles.computeIfAbsent( name, File::new );
-    }
-
-    @Override
-    public void addFile( File file )
-    {
-        permFiles.putIfAbsent( file.getName(), file );
-    }
-
-    @Override
-    public File createTempFile( String prefix, String suffix )
-    {
-        Objects.requireNonNull( prefix, "Prefix is mandatory" );
-
-        return tempFiles.computeIfAbsent( prefix + suffix, n -> {
-                                      try {
-                                          // File.createTempFile will throw an IllegalArgumentException if prefix is under 3 characters so pad out with _
-                                          String p = prefix;
-                                          if( p.length() < 3 ) {
-                                              p = (p + "___").substring( 0, 3 );
-                                          }
-
-                                          File f = File.createTempFile( p, suffix );
-                                          f.deleteOnExit();
-                                          return f;
-                                      }
-                                      catch( IOException e ) {
-                                          throw new UncheckedIOException( e );
-                                      }
-                                  } );
-    }
-
-    @Override
-    public void addTempFile( File file )
-    {
-        tempFiles.putIfAbsent( file.getName(), file );
-        file.deleteOnExit();
-    }
-
-    @Override
-    public Collection<File> getFiles()
-    {
-        List<File> l = new ArrayList<>( permFiles.values() );
-        l.addAll( tempFiles.values() );
-        return l;
-    }
-
-    @Override
-    public File getLog()
-    {
-        return logFile;
+        archivers.forEach( IOConsumer.guard( a -> a.archive( p ) ) );
     }
 
     @Override
@@ -252,7 +172,8 @@ public final class JobOutputImpl
     @Override
     public void addJobOutputArchiver( JobOutputArchiver a )
     {
-        if( archivers == null ) {
+        if( archivers == null )
+        {
             archivers = new ArrayList<>();
         }
         archivers.add( a );
@@ -261,9 +182,11 @@ public final class JobOutputImpl
     @Override
     public void removeJobOutputArchiver( JobOutputArchiver a )
     {
-        if( archivers != null ) {
+        if( archivers != null )
+        {
             archivers.remove( a );
-            if( archivers.isEmpty() ) {
+            if( archivers.isEmpty() )
+            {
                 archivers = null;
             }
         }
@@ -272,7 +195,8 @@ public final class JobOutputImpl
     @Override
     public void addResource( AutoCloseable resource )
     {
-        if( resources == null ) {
+        if( resources == null )
+        {
             resources = new HashSet<>();
         }
         resources.add( resource );
@@ -281,7 +205,8 @@ public final class JobOutputImpl
     @Override
     public void removeResource( AutoCloseable resource )
     {
-        if( resources != null ) {
+        if( resources != null )
+        {
             resources.remove( resource );
         }
     }

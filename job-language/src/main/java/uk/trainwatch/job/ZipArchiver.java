@@ -6,16 +6,14 @@
 package uk.trainwatch.job;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -30,20 +28,6 @@ public class ZipArchiver
 
     private final ZipOutputStream zos;
     private final byte buffer[] = new byte[1024];
-
-    /**
-     * Create an archive of the job output
-     * <p>
-     * @param file File to write to
-     * <p>
-     * @return
-     * @throws IOException on error
-     */
-    public static JobOutputArchiver archive( File file )
-            throws IOException
-    {
-        return archive( new FileOutputStream( file ) );
-    }
 
     /**
      * Create an archive of the job output
@@ -117,14 +101,14 @@ public class ZipArchiver
     }
 
     @Override
-    public void archive( String name, File file )
+    public void archive( String name, Path file )
             throws IOException
     {
-        try( InputStream fis = new FileInputStream( file ) ) {
+        try( InputStream fis = Files.newInputStream( file, StandardOpenOption.READ) ) {
             ZipEntry ze = new ZipEntry( normalise( name ) );
             zos.putNextEntry( ze );
 
-            int i = 0;
+            int i;
             while( (i = fis.read( buffer )) > -1 ) {
                 zos.write( buffer, 0, i );
             }
@@ -165,7 +149,7 @@ public class ZipArchiver
         }
 
         @Override
-        public void archive( String name, File file )
+        public void archive( String name, Path file )
                 throws IOException
         {
             archiver.archive( name, file );

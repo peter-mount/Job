@@ -6,8 +6,8 @@
 package uk.trainwatch.job;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * An archiver to run when a job completes
@@ -18,10 +18,10 @@ public interface JobOutputArchiver
         extends Closeable
 {
 
-    default void archiveLog( Job job, File logFile )
+    default void archiveLog( Job job, Path logFile )
             throws IOException
     {
-        archive( "job.log", logFile );
+        archive( logFile );
     }
 
     /**
@@ -32,14 +32,19 @@ public interface JobOutputArchiver
      * <p>
      * @throws IOException on error
      */
-    void archive( String name, File file )
+    default void archive( Path file )
+            throws IOException
+    {
+        archive( file.toString(), file );
+    }
+
+    void archive( String name, Path file )
             throws IOException;
 
     /**
      * Normalise the archive name to remove directory paths
      * <p>
-     * @param name
-     *             <p>
+     * @param name <p>
      * @return
      */
     default String normalise( String name )
@@ -49,10 +54,12 @@ public interface JobOutputArchiver
         String n = i > -1 ? name.substring( i + 1 ) : name;
 
         // Remvoe trailing _ which we add to temp files when prefix is < 3 characters (Limit imposed in File.createTempFile)
-        while( n.endsWith( "_" ) ) {
+        while( n.endsWith( "_" ) )
+        {
             n = n.substring( 0, n.length() - 1 );
         }
-        if( n.isEmpty() ) {
+        if( n.isEmpty() )
+        {
             n = "_";
         }
 

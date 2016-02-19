@@ -7,10 +7,7 @@ package uk.trainwatch.job.io;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,10 +15,13 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import uk.trainwatch.job.Scope;
 import uk.trainwatch.job.lang.Statement;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
@@ -33,95 +33,58 @@ import uk.trainwatch.job.lang.expr.ExpressionOperation;
 public class FileOp
 {
 
-    public static ExpressionOperation newFile( ExpressionOperation exp0 )
+    public static Path getPath( ExpressionOperation exp, Scope s )
+            throws Exception
     {
-        return ( s, a ) -> s.getJob().getJobOutput().createFile(
-                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString()
-        );
+        Object o = decode( exp.invoke( s ) );
+        if( o instanceof Path )
+        {
+            return (Path) o;
+        }
+        if( o instanceof File )
+        {
+            return ((File) o).toPath();
+        }
+        return s.getJob().getJobOutput().pathOf( Objects.toString( o ) );
+    }
+
+    public static ExpressionOperation newFile( ExpressionOperation exp )
+    {
+        return ( s, a ) -> getPath( exp, s );
     }
 
     public static ExpressionOperation newFile( ExpressionOperation exp0, ExpressionOperation exp1 )
     {
-        return ( s, a ) -> {
-            Object arg0 = Objects.requireNonNull( decode( exp0.invoke( s ) ) );
-            String arg1 = Objects.requireNonNull( decode( exp1.invoke( s ) ) ).toString();
-
-            File f;
-            if( arg0 instanceof File ) {
-                f = new File( (File) arg0, arg1 );
-            }
-            else {
-                f = new File( arg0.toString(), arg1 );
-            }
-            s.getJob().getJobOutput().addFile( f );
-            return f;
-        };
-    }
-
-    public static ExpressionOperation newTempFile( ExpressionOperation exp0 )
-    {
-        return ( s, a ) -> s.getJob().getJobOutput().createTempFile(
-                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString()
-        );
-    }
-
-    public static ExpressionOperation newTempFile( ExpressionOperation exp0, ExpressionOperation exp1 )
-    {
-        return ( s, a ) -> s.getJob().getJobOutput().createTempFile(
-                Objects.requireNonNull( decode( exp0.invoke( s ) ) ).toString(),
-                Objects.requireNonNull( decode( exp1.invoke( s ) ) ).toString()
-        );
+        return ( s, a ) -> getPath( exp0, s ).resolve( getPath( exp1, s ) );
     }
 
     public static ExpressionOperation newReader( ExpressionOperation exp )
     {
-        return ( s, a ) -> {
-            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
-            if( o instanceof String ) {
-                return new ReaderWrapper( new FileReader(
-                        s.getJob().getJobOutput().createFile( o.toString() )
-                ) );
-            }
-            return new ReaderWrapper( createReader( o ) );
-        };
-    }
-
-    public static ExpressionOperation newTempReader( ExpressionOperation exp )
-    {
-        return ( s, a ) -> {
-            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
-            if( o instanceof String ) {
-                return new ReaderWrapper( new FileReader(
-                        s.getJob().getJobOutput().createTempFile( o.toString() )
-                ) );
-            }
-            return new ReaderWrapper( createReader( o ) );
-        };
+        return ( s, a ) -> new ReaderWrapper( Files.newBufferedReader( getPath( exp, s ) ) );
     }
 
     public static Reader createReader( Object v )
-            throws FileNotFoundException
+            throws IOException
     {
-        Objects.requireNonNull( v );
-        Object o = decode( v );
+        Object o = Objects.requireNonNull( decode( v ) );
 
-        if( o instanceof ReaderWrapper ) {
+        if( o instanceof ReaderWrapper )
+        {
             return (Reader) o;
         }
 
-        if( o instanceof File ) {
-            return new FileReader( (File) o );
+        if( o instanceof Path )
+        {
+            return new ReaderWrapper( Files.newBufferedReader( (Path) o ) );
         }
 
-        if( o instanceof Path ) {
-            return new FileReader( ((Path) o).toFile() );
-        }
-
-        if( o instanceof Reader ) {
+        if( o instanceof Reader )
+        {
             return (Reader) o;
         }
 
-        if( o instanceof InputStream ) {
+        if( o instanceof InputStream )
+        {
             return new InputStreamReader( (InputStream) o );
         }
 
@@ -130,28 +93,7 @@ public class FileOp
 
     public static ExpressionOperation newWriter( ExpressionOperation exp )
     {
-        return ( s, a ) -> {
-            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
-            if( o instanceof String ) {
-                return new WriterWrapper( new FileWriter(
-                        s.getJob().getJobOutput().createFile( o.toString() )
-                ) );
-            }
-            return new WriterWrapper( createWriter( o ) );
-        };
-    }
-
-    public static ExpressionOperation newTempWriter( ExpressionOperation exp )
-    {
-        return ( s, a ) -> {
-            Object o = decode( Objects.requireNonNull( exp.invoke( s, a ) ) );
-            if( o instanceof String ) {
-                return new WriterWrapper( new FileWriter(
-                        s.getJob().getJobOutput().createTempFile( o.toString() )
-                ) );
-            }
-            return new WriterWrapper( createWriter( o ) );
-        };
+        return ( s, a ) -> new WriterWrapper( Files.newBufferedWriter( getPath( exp, s ), StandardOpenOption.CREATE, StandardOpenOption.WRITE ) );
     }
 
     public static Writer createWriter( Object v )
@@ -160,23 +102,23 @@ public class FileOp
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof WriterWrapper ) {
+        if( o instanceof WriterWrapper )
+        {
             return (Writer) o;
         }
 
-        if( o instanceof File ) {
-            return new FileWriter( (File) o );
+        if( o instanceof Path )
+        {
+            return new WriterWrapper( Files.newBufferedWriter( (Path) o, StandardOpenOption.CREATE, StandardOpenOption.WRITE ) );
         }
 
-        if( o instanceof Path ) {
-            return new FileWriter( ((Path) o).toFile() );
-        }
-
-        if( o instanceof Writer ) {
+        if( o instanceof Writer )
+        {
             return (Writer) o;
         }
 
-        if( o instanceof OutputStream ) {
+        if( o instanceof OutputStream )
+        {
             return new OutputStreamWriter( (OutputStream) o );
         }
 
@@ -184,20 +126,23 @@ public class FileOp
     }
 
     private static InputStream newInputStream( Object v )
-            throws FileNotFoundException
+            throws IOException
     {
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof File ) {
+        if( o instanceof File )
+        {
             return new FileInputStream( (File) o );
         }
 
-        if( o instanceof Path ) {
-            return new FileInputStream( ((Path) o).toFile() );
+        if( o instanceof Path )
+        {
+            return Files.newInputStream( (Path) o );
         }
 
-        if( o instanceof InputStream ) {
+        if( o instanceof InputStream )
+        {
             return (InputStream) o;
         }
 
@@ -205,20 +150,23 @@ public class FileOp
     }
 
     private static OutputStream newOutputStream( Object v )
-            throws FileNotFoundException
+            throws IOException
     {
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof File ) {
+        if( o instanceof File )
+        {
             return new FileOutputStream( (File) o );
         }
 
-        if( o instanceof Path ) {
-            return new FileOutputStream( ((Path) o).toFile() );
+        if( o instanceof Path )
+        {
+            return Files.newOutputStream( (Path) o );
         }
 
-        if( o instanceof OutputStream ) {
+        if( o instanceof OutputStream )
+        {
             return (OutputStream) o;
         }
 
@@ -237,18 +185,30 @@ public class FileOp
 
     public static Statement delete( ExpressionOperation... args )
     {
-        return ( s, a ) -> {
-            for( ExpressionOperation arg: args ) {
-                Object o = decode( arg.invoke( s, a ) );
-                if( o != null ) {
-                    if( o instanceof File ) {
-                        s.getJob().getJobOutput().delete( (File) o );
+        return ( s, a )
+                -> 
+                {
+                    for( ExpressionOperation arg : args )
+                    {
+                        Object o = decode( arg.invoke( s, a ) );
+                        if( o != null )
+                        {
+                            Path p;
+                            if( o instanceof Path )
+                            {
+                                p = (Path) o;
+                            }
+                            else if( o instanceof File )
+                            {
+                                p = ((File) o).toPath();
+                            }
+                            else
+                            {
+                                p = s.getJob().getJobOutput().pathOf( o.toString() );
+                            }
+                            Files.delete( p );
+                        }
                     }
-                    else {
-                        s.getJob().getJobOutput().delete( o.toString() );
-                    }
-                }
-            }
         };
     }
 }

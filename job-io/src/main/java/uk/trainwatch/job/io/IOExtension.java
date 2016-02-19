@@ -63,15 +63,6 @@ public class IOExtension
                     case "Reader":
                         return FileOp.newReader( exp[0] );
 
-                    case "TempFile":
-                        return FileOp.newTempFile( exp[0] );
-
-                    case "TempReader":
-                        return FileOp.newTempReader( exp[0] );
-
-                    case "TempWriter":
-                        return FileOp.newTempWriter( exp[0] );
-
                     case "Writer":
                         return FileOp.newWriter( exp[0] );
 
@@ -83,9 +74,6 @@ public class IOExtension
                 switch( type ) {
                     case "File":
                         return FileOp.newFile( exp[0], exp[1] );
-
-                    case "TempFile":
-                        return FileOp.newTempFile( exp[0], exp[1] );
 
                     default:
                         return null;

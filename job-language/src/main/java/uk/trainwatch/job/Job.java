@@ -5,6 +5,9 @@
  */
 package uk.trainwatch.job;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -15,10 +18,20 @@ import uk.trainwatch.job.lang.Statement;
  * @author peter
  */
 public interface Job
-        extends Statement
+        extends Statement,
+                Closeable
 {
 
+    UUID getJobUUID();
+
     JobOutput getJobOutput();
+
+    @Override
+    default void close()
+            throws IOException
+    {
+        getJobOutput().close();
+    }
 
     void addListener( JobListener l );
 
@@ -38,7 +51,8 @@ public interface Job
 
     default void log( Level l, Exception e, Supplier<String> c )
     {
-        if( isLoggable( l ) ) {
+        if( isLoggable( l ) )
+        {
             log( l, c.get(), e );
         }
     }
