@@ -14,11 +14,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import uk.trainwatch.job.Scope;
@@ -32,6 +37,88 @@ import uk.trainwatch.job.lang.expr.ExpressionOperation;
  */
 public class FileOp
 {
+
+    private static String encode( Object o )
+    {
+        if( o == null )
+        {
+            return "";
+        }
+        try
+        {
+            return URLEncoder.encode( o.toString(), "UTF-8" );
+        } catch( UnsupportedEncodingException ex )
+        {
+            throw new UnsupportedOperationException( ex );
+        }
+    }
+
+    public static String getQueryString( ExpressionOperation exp, Scope s )
+            throws Exception
+    {
+        Object o = exp.invoke( s );
+        if( o instanceof Map )
+        {
+            return ((Map<Object, Object>) o).entrySet()
+                    .stream()
+                    .map( e -> encode( e.getKey() ) + "=" + encode( e.getValue() ) )
+                    .collect( Collectors.joining( "&" ) );
+        }
+        return Objects.toString( o, null );
+    }
+
+    public static ExpressionOperation newURI( ExpressionOperation... exp )
+    {
+        switch( exp.length )
+        {
+            case 1:
+                return ( s, a ) -> new URI( exp[0].getString( s ) );
+
+            case 2:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            null );
+
+            case 3:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            exp[2].getString( s ) );
+
+            case 4:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            exp[2].getString( s ),
+                                            exp[3].getString( s ) );
+
+            case 5:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            exp[2].getString( s ),
+                                            exp[3].getString( s ),
+                                            exp[4].getString( s ) );
+
+            case 6:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            exp[2].getString( s ),
+                                            exp[3].getInt( s ),
+                                            exp[4].getString( s ),
+                                            exp[4].getString( s ),
+                                            null );
+
+            case 7:
+                return ( s, a ) -> new URI( exp[0].getString( s ),
+                                            exp[1].getString( s ),
+                                            exp[2].getString( s ),
+                                            exp[3].getInt( s ),
+                                            exp[4].getString( s ),
+                                            exp[4].getString( s ),
+                                            exp[5].getString( s ) );
+
+            default:
+                return null;
+        }
+    }
 
     public static Path getPath( ExpressionOperation exp, Scope s )
             throws Exception
