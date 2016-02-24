@@ -16,6 +16,7 @@
 package onl.area51.job.cluster;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -53,13 +54,17 @@ public class ClusterJobRetriever
 
     @PostConstruct
     void start()
-            throws IOException
     {
-        fs = FileSystems.newFileSystem( URI.create( "cache://job.control" ),
-                                        MapBuilder.<String, Object>builder()
-                                        .add( ClusterJobFileSystemIO.DATA_SOURCE, dataSource )
-                                        .addBiFunction( FileSystemIORepository.WRAPPER, ClusterJobFileSystemIO::new )
-                                        .build() );
+        try {
+            fs = FileSystems.newFileSystem( URI.create( "cache://job.control" ),
+                                            MapBuilder.<String, Object>builder()
+                                            .add( ClusterJobFileSystemIO.DATA_SOURCE, dataSource )
+                                            .addBiFunction( FileSystemIORepository.WRAPPER, ClusterJobFileSystemIO::new )
+                                            .build() );
+        }
+        catch( IOException ex ) {
+            throw new UncheckedIOException( ex );
+        }
     }
 
     @PreDestroy

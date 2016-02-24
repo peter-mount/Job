@@ -60,7 +60,7 @@ public final class JobOutputImpl
 
     private FileSystem getFileSystem()
     {
-        if( fileSystem != null )
+        if( fileSystem == null )
         {
             try
             {

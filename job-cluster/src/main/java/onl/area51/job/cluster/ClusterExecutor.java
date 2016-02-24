@@ -114,6 +114,7 @@ public class ClusterExecutor
                 try {
                     LOG.log( Level.INFO, () -> "Executing Job " + node + ":" + jobName );
                     run( (Map<String, Object>) request.get( ARGS ), job, globalScope );
+                    LOG.log( Level.INFO, () -> "Completed Job " + node + ":" + jobName );
                     return globalScope;
                 }
                 catch( Throwable t ) {

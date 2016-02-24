@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
@@ -40,15 +41,13 @@ public class FileOp
 
     private static String encode( Object o )
     {
-        if( o == null )
-        {
+        if( o == null ) {
             return "";
         }
-        try
-        {
+        try {
             return URLEncoder.encode( o.toString(), "UTF-8" );
-        } catch( UnsupportedEncodingException ex )
-        {
+        }
+        catch( UnsupportedEncodingException ex ) {
             throw new UnsupportedOperationException( ex );
         }
     }
@@ -57,8 +56,7 @@ public class FileOp
             throws Exception
     {
         Object o = exp.invoke( s );
-        if( o instanceof Map )
-        {
+        if( o instanceof Map ) {
             return ((Map<Object, Object>) o).entrySet()
                     .stream()
                     .map( e -> encode( e.getKey() ) + "=" + encode( e.getValue() ) )
@@ -69,8 +67,7 @@ public class FileOp
 
     public static ExpressionOperation newURI( ExpressionOperation... exp )
     {
-        switch( exp.length )
-        {
+        switch( exp.length ) {
             case 1:
                 return ( s, a ) -> new URI( exp[0].getString( s ) );
 
@@ -124,15 +121,21 @@ public class FileOp
             throws Exception
     {
         Object o = decode( exp.invoke( s ) );
-        if( o instanceof Path )
-        {
+        if( o instanceof Path ) {
             return (Path) o;
         }
-        if( o instanceof File )
-        {
+        if( o instanceof File ) {
             return ((File) o).toPath();
         }
-        return s.getJob().getJobOutput().pathOf( Objects.toString( o ) );
+        if( o == null ) {
+            return s.getJob().getJobOutput().pathOf( "/" );
+        }
+
+        String p = o.toString();
+        if( p.matches( "^.+?://.*?/.*$" ) ) {
+            return Paths.get( new URI( p ) );
+        }
+        return s.getJob().getJobOutput().pathOf( p );
     }
 
     public static ExpressionOperation newFile( ExpressionOperation exp )
@@ -155,23 +158,19 @@ public class FileOp
     {
         Object o = Objects.requireNonNull( decode( v ) );
 
-        if( o instanceof ReaderWrapper )
-        {
+        if( o instanceof ReaderWrapper ) {
             return (Reader) o;
         }
 
-        if( o instanceof Path )
-        {
+        if( o instanceof Path ) {
             return new ReaderWrapper( Files.newBufferedReader( (Path) o ) );
         }
 
-        if( o instanceof Reader )
-        {
+        if( o instanceof Reader ) {
             return (Reader) o;
         }
 
-        if( o instanceof InputStream )
-        {
+        if( o instanceof InputStream ) {
             return new InputStreamReader( (InputStream) o );
         }
 
@@ -189,23 +188,19 @@ public class FileOp
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof WriterWrapper )
-        {
+        if( o instanceof WriterWrapper ) {
             return (Writer) o;
         }
 
-        if( o instanceof Path )
-        {
+        if( o instanceof Path ) {
             return new WriterWrapper( Files.newBufferedWriter( (Path) o, StandardOpenOption.CREATE, StandardOpenOption.WRITE ) );
         }
 
-        if( o instanceof Writer )
-        {
+        if( o instanceof Writer ) {
             return (Writer) o;
         }
 
-        if( o instanceof OutputStream )
-        {
+        if( o instanceof OutputStream ) {
             return new OutputStreamWriter( (OutputStream) o );
         }
 
@@ -218,18 +213,15 @@ public class FileOp
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof File )
-        {
+        if( o instanceof File ) {
             return new FileInputStream( (File) o );
         }
 
-        if( o instanceof Path )
-        {
+        if( o instanceof Path ) {
             return Files.newInputStream( (Path) o );
         }
 
-        if( o instanceof InputStream )
-        {
+        if( o instanceof InputStream ) {
             return (InputStream) o;
         }
 
@@ -242,18 +234,15 @@ public class FileOp
         Objects.requireNonNull( v );
         Object o = decode( v );
 
-        if( o instanceof File )
-        {
+        if( o instanceof File ) {
             return new FileOutputStream( (File) o );
         }
 
-        if( o instanceof Path )
-        {
+        if( o instanceof Path ) {
             return Files.newOutputStream( (Path) o );
         }
 
-        if( o instanceof OutputStream )
-        {
+        if( o instanceof OutputStream ) {
             return (OutputStream) o;
         }
 
@@ -273,29 +262,23 @@ public class FileOp
     public static Statement delete( ExpressionOperation... args )
     {
         return ( s, a )
-                -> 
-                {
-                    for( ExpressionOperation arg : args )
-                    {
-                        Object o = decode( arg.invoke( s, a ) );
-                        if( o != null )
-                        {
-                            Path p;
-                            if( o instanceof Path )
-                            {
-                                p = (Path) o;
-                            }
-                            else if( o instanceof File )
-                            {
-                                p = ((File) o).toPath();
-                            }
-                            else
-                            {
-                                p = s.getJob().getJobOutput().pathOf( o.toString() );
-                            }
-                            Files.delete( p );
-                        }
+                -> {
+            for( ExpressionOperation arg: args ) {
+                Object o = decode( arg.invoke( s, a ) );
+                if( o != null ) {
+                    Path p;
+                    if( o instanceof Path ) {
+                        p = (Path) o;
                     }
+                    else if( o instanceof File ) {
+                        p = ((File) o).toPath();
+                    }
+                    else {
+                        p = s.getJob().getJobOutput().pathOf( o.toString() );
+                    }
+                    Files.delete( p );
+                }
+            }
         };
     }
 }
