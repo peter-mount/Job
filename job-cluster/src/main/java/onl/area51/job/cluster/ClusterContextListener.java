@@ -36,7 +36,7 @@ public class ClusterContextListener
     private static final Logger LOG = Logger.getLogger( ClusterContextListener.class.getName() );
 
     private static String clusterName = System.getProperty( CLUSTER_NAME );
-    private static int threadCount = 1;
+    private static int threadCount = Integer.parseInt( System.getProperty( THREAD_COUNT, "1" ) );
 
     @Override
     public void contextInitialized( ServletContextEvent sce )

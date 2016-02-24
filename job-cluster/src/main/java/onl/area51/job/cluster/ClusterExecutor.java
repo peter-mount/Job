@@ -27,6 +27,7 @@ import onl.area51.job.jcl.JclScript;
 import uk.trainwatch.job.lang.Compiler;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.Scope;
+import uk.trainwatch.util.MapBuilder;
 
 /**
  * Handles the execution of queued jobs.
@@ -77,7 +78,6 @@ public class ClusterExecutor
     public Map<String, Object> apply( Map<String, Object> request )
     {
         try {
-            LOG.log( Level.INFO, () -> Objects.toString( request ) );
             String requestedCluster = Objects.toString( request.get( CLUSTER ), null );
             if( node.equals( requestedCluster ) ) {
                 return execute( request );
@@ -112,6 +112,7 @@ public class ClusterExecutor
                 globalScope.setJcl( jclScript.getJcl() );
 
                 try {
+                    LOG.log( Level.INFO, () -> "Executing Job " + node + ":" + jobName );
                     run( (Map<String, Object>) request.get( ARGS ), job, globalScope );
                     return globalScope;
                 }
@@ -124,7 +125,9 @@ public class ClusterExecutor
         }
         catch( Exception ex ) {
             LOG.log( Level.SEVERE, ex, () -> "Failed to execute Job " + node + ":" + jobName );
-            return null;
+            return MapBuilder.<String, Object>builder()
+                    .add( EXCEPTION, ex.toString() )
+                    .build();
         }
     }
 
