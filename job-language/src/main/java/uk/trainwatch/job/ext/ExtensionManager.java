@@ -34,7 +34,7 @@ public enum ExtensionManager
         Iterator<Extension> it = loader.iterator();
         while( it.hasNext() ) {
             Extension ex = it.next();
-            LOG.log( Level.INFO, () -> "Registering extension " + ex.getName() + ":" + ex.getVersion() );
+            LOG.log( Level.FINE, () -> "Registering extension " + ex.getName() + ":" + ex.getVersion() );
             extensions.add( ex );
         }
     }
