@@ -28,14 +28,14 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import onl.area51.job.cluster.ClusterContextListener;
 import static onl.area51.job.cluster.Constants.CLUSTER_NAME;
 import onl.area51.job.jcl.Jcl;
-import onl.area51.job.jcl.JclFactory;
 import onl.area51.job.jcl.JclScript;
 import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.rabbitmq.Rabbit;
 import uk.trainwatch.rabbitmq.RabbitMQ;
+import uk.trainwatch.util.config.Configuration;
+import uk.trainwatch.util.config.impl.GlobalConfiguration;
 import uk.trainwatch.util.sql.Database;
 import uk.trainwatch.util.sql.SQL;
 
@@ -59,6 +59,20 @@ public class JobSubmissionService
     @Database("job")
     @Inject
     private DataSource dataSource;
+    
+    @Inject
+    @GlobalConfiguration( "jobcluster" )
+    private Configuration configuration;
+
+    private String getClusterName()
+    {
+        String clusterName = System.getenv( "CLUSTERNAME" );
+        if( clusterName == null )
+        {
+            clusterName = configuration.getString( "clustername" );
+        }
+        return clusterName;
+    }
 
     @PostConstruct
     void start()
@@ -68,7 +82,7 @@ public class JobSubmissionService
         ExtensionManager.INSTANCE.init();
 
         // clusterName is global to the VM
-        String clusterName = ClusterContextListener.getClusterName();
+        String clusterName = getClusterName();
         LOG.log( Level.INFO, () -> "Initialising Job Cluster " + clusterName );
         Objects.requireNonNull( clusterName, "No cluster name defined. Set with " + CLUSTER_NAME + " system property." );
 
