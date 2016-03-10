@@ -26,9 +26,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import org.apache.commons.configuration.Configuration;
 import uk.trainwatch.job.Job;
 import uk.trainwatch.job.JobOutputArchiver;
+import uk.trainwatch.util.config.Configuration;
 import uk.trainwatch.util.config.ConfigurationService;
 
 /**
@@ -157,7 +157,7 @@ public class MailArchiver
         {
             LOG.log( Level.INFO, () -> "Sending mail to " + recipients );
 
-            Configuration config = ConfigurationService.getInstance().getPrivateConfiguration( "mailer" );
+            Configuration config = ConfigurationService.getInstance().getConfiguration( "mailer" );
             String user = config.getString( "mail.user" );
             if( user != null && !user.isEmpty() )
             {

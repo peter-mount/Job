@@ -52,15 +52,15 @@ public class ConfigurationExtension
             switch( args.length ) {
                 case 1:
                     return ( s, a ) -> ConfigurationService.getInstance()
-                            .getPrivateConfiguration( Objects.toString( args[0].invoke( s ), "" ) );
+                            .getConfiguration( Objects.toString( args[0].invoke( s ), "" ) );
                 case 2:
                     return ( s, a ) -> ConfigurationService.getInstance()
-                            .getPrivateConfiguration( Objects.toString( args[0].invoke( s ), "" ) )
+                            .getConfiguration( Objects.toString( args[0].invoke( s ), "" ) )
                             .getString( Objects.toString( args[1].invoke( s ), "" ) );
                 case 3:
                     return ( s, a ) -> {
                         String v = ConfigurationService.getInstance()
-                                .getPrivateConfiguration( Objects.toString( args[0].invoke( s ), "" ) )
+                                .getConfiguration( Objects.toString( args[0].invoke( s ), "" ) )
                                 .getString( Objects.toString( args[1].invoke( s ), "" ) );
                         return v == null ? args[2].invoke( s ) : v;
                     };

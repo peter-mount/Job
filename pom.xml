@@ -14,17 +14,12 @@
     
     <modules>
         <module>job-cluster</module>
-        <!--
-        <module>job-cluster-db</module>
-        <module>job-cluster-web</module>
-        -->
         <module>job-commons</module>
         <module>job-io</module>
         <module>job-jcl</module>
         <module>job-language</module>
         <module>job-output</module>
         <module>job-os</module>
-        <module>job-shell</module>
         <module>job-schedule</module>
         <module>job-sql</module>
         <module>job-transform</module>

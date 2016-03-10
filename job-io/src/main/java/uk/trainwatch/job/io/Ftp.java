@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.net.ftp.FTPFile;
 import uk.trainwatch.io.ftp.FTPClient;
 import uk.trainwatch.io.ftp.FTPClientBuilder;
@@ -24,6 +23,7 @@ import uk.trainwatch.job.JobListener;
 import uk.trainwatch.job.Scope;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
+import uk.trainwatch.util.config.Configuration;
 import uk.trainwatch.util.config.ConfigurationService;
 
 /**
@@ -69,7 +69,7 @@ public class Ftp
 
         };
 
-        config = ConfigurationService.getInstance().getPrivateConfiguration( name );
+        config = ConfigurationService.getInstance().getConfiguration( name );
 
         FTPClientBuilder b = new FTPClientBuilder()
                 .logger( s -> LOG.log( Level.INFO, s ) );

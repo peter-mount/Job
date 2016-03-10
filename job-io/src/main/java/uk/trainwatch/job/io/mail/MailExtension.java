@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import javax.mail.Session;
-import org.apache.commons.configuration.Configuration;
 import org.kohsuke.MetaInfServices;
 import uk.trainwatch.job.ext.Extension;
 import uk.trainwatch.job.lang.Statement;
 import static uk.trainwatch.job.lang.expr.Arithmetic.decode;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
+import uk.trainwatch.util.config.Configuration;
 import uk.trainwatch.util.config.ConfigurationService;
 
 /**
@@ -41,7 +41,7 @@ public class MailExtension
 
     private Session getSession()
     {
-        Configuration config = ConfigurationService.getInstance().getPrivateConfiguration( "mailer" );
+        Configuration config = ConfigurationService.getInstance().getConfiguration( "mailer" );
         Properties mailProps = new Properties();
 
         mailProps.put( "mail.transport.protocol", "smtp" );
