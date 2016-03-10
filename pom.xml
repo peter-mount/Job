@@ -23,7 +23,6 @@
         <module>job-schedule</module>
         <module>job-sql</module>
         <module>job-transform</module>
-        <module>job-web</module>
     </modules>
     
     <properties>
