@@ -16,3 +16,5 @@
 /job-jcl/target/
 /job-jcl/nbproject/
 /job-cluster-web/target/
+/job-image/target/
+/job-docker/target/
