@@ -7,7 +7,9 @@ package uk.trainwatch.job.lang.block;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Objects;
@@ -25,6 +27,23 @@ import uk.trainwatch.job.lang.expr.Lambda;
  */
 public class TypeOp
 {
+
+    /**
+     * Temp fix for https://github.com/peter-mount/Job/issues/1
+     */
+    private static final Lookup TRUSTED_LOOKUP;
+    static {
+        Lookup myLookup = MethodHandles.lookup(); // the Lookup which should be trusted
+
+        try {
+            Field impl_lookup = Lookup.class.getDeclaredField( "IMPL_LOOKUP" );
+            impl_lookup.setAccessible( true );
+            TRUSTED_LOOKUP = (Lookup) impl_lookup.get( myLookup );
+        } catch( Exception e ) {
+            e.printStackTrace();
+            throw new InstantiationError( e.getMessage() );
+        }
+    }
 
     public static ExpressionOperation[] toArray( Collection<ExpressionOperation> col )
     {
@@ -61,25 +80,25 @@ public class TypeOp
                 if( realType == null ) {
                     throw new ClassNotFoundException( "Type " + type + " has not been defined" );
                 }
-                
+
                 Class clazz = Class.forName( realType );
 
                 Object args[] = invokeArguments( s, expArgs );
 
-                return MethodHandles.lookup()
+                // See top of class for why
+                //return MethodHandles.lookup()
+                return TRUSTED_LOOKUP
                         .findConstructor( clazz, MethodType.methodType( void.class ) )
                         .invokeWithArguments( args );
-            }
-            catch( Exception ex ) {
+            } catch( Exception ex ) {
                 throw ex;
-            }
-            catch( Throwable ex ) {
+            } catch( Throwable ex ) {
                 throw new InvocationTargetException( ex );
             }
         };
     }
 
-    @SuppressWarnings("ThrowableInstanceNotThrown")
+    @SuppressWarnings( "ThrowableInstanceNotThrown" )
     public static ExpressionOperation invoke( ExpressionOperation srcExp, String methodName, ExpressionOperation... argExp )
     {
         Objects.requireNonNull( methodName, "methodName is null" );
@@ -92,7 +111,8 @@ public class TypeOp
                 Object args[] = invokeArguments( s, argExp );
 
                 // Not ideal but appears to work, locates the first method with same name and number of arguments
-                MethodHandle h = MethodHandles.publicLookup().unreflect(
+                //MethodHandle h = MethodHandles.publicLookup().unreflect(
+                MethodHandle h = TRUSTED_LOOKUP.unreflect(
                         Stream.of( clazz.getMethods() ).
                         filter( m -> methodName.equals( m.getName() ) ).
                         filter( m -> m.getParameterCount() == args.length ).
@@ -115,11 +135,9 @@ public class TypeOp
                 }
 
                 return h.invokeWithArguments( args );
-            }
-            catch( Exception ex ) {
+            } catch( Exception ex ) {
                 throw ex;
-            }
-            catch( Throwable ex ) {
+            } catch( Throwable ex ) {
                 throw new InvocationTargetException( ex );
             }
         };
