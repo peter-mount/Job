@@ -35,8 +35,8 @@ import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.rabbitmq.Rabbit;
 import uk.trainwatch.rabbitmq.RabbitMQ;
 import uk.trainwatch.util.config.Configuration;
+import uk.trainwatch.util.config.Database;
 import uk.trainwatch.util.config.impl.GlobalConfiguration;
-import uk.trainwatch.util.sql.Database;
 import uk.trainwatch.util.sql.SQL;
 
 /**

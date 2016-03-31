@@ -35,7 +35,7 @@ import javax.sql.DataSource;
 import onl.area51.filesystem.io.FileSystemIORepository;
 import onl.area51.job.jcl.Jcl;
 import uk.trainwatch.util.MapBuilder;
-import uk.trainwatch.util.sql.Database;
+import uk.trainwatch.util.config.Database;
 
 /**
  * An implementation that will retrieve a Job from some central location, a FileSystem or a Database

@@ -35,7 +35,7 @@ import static onl.area51.job.cluster.Constants.EXCEPTION;
 import onl.area51.job.cluster.JobCluster;
 import uk.trainwatch.scheduler.Cron;
 import uk.trainwatch.util.Consumers;
-import uk.trainwatch.util.sql.Database;
+import uk.trainwatch.util.config.Database;
 import uk.trainwatch.util.sql.SQL;
 import uk.trainwatch.util.sql.UncheckedSQLException;
 

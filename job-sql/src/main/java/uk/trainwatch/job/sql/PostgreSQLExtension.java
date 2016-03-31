@@ -23,7 +23,6 @@ import uk.trainwatch.job.lang.Operation;
 import uk.trainwatch.job.lang.Statement;
 import uk.trainwatch.job.lang.block.TypeOp;
 import uk.trainwatch.job.lang.expr.ExpressionOperation;
-import uk.trainwatch.util.sql.DataSourceProducer;
 
 /**
  * Implements print, println and printf functionality.
@@ -32,7 +31,7 @@ import uk.trainwatch.util.sql.DataSourceProducer;
  *
  * @author peter
  */
-@MetaInfServices(Extension.class)
+@MetaInfServices( Extension.class )
 public class PostgreSQLExtension
         implements Extension
 {
@@ -57,17 +56,17 @@ public class PostgreSQLExtension
     public synchronized void init()
             throws Exception
     {
-        if( postgreSQLManager == null ) {
-            postgreSQLManager = new PostgreSQLManager( DataSourceProducer.getInstance().getDataSource( "rail" ) );
-        }
+        throw new UnsupportedOperationException( "This is currently broken" );
+//        if( postgreSQLManager == null ) {
+//            postgreSQLManager = new PostgreSQLManager( DataSourceProducer.getInstance().getDataSource( "rail" ) );
+//        }
     }
 
     /**
      * Handle statements
      * <p>
      * @param name
-     * @param args
-     *             <p>
+     * @param args <p>
      * @return
      */
     @Override
@@ -93,8 +92,7 @@ public class PostgreSQLExtension
      * Handle standard functions that return a value
      * <p>
      * @param name
-     * @param args
-     *             <p>
+     * @param args <p>
      * @return
      */
     @Override
@@ -123,8 +121,7 @@ public class PostgreSQLExtension
      * This will filter out all functions that don't match the number of arguments and those who's datasource is not available.
      * <p>
      * @param name
-     * @param args
-     *             <p>
+     * @param args <p>
      * @return
      */
     private PostgreSQLFunction lookup( ExtensionType type, String name, ExpressionOperation... args )
@@ -183,8 +180,7 @@ public class PostgreSQLExtension
                             throw new IllegalStateException( "Implementation does not support resources but declares it does" );
                         }
                         throw new IllegalStateException( "Implementation declares resource support but returns non-result set" );
-                    }
-                    catch( Exception ex ) {
+                    } catch( Exception ex ) {
                         w.close();
                         throw ex;
                     }
@@ -215,12 +211,12 @@ public class PostgreSQLExtension
      */
     private DataSource getDataSource( PostgreSQLFunction f )
     {
-        try {
-            return dataSources.computeIfAbsent( f.getDataSource(), DataSourceProducer.getInstance()::getDataSource );
-        }
-        catch( IllegalArgumentException ex ) {
-            // No datasource so return null
-            return null;
-        }
+        throw new UnsupportedOperationException("This is currently broken");
+//        try {
+//            return dataSources.computeIfAbsent( f.getDataSource(), DataSourceProducer.getInstance()::getDataSource );
+//        } catch( IllegalArgumentException ex ) {
+//            // No datasource so return null
+//            return null;
+//        }
     }
 }
