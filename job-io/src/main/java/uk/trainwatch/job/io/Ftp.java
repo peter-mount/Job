@@ -128,7 +128,7 @@ public class Ftp
             throws IOException
     {
         if( !client.isConnected() ) {
-            client.connect( config.getString( "ftp.server" ) );
+//            client.connect( config.getString( "ftp.server" ) );
         }
     }
 
@@ -137,7 +137,7 @@ public class Ftp
     {
         connect();
         if( !client.isLoggedIn() ) {
-            client.login( config.getString( "ftp.username" ), config.getString( "ftp.password" ) );
+//            client.login( config.getString( "ftp.username" ), config.getString( "ftp.password" ) );
         }
     }
 
