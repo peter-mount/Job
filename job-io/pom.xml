@@ -37,7 +37,7 @@
         
         <dependency>
             <groupId>uk.trainwatch</groupId>
-            <artifactId>opendata-obsolete</artifactId>
+            <artifactId>opendata-ftp</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
