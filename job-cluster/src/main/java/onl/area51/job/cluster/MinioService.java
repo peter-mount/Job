@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package onl.area51.job.hub;
+package onl.area51.job.cluster;
 
 import io.minio.MinioClient;
 import io.minio.Result;
@@ -94,8 +94,7 @@ public class MinioService
             }
         };
 
-        return StreamSupport.stream( Spliterators.spliteratorUnknownSize( it, 0 ),
-                                     false )
+        return StreamSupport.stream( Spliterators.spliteratorUnknownSize( it, 0 ), false )
                 .map( r -> {
                     try {
                         return r.get();
@@ -114,12 +113,29 @@ public class MinioService
                 } );
     }
 
+    public String getJobPath( String node, String job )
+    {
+        return String.join( "/", "jobs", node, job );
+    }
+
+    public String getContent( String node, String job )
+            throws IOException
+    {
+        return getContent( getJobPath( node, job ) );
+    }
+
     public String getContent( String objectName )
             throws IOException
     {
         try( BufferedReader r = new BufferedReader( new InputStreamReader( getObject( objectName ) ) ) ) {
             return r.lines().collect( Collectors.joining( "\n" ) );
         }
+    }
+
+    public void setContent( String node, String job, String content )
+            throws IOException
+    {
+        setContent( getJobPath( node, job ), content );
     }
 
     public void setContent( String objectName, String content )

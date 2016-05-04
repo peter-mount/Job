@@ -29,8 +29,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import static onl.area51.job.cluster.Constants.*;
+import onl.area51.kernel.CommandArguments;
 import uk.trainwatch.job.ext.ExtensionManager;
 import uk.trainwatch.rabbitmq.Rabbit;
 import uk.trainwatch.rabbitmq.RabbitConnection;
@@ -38,8 +40,6 @@ import uk.trainwatch.rabbitmq.RabbitMQ;
 import uk.trainwatch.rabbitmq.RabbitRPCClient;
 import uk.trainwatch.rabbitmq.RabbitRPCInvoker;
 import uk.trainwatch.util.Consumers;
-import uk.trainwatch.util.config.Configuration;
-import uk.trainwatch.util.config.impl.GlobalConfiguration;
 
 /**
  * Handles the execution of jobs on a remote cluster
@@ -57,20 +57,28 @@ public class JobCluster
     private Rabbit rabbit;
 
     @Inject
-    private ClusterJobRetriever jobRetriever;
-
-    @Inject
-    @GlobalConfiguration( "jobcluster" )
-    private Configuration configuration;
+    private MinioService minioService;
+    
+    @Inject private ClusterMonitor clusterMonitor;
 
     private String getClusterName()
     {
-        String clusterName = System.getenv( "CLUSTERNAME" );
-        if( clusterName == null )
-        {
-            clusterName = configuration.getString( "clustername" );
+        return System.getenv( "CLUSTERNAME" );
+    }
+
+    private int getThreads()
+    {
+        try {
+            return Integer.parseInt( System.getenv( "CLUSTER_THREADS" ) );
         }
-        return clusterName;
+        catch( Exception ex ) {
+            return 1;
+        }
+    }
+
+    void deploy( @Observes CommandArguments args )
+    {
+        // Nothing to do here, it's presence ensures the bean is instantiated by CDI
     }
 
     @PostConstruct
@@ -85,17 +93,16 @@ public class JobCluster
         Objects.requireNonNull( clusterName, "No cluster name defined. Set with " + CLUSTER_NAME + " system property." );
 
         RabbitConnection connection = rabbit.getConnection();
-        ClusterExecutor clusterExecutor = new ClusterExecutor( clusterName, jobRetriever );
+        ClusterExecutor clusterExecutor = new ClusterExecutor( clusterName, this, clusterMonitor );
         RabbitRPCInvoker rpcInvoker = new RabbitRPCInvoker( connection, clusterExecutor );
 
         // Create the required number of client threads
         Map<String, Object> props = new HashMap<>();
         // Don't append host name to queue - we want to share the cluster queue across nodes
         props.put( RabbitMQ.NO_HOSTNAME, true );
-        int threads = configuration.getInt( clusterName+".threadCount", 1 );
+        int threads = getThreads();
         LOG.log( Level.INFO, () -> "Initialising " + threads + " Job execution threads" );
-        for( int t = 0; t < threads; t++ )
-        {
+        for( int t = 0; t < threads; t++ ) {
             RabbitMQ.queueConsumer( connection, "job." + clusterName + ".exec", RabbitMQ.DEFAULT_TOPIC, ROUTING_KEY_PREFIX + clusterName, false, props,
                                     rpcInvoker );
         }
@@ -107,6 +114,12 @@ public class JobCluster
         );
     }
 
+    MinioService getMinioService()
+    {
+        return minioService;
+    }
+
+    
     /**
      * Is the String a valid cluster or job name.
      * <p>
@@ -133,11 +146,10 @@ public class JobCluster
     public void execute( String cluster, String job, Map<String, Object> args )
             throws IOException
     {
-        try
-        {
+        try {
             call( cluster, job, args, 0, TimeUnit.SECONDS );
-        } catch( TimeoutException ex )
-        {
+        }
+        catch( TimeoutException ex ) {
             // Ignore
         }
     }
@@ -188,10 +200,9 @@ public class JobCluster
         Map<String, Object> params = getParams( cluster, job, args );
         RabbitRPCClient.execute( rabbit.getConnection(), key, (int) unit.toMillis( time ), params,
                                  ret
-                                 -> 
-                                 {
-                                     Map<String, Object> retArgs = (Map<String, Object>) ret.get( ARGS );
-                                     action.accept( retArgs == null ? Collections.emptyMap() : retArgs );
+                                 -> {
+                             Map<String, Object> retArgs = (Map<String, Object>) ret.get( ARGS );
+                             action.accept( retArgs == null ? Collections.emptyMap() : retArgs );
                          } );
     }
 

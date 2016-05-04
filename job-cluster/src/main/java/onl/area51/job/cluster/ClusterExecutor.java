@@ -22,7 +22,6 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static onl.area51.job.cluster.Constants.*;
-import onl.area51.job.jcl.Jcl;
 import onl.area51.job.jcl.JclScript;
 import uk.trainwatch.job.lang.Compiler;
 import uk.trainwatch.job.Job;
@@ -61,17 +60,22 @@ public class ClusterExecutor
 
     private static final Logger LOG = Logger.getLogger( ClusterExecutor.class.getName() );
     private final String node;
-    private final ClusterJobRetriever jobRetriever;
+    private final JobCluster cluster;
+    private final ClusterMonitor clusterMonitor;
+    private final String statName;
 
     /**
      *
-     * @param node         Cluster name to listen under
-     * @param jobRetriever function to retrieve a {@link Job} from it's cluster & job names
+     * @param node    Cluster name to listen under
+     * @param cluster
      */
-    public ClusterExecutor( String node, ClusterJobRetriever jobRetriever )
+    public ClusterExecutor( String node, JobCluster cluster, ClusterMonitor clusterMonitor )
     {
         this.node = node;
-        this.jobRetriever = jobRetriever;
+        this.cluster = cluster;
+        this.clusterMonitor = clusterMonitor;
+        statName = "job." + node + ".exec";
+        clusterMonitor.create( statName );
     }
 
     @Override
@@ -96,8 +100,10 @@ public class ClusterExecutor
     {
         String jobName = Objects.toString( request.get( JOB ), null );
 
+        clusterMonitor.increment( statName );
+
         try {
-            String src = jobRetriever.retrieveJob( Jcl.create( node, jobName ) );
+            String src = cluster.getMinioService().getContent( node + "/" + jobName );
             if( src == null ) {
                 LOG.log( Level.WARNING, () -> "Cannot find Job " + node + ":" + jobName );
                 return null;

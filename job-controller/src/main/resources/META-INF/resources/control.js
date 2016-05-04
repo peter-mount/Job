@@ -103,6 +103,49 @@ $(function () {
         });
     };
 
+    var showStats = function () {
+        var p = {
+            id: "stats",
+            width: '20em',
+            height: '40em',
+            title: 'Statistics'
+        };
+        openWindow(p);
+        var d = $('<div></div>').appendTo(p.wp);
+        var stats = {};
+
+        //var ws = new SockJS('http://172.17.4.84:15674/stomp');
+        var ws = new WebSocket('ws://172.17.4.84:15674/ws');
+        var client = Stomp.over(ws);
+        client.connect('peter', 'password', function (frame) {
+            console.log("Connected");
+            client.subscribe('/topic/statistics', function (m) {
+                var msg = JSON.parse(m.body);
+                if (msg.type === 'statistic') {
+                    msg = msg.value;
+                    if (!stats[msg.name]) {
+                        stats[msg.name] = $('<div></div>').attr({id: 'stat_' + msg.name.replace('.', '_')}).appendTo(d);
+                        d.children("div").sort(function (a, b) {
+                            console.log($(a).attr('id'), $(b).attr('id'));
+                            return $(a).attr('id') > $(b).attr('id');
+                        }).each(function () {
+                            var e = $(this);
+                            e.remove();
+                            e.appendTo(d);
+                        });
+                    }
+                    $(stats[msg.name]).empty()
+                            .append(msg.name)
+                            .append($('<span></span>').attr({style: 'float:right'}).append(msg.count))
+                }
+                console.log(msg);
+            });
+        }, function () {
+            console.log("Error");
+            d.empty().append("Failed to connect");
+        }, '/');
+    };
+
     tree = $('#tree');
     tree.on('changed.jstree', function (e, data) {
         var i, j;
@@ -122,4 +165,5 @@ $(function () {
         }
     });
 
+    showStats();
 });

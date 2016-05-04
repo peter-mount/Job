@@ -1,5 +1,6 @@
 package onl.area51.job.hub;
 
+import onl.area51.job.cluster.MinioService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.json.Json;
