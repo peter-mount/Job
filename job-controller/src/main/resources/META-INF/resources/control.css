@@ -1,0 +1,126 @@
+body {
+    overflow: hidden;
+    margin: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+#banner {
+    margin: 0;
+    position: absolute;
+    top: 0em;
+    left: 0em;
+    right: 0em;
+    height: 2em;
+    border-bottom: 1px solid black;
+    background: burlywood;
+}
+#banner h1 {font-size: 0.8em;}
+
+#left {
+    margin: 0;
+    position: absolute;
+    top: 2em;
+    left: 0em;
+    width: 15em;
+    bottom: 1.5em;
+    border-right: 1px solid grey;
+    xbackground: black;
+    xcolor: white;
+}
+
+#footer {
+    margin: 0;
+    position: absolute;
+    height: 1em;
+    left: 0em;
+    right: 0em;
+    bottom: 0em;
+    border-bottom: 1px solid black;
+    xbackground: black;
+    xcolor: white;
+    border-top: 1px solid grey;
+}
+
+.window {
+    margin: 2px;
+    background: white;
+    color: black;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 2px solid black;
+    border-bottom: 2px solid black;
+}
+
+.wintitle {
+    background: darkgray;
+    margin: 0;
+    position: absolute;
+    top: 0em;
+    left: 0em;
+    right: 0em;
+    height: 1.1em;
+    border-bottom: 1px solid black;
+}
+
+.winbut {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+}
+
+.winpane {
+    background: white;
+    margin: 0;
+    position: absolute;
+    top: 1.5em;
+    left: 0em;
+    right: 0em;
+    bottom: 0em;
+}
+
+.winclose {
+    background: url('/httpd/buttons/general/Stop16.gif') no-repeat;
+    float:right;
+    width: 16px;
+    height: 16px;
+}
+
+#tree {
+    margin: 0;
+    position: absolute;
+    top: 0em;
+    left: 0em;
+    right: 0em;
+    bottom: 0em;
+    font-size: 0.5em;
+    font: monospace;
+}
+
+#buttons {
+    margin: 0;
+    position: absolute;
+    top: 1.2em;
+    left: 0em;
+    right: 0em;
+    border: 1px groove grey;
+    background: lightgrey;
+}
+#tabs {
+    margin: 0;
+    position: absolute;
+    top: 1.2em;
+    bottom: 0.5em;
+    left: 0em;
+    right: 0em;
+}
+#editor {
+    margin: 0;
+    position: absolute;
+    top: 5em;
+    bottom: 1.5em;
+    left: 0.5em;
+    right: 20.5em;
+}

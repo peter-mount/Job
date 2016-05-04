@@ -28,14 +28,24 @@
             <version>1.2.2</version>
         </dependency>
 
-        <!-- pom dependency as we need that image as the parent -->
         <dependency>
-            <groupId>onl.area51.apps</groupId>
-            <artifactId>fileserver</artifactId>
+            <groupId>onl.area51.httpd</groupId>
+            <artifactId>area51-httpd-cdi</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <type>pom</type>
         </dependency>
 
+        <dependency>
+            <groupId>onl.area51.httpd</groupId>
+            <artifactId>area51-httpd-rest</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>onl.area51.httpd</groupId>
+            <artifactId>area51-httpd-buttons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
         <dependency>
             <groupId>uk.trainwatch.job</groupId>
             <artifactId>job-language</artifactId>
@@ -66,7 +76,12 @@
             <groupId>onl.area51.filesystem</groupId>
             <artifactId>filesystem-core</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>onl.area51.filesystem</groupId>
+            <artifactId>filesystem-minio</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         
         <dependency>
@@ -150,11 +165,7 @@
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>0.2.3</version>
                 <configuration>
-                    <imageName>${docker.image.prefix}/${project.artifactId}</imageName>
-                    <imageTags>
-                        <imageTag>latest</imageTag>
-                        <imageTag>${project.version}</imageTag>
-                    </imageTags>
+                    <imageName>${docker.image.prefix}/${project.artifactId}:latest</imageName>
                     <dockerDirectory>${project.build.directory}/docker.temp</dockerDirectory>
                     <resources>
                         <resource>

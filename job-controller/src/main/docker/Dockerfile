@@ -1,4 +1,4 @@
-FROM area51/job-docker:latest
+FROM area51/kernel:latest-opendata
 MAINTAINER Peter Mount <peter@retep.org>
 
 # You must define this for your application

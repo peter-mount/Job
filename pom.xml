@@ -15,6 +15,7 @@
     <modules>
         <module>job-cluster</module>
         <module>job-commons</module>
+        <module>job-controller</module>
         <module>job-docker</module>
         <module>job-io</module>
         <module>job-jcl</module>

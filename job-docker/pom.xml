@@ -138,7 +138,6 @@
                     <imageName>${docker.image.prefix}/${project.artifactId}</imageName>
                     <imageTags>
                         <imageTag>latest</imageTag>
-                        <imageTag>${project.version}</imageTag>
                     </imageTags>
                     <dockerDirectory>${project.build.directory}/docker.temp</dockerDirectory>
                     <resources>

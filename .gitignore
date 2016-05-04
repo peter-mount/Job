@@ -18,3 +18,4 @@
 /job-cluster-web/target/
 /job-image/target/
 /job-docker/target/
+/job-controller/target/
