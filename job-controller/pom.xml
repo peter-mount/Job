@@ -148,6 +148,7 @@
                 </executions>
             </plugin>
             
+		<!-- disabled
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -172,6 +173,7 @@
                     </execution>
                 </executions>
             </plugin>
+		-->
             
         </plugins>
     </build>
